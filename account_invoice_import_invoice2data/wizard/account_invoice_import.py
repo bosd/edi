@@ -65,13 +65,29 @@ class AccountInvoiceImport(models.TransientModel):
 
     @api.model
     def invoice2data_to_parsed_inv(self, invoice2data_res):
+        lines = invoice2data_res.get("lines", [])
+
+        for line in lines:
+            # Manipulate line data to match with account_invoice_import
+            line["price_unit"] = float(line.get("price_unit", 0))
+            # qty 0 should be allowed to import notes, but nut supported by document_import
+            line["qty"] = float(line.get("qty", 1))
+            if line.get("qty") > 0:
+                line["product"] = {
+                    "barcode": invoice2data_res.get("barcode"),
+                    "code": invoice2data_res.get("code"),
+                }
+
         parsed_inv = {
             "partner": {
                 "vat": invoice2data_res.get("vat"),
                 "name": invoice2data_res.get("partner_name"),
                 "email": invoice2data_res.get("partner_email"),
                 "website": invoice2data_res.get("partner_website"),
+                "bic": invoice2data_res.get("bic"),
+                "iban": invoice2data_res.get("iban"),
                 "siren": invoice2data_res.get("siren"),
+                "coc_registration_number": invoice2data_res.get("partner_coc"),
             },
             "currency": {
                 "iso": invoice2data_res.get("currency"),
@@ -81,6 +97,8 @@ class AccountInvoiceImport(models.TransientModel):
             "date_due": invoice2data_res.get("date_due"),
             "date_start": invoice2data_res.get("date_start"),
             "date_end": invoice2data_res.get("date_end"),
+            "note": invoice2data_res.get("note"),
+            "lines": lines,
         }
         for field in ["invoice_number", "description"]:
             if isinstance(invoice2data_res.get(field), list):
