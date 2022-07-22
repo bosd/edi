@@ -4,7 +4,7 @@
 
 {
     "name": "Account Invoice Import Invoice2data",
-    "version": "14.0.1.0.0",
+    "version": "14.0.1.0.1",
     "category": "Accounting/Accounting",
     "license": "AGPL-3",
     "summary": "Import supplier invoices using the invoice2data lib",
@@ -12,7 +12,15 @@
     "maintainers": ["alexis-via"],
     "website": "https://github.com/OCA/edi",
     "depends": ["account_invoice_import"],
-    "external_dependencies": {"python": ["invoice2data"]},
+    # "excludes": ["account_invoice_import_simple_pdf"],
+    "external_dependencies": {
+        "python": [
+            "invoice2data",
+            # https://github.com/OCA/edi/issues/544
+            "dateparser==1.1.1",
+        ],
+        "deb": ["poppler-utils"],
+    },
     "data": [
         "security/res_groups.xml",
         "security/ir.model.access.csv",

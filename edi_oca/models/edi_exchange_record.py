@@ -17,12 +17,12 @@ class EDIExchangeRecord(models.Model):
     _inherit = "mail.thread"
     _description = "EDI exchange Record"
     _order = "exchanged_on desc"
+    _rec_name = "identifier"
 
-    name = fields.Char(compute="_compute_name")
     identifier = fields.Char(required=True, index=True, readonly=True)
     external_identifier = fields.Char(index=True, readonly=True)
     type_id = fields.Many2one(
-        string="EDI Exchange type",
+        string="Exchange type",
         comodel_name="edi.exchange.type",
         required=True,
         ondelete="cascade",
@@ -32,12 +32,13 @@ class EDIExchangeRecord(models.Model):
     backend_id = fields.Many2one(comodel_name="edi.backend", required=True)
     model = fields.Char(index=True, required=False, readonly=True)
     res_id = fields.Many2oneReference(
-        string="Record ID",
+        string="Record",
         index=True,
         required=False,
         readonly=True,
         model_field="model",
     )
+    related_name = fields.Char(compute="_compute_related_name", compute_sudo=True)
     exchange_file = fields.Binary(attachment=True)
     exchange_filename = fields.Char(
         compute="_compute_exchange_filename", readonly=False, store=True
@@ -82,33 +83,38 @@ class EDIExchangeRecord(models.Model):
         comodel_name="edi.exchange.record",
         inverse_name="parent_id",
     )
+    ack_expected = fields.Boolean(compute="_compute_ack_expected")
     # TODO: shall we add a constrain on the direction?
     # In theory if the record is outgoing the ack should be incoming and vice versa.
     ack_exchange_id = fields.Many2one(
+        string="ACK exchange",
         comodel_name="edi.exchange.record",
-        help="Ack for this exchange",
+        help="ACK for this exchange",
         compute="_compute_ack_exchange_id",
         store=True,
     )
     ack_received_on = fields.Datetime(
         string="ACK received on", related="ack_exchange_id.exchanged_on"
     )
+    retryable = fields.Boolean(
+        compute="_compute_retryable",
+        help="The record state can be rolled back manually in case of failure.",
+    )
 
     _sql_constraints = [
         ("identifier_uniq", "unique(identifier)", "The identifier must be unique."),
         (
             "external_identifier_uniq",
-            "unique(external_identifier)",
-            "The external_identifier must be unique.",
+            "unique(external_identifier, backend_id, type_id)",
+            "The external_identifier must be unique for a type and a backend.",
         ),
     ]
 
-    @api.depends("type_id.code", "model", "res_id")
-    def _compute_name(self):
+    @api.depends("model", "res_id")
+    def _compute_related_name(self):
         for rec in self:
-            rec.name = "{} - {}".format(
-                rec.type_id.name, rec.record.name if rec.model else "Unrelated"
-            )
+            related_record = rec.record
+            rec.related_name = related_record.display_name if related_record else ""
 
     @api.depends("model", "type_id")
     def _compute_exchange_filename(self):
@@ -146,8 +152,24 @@ class EDIExchangeRecord(models.Model):
             lambda x: x.type_id == self.type_id.ack_type_id
         )
 
+    def _compute_ack_expected(self):
+        for rec in self:
+            rec.ack_expected = bool(self.type_id.ack_type_id)
+
     def needs_ack(self):
         return self.type_id.ack_type_id and not self.ack_exchange_id
+
+    _rollback_state_mapping = {
+        # From: to
+        "output_error_on_send": "output_pending",
+        "output_sent_and_error": "output_pending",
+        "input_receive_error": "input_pending",
+        "input_processed_error": "input_received",
+    }
+
+    def _compute_retryable(self):
+        for rec in self:
+            rec.retryable = rec.edi_exchange_state in self._rollback_state_mapping
 
     @property
     def record(self):
@@ -157,7 +179,7 @@ class EDIExchangeRecord(models.Model):
             return None
         if not self.model and self.parent_id:
             return self.parent_id.record
-        return self.env[self.model].browse(self.res_id)
+        return self.env[self.model].browse(self.res_id).exists()
 
     def _set_file_content(
         self, output_string, encoding="utf-8", field_name="exchange_file"
@@ -168,21 +190,22 @@ class EDIExchangeRecord(models.Model):
             output_string = bytes(output_string, encoding)
         self[field_name] = base64.b64encode(output_string)
 
-    def _get_file_content(self, field_name="exchange_file"):
-        """Handy method to no have to convert b64 back and forth."""
+    def _get_file_content(self, field_name="exchange_file", binary=True):
+        """Handy method to not have to convert b64 back and forth."""
         self.ensure_one()
         if not self[field_name]:
             return ""
-        return base64.b64decode(self[field_name]).decode()
+        if binary:
+            return base64.b64decode(self[field_name]).decode()
+        return self[field_name]
 
     def name_get(self):
         result = []
         for rec in self:
-            dt = fields.Datetime.to_string(rec.exchanged_on) if rec.exchanged_on else ""
             rec_name = rec.identifier
             if rec.res_id and rec.model:
                 rec_name = rec.record.display_name
-            name = "[{}] {} {}".format(rec.type_id.name, rec_name, dt)
+            name = "[{}] {}".format(rec.type_id.name, rec_name)
             result.append((rec.id, name))
         return result
 
@@ -212,22 +235,26 @@ class EDIExchangeRecord(models.Model):
     def _exchange_status_messages(self):
         return {
             # status: message
-            "send_ok": _("File %s sent") % self.exchange_filename,
+            "send_ok": _("Exchange sent"),
             "send_ko": _(
                 "An error happened while sending. Please check exchange record info."
             ),
-            "process_ok": _("File %s processed successfully ") % self.exchange_filename,
-            "process_ko": _("File %s processed with errors") % self.exchange_filename,
-            "receive_ok": _("File %s received successfully ") % self.exchange_filename,
-            "receive_ko": _("File %s not received") % self.exchange_filename,
+            "process_ok": _("Exchange processed successfully "),
+            "process_ko": _("Exchange processed with errors"),
+            "receive_ok": _("Exchange received successfully "),
+            "receive_ko": _("Exchange not received"),
             "ack_received": _("ACK file received."),
             "ack_missing": _("ACK file is required for this exchange but not found."),
             "ack_received_error": _("ACK file received but contains errors."),
-            "validate_ko": _("File %s not valid") % self.exchange_filename,
+            "validate_ko": _("Exchange not valid"),
         }
 
     def _exchange_status_message(self, key):
         return self._exchange_status_messages[key]
+
+    def action_exchange_generate(self):
+        self.ensure_one()
+        return self.backend_id.exchange_generate(self)
 
     def action_exchange_send(self):
         self.ensure_one()
@@ -237,11 +264,49 @@ class EDIExchangeRecord(models.Model):
         self.ensure_one()
         return self.backend_id.exchange_process(self)
 
+    def action_exchange_receive(self):
+        self.ensure_one()
+        return self.backend_id.exchange_receive(self)
+
+    def exchange_create_ack_record(self):
+        ack_type = self.type_id.ack_type_id
+        values = {"parent_id": self.id}
+        return self.backend_id.create_record(ack_type.code, values)
+
+    def action_retry(self):
+        for rec in self:
+            rec._retry_exchange_action()
+
+    def _retry_exchange_action(self):
+        """Move back to precedent state to retry exchange action if failed."""
+        if not self.retryable:
+            return False
+        new_state = self._rollback_state_mapping[self.edi_exchange_state]
+        fname = "edi_exchange_state"
+        self[fname] = new_state
+        display_state = self._fields[fname].convert_to_export(self[fname], self)
+        self.message_post(
+            body=_("Action retry: state moved back to '%s'") % display_state
+        )
+        return True
+
     def action_open_related_record(self):
         self.ensure_one()
         if not self.model or not self.res_id:
             return {}
         return self.record.get_formview_action()
+
+    def _set_related_record(self, odoo_record):
+        self.update({"model": odoo_record._name, "res_id": odoo_record.id})
+
+    def action_open_related_exchanges(self):
+        self.ensure_one()
+        if not self.related_exchange_ids:
+            return {}
+        xmlid = "edi_oca.act_open_edi_exchange_record_view"
+        action = self.env["ir.actions.act_window"]._for_xml_id(xmlid)
+        action["domain"] = [("id", "in", self.related_exchange_ids.ids)]
+        return action
 
     def _notify_related_record(self, message, level="info"):
         """Post notification on the original record."""
@@ -364,6 +429,8 @@ class EDIExchangeRecord(models.Model):
                     access_rights_uid=access_rights_uid,
                 )[: limit - len(result)]
             )
+        # Restore original ordering
+        result = [x for x in orig_ids if x in result]
         return len(result) if count else list(result)
 
     def read(self, fields=None, load="_classic_read"):
@@ -403,3 +470,15 @@ class EDIExchangeRecord(models.Model):
     def write(self, vals):
         self.check_access_rule("write")
         return super().write(vals)
+
+    def _job_delay_params(self):
+        params = {}
+        channel = self.type_id.sudo().job_channel_id
+        if channel:
+            params["channel"] = channel.complete_name
+        return params
+
+    def with_delay(self, **kw):
+        params = self._job_delay_params()
+        params.update(kw)
+        return super().with_delay(**params)

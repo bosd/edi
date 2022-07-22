@@ -95,6 +95,16 @@ class TestBaseBusinessDocumentImport(TransactionCase):
 
     def test_match_currency(self):
         bdio = self.env["business.document.import"]
+        currency_dict = {"xmlid": "base.USD"}
+        res = bdio._match_currency(currency_dict, [])
+        self.assertEqual(res, self.env.ref("base.USD"))
+        first_cur = self.env["res.currency"].search([], limit=1)
+        currency_dict = {"id": first_cur.id}
+        res = bdio._match_currency(currency_dict, [])
+        self.assertEqual(res, first_cur)
+        currency_dict = {"recordset": first_cur}
+        res = bdio._match_currency(currency_dict, [])
+        self.assertEqual(res, first_cur)
         currency_dict = {"iso": "EUR"}
         res = bdio._match_currency(currency_dict, [])
         self.assertEqual(res, self.env.ref("base.EUR"))
@@ -132,14 +142,22 @@ class TestBaseBusinessDocumentImport(TransactionCase):
                         },
                     ),
                 ],
+                "packaging_ids": [(0, 0, {"name": "Big Pack", "barcode": "BIG-PACK"})],
             }
         )
+        # Match by code
         product_dict = {"code": "FURN_7777 "}
         res = bdio._match_product(product_dict, [])
         self.assertEqual(res, self.env.ref("product.product_delivery_01"))
+        # Match by barcode
         product_dict = {"barcode": "9782203121102"}
         res = bdio._match_product(product_dict, [])
         self.assertEqual(res, product1)
+        # Match by packaging barcode
+        product_dict = {"barcode": "BIG-PACK"}
+        res = bdio._match_product(product_dict, [])
+        self.assertEqual(res, product1)
+        # Match by seller
         product_dict = {"code": "TEST1242"}
         res = bdio._match_product(
             product_dict, [], seller=self.env.ref("base.res_partner_2")

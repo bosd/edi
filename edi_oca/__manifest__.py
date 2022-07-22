@@ -8,9 +8,9 @@
     Define backends, exchange types, exchange records,
     basic automation and views for handling EDI exchanges.
     """,
-    "version": "14.0.1.0.1",
+    "version": "14.0.1.9.1",
     "website": "https://github.com/OCA/edi",
-    "development_status": "Alpha",
+    "development_status": "Beta",
     "license": "LGPL-3",
     "author": "ACSONE,Creu Blanca,Odoo Community Association (OCA)",
     "maintainers": ["simahawk", "etobella"],

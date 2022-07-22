@@ -118,6 +118,8 @@ class AccountInvoiceImport(models.TransientModel):
         # modules, which is what we want!
         # {
         # 'type': 'in_invoice' or 'in_refund'  # 'in_invoice' by default
+        # 'journal': {'code': 'PUR'},  # use only if you want to force
+        #                              # a specific journal
         # 'currency': {
         #    'iso': 'EUR',
         #    'currency_symbol': u'€',  # The one or the other
@@ -209,13 +211,45 @@ class AccountInvoiceImport(models.TransientModel):
         currency = self._match_currency(
             parsed_inv.get("currency"), parsed_inv["chatter_msg"]
         )
-        journal_id = (
-            amo.with_context(
-                default_move_type=parsed_inv["type"], company_id=company.id
+        if parsed_inv["type"] in ("in_invoice", "in_refund") and import_config.get(
+            "journal"
+        ):
+            journal_id = import_config["journal"].id
+        elif parsed_inv.get("journal"):
+            journal = self.with_company(company.id)._match_journal(
+                parsed_inv["journal"], parsed_inv["chatter_msg"]
             )
-            ._get_default_journal()
-            .id
-        )
+            if (
+                parsed_inv["type"] in ("in_invoice", "in_refund")
+                and journal.type != "purchase"
+            ):
+                raise UserError(
+                    _(
+                        "You are importing a vendor bill/refund in journal '%s' "
+                        "which is not a purchase journal."
+                    )
+                    % journal.display_name
+                )
+            elif (
+                parsed_inv["type"] in ("out_invoice", "out_refund")
+                and journal.type != "sale"
+            ):
+                raise UserError(
+                    _(
+                        "You are importing a customer invoice/refund in journal '%s' "
+                        "which is not a sale journal."
+                    )
+                    % journal.display_name
+                )
+            journal_id = journal.id
+        else:
+            journal_id = (
+                amo.with_context(
+                    default_move_type=parsed_inv["type"], company_id=company.id
+                )
+                ._get_default_journal()
+                .id
+            )
         vals = {
             "partner_id": partner.id,
             "currency_id": currency.id,
@@ -230,7 +264,10 @@ class AccountInvoiceImport(models.TransientModel):
         vals = amo.play_onchanges(vals, ["partner_id"])
         # Force due date of the invoice
         if parsed_inv.get("date_due"):
-            vals["invoice_date_due"] = parsed_inv.get("date_due")
+            vals["invoice_date_due"] = parsed_inv["date_due"]
+            # Set invoice_payment_term_id to False because the due date is
+            # set by invoice_date + invoice_payment_term_id otherwise
+            vals["invoice_payment_term_id"] = False
         # Bank info
         if parsed_inv.get("iban") and vals["move_type"] == "in_invoice":
             partner_bank = self._match_partner_bank(
@@ -561,11 +598,8 @@ class AccountInvoiceImport(models.TransientModel):
             if country:
                 vals["partner_country_id"] = country.id
         self.write(vals)
-        action = (
-            self.env.ref("account_invoice_import.account_invoice_import_action")
-            .sudo()
-            .read()[0]
-        )
+        xmlid = "account_invoice_import.account_invoice_import_action"
+        action = self.env["ir.actions.act_window"]._for_xml_id(xmlid)
         action["res_id"] = self.id
         return action
 
@@ -747,11 +781,8 @@ class AccountInvoiceImport(models.TransientModel):
 
         if not wiz_vals.get("import_config_id"):
             wiz_vals["state"] = "config"
-            action = (
-                self.env.ref("account_invoice_import.account_invoice_import_action")
-                .sudo()
-                .read()[0]
-            )
+            xmlid = "account_invoice_import.account_invoice_import_action"
+            action = self.env["ir.actions.act_window"]._for_xml_id(xmlid)
             action["res_id"] = self.id
         else:
             draft_same_supplier_invs = amo.search(
@@ -766,11 +797,8 @@ class AccountInvoiceImport(models.TransientModel):
                 wiz_vals["state"] = "update"
                 if len(draft_same_supplier_invs) == 1:
                     wiz_vals["invoice_id"] = draft_same_supplier_invs[0].id
-                action = (
-                    self.env.ref("account_invoice_import.account_invoice_import_action")
-                    .sudo()
-                    .read()[0]
-                )
+                xmlid = "account_invoice_import.account_invoice_import_action"
+                action = self.env["ir.actions.act_window"]._for_xml_id(xmlid)
                 action["res_id"] = self.id
             else:
                 action = self.create_invoice_action(
@@ -793,7 +821,8 @@ class AccountInvoiceImport(models.TransientModel):
             assert self.import_config_id
             import_config = self.import_config_id.convert_to_import_config()
         invoice = self.create_invoice(parsed_inv, import_config, origin)
-        action = self.env.ref("account.action_move_in_invoice_type").sudo().read()[0]
+        xmlid = "account.action_move_in_invoice_type"
+        action = self.env["ir.actions.act_window"]._for_xml_id(xmlid)
         action.update(
             {
                 "view_mode": "form,tree,kanban",
@@ -1027,15 +1056,21 @@ class AccountInvoiceImport(models.TransientModel):
                 # select first tax line
                 if mline.tax_line_id and not company_cur.is_zero(mline.amount_currency):
                     has_tax_line = True
-                    new_amount_currency = inv_cur.round(
-                        mline.amount_currency + diff_tax_amount
-                    )
+                    if mline.currency_id.compare_amounts(mline.amount_currency, 0) >= 0:
+                        new_amount_currency = inv_cur.round(
+                            mline.amount_currency + diff_tax_amount
+                        )
+                    else:
+                        new_amount_currency = inv_cur.round(
+                            mline.amount_currency - diff_tax_amount
+                        )
                     invoice.message_post(
                         body=_(
-                            "The tax amount has been forced to %s "
-                            "(amount computed by Odoo was: %s)."
+                            "The <b>tax amount</b> for tax %s has been <b>forced</b> "
+                            "to %s (amount computed by Odoo was: %s)."
                         )
                         % (
+                            mline.tax_line_id.display_name,
                             format_amount(
                                 self.env, new_amount_currency, invoice.currency_id
                             ),
@@ -1271,7 +1306,8 @@ class AccountInvoiceImport(models.TransientModel):
             )
             % self.invoice_filename
         )
-        action = self.env.ref("account.action_move_in_invoice_type").sudo().read()[0]
+        xmlid = "account.action_move_in_invoice_type"
+        action = self.env["ir.actions.act_window"]._for_xml_id(xmlid)
         action.update(
             {
                 "view_mode": "form,tree,kanban",
@@ -1348,15 +1384,14 @@ class AccountInvoiceImport(models.TransientModel):
         one even though the actual result is the imported invoice, if the
         message content allows it.
         """
+        # TODO: split this method into smaller ones
         logger.info(
-            "New email received associated with account.invoice.import: "
-            "From: %s, Subject: %s, Date: %s, Message ID: %s. Executing "
-            "with user %s ID %d",
-            msg_dict.get("email_from"),
-            msg_dict.get("subject"),
+            "New email received. "
+            "Date: %s, Message ID: %s. "
+            "Executing "
+            "with user ID %d",
             msg_dict.get("date"),
             msg_dict.get("message_id"),
-            self.env.user.name,
             self.env.user.id,
         )
         # It seems that the "Odoo-way" to handle multi-company in E-mail
@@ -1383,19 +1418,16 @@ class AccountInvoiceImport(models.TransientModel):
                     ) or company_dest_email in msg_dict.get("cc", ""):
                         company_id = company["id"]
                         logger.info(
-                            "Matched with %s: importing invoices in company " "ID %d",
-                            company_dest_email,
+                            "Matched message %s: importing invoices in company ID %d",
+                            msg_dict["message_id"],
                             company_id,
                         )
                         break
             if not company_id:
                 logger.error(
-                    "Invoice import mail gateway in multi-company setup: "
-                    "invoice_import_email of the companies of this DB was "
-                    "not found as destination of this email (to: %s, cc: %s). "
-                    "Ignoring this email.",
-                    msg_dict["email_to"],
-                    msg_dict["cc"],
+                    "Mail gateway in multi-company setup: mail ignored. "
+                    "No destination found for message_id = %s.",
+                    msg_dict["message_id"],
                 )
                 return self.create({})
         else:  # mono-company setup

@@ -10,6 +10,7 @@ from .common import EDIBackendCommonTestCase
 class EDIBackendTestCase(EDIBackendCommonTestCase):
     @freeze_time("2020-10-21 10:00:00")
     def test_create_record(self):
+        self.env.user.tz = None  # Have no timezone used in generated filename
         vals = {
             "model": self.partner._name,
             "res_id": self.partner.id,
@@ -61,3 +62,11 @@ class EDIBackendTestCase(EDIBackendCommonTestCase):
             candidates,
             ["my.special.send", "output.send"],
         )
+
+    def test_action_view_exchanges(self):
+        # Just testing is not broken
+        self.assertTrue(self.backend.action_view_exchanges())
+
+    def test_action_view_exchange_types(self):
+        # Just testing is not broken
+        self.assertTrue(self.backend.action_view_exchange_types())

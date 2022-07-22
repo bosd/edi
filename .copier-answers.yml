@@ -1,13 +1,21 @@
 # Do NOT update manually; changes here will be overwritten by Copier
-_commit: v1.1.4
+_commit: v1.5.2
 _src_path: gh:oca/oca-addons-repo-template
+ci: GitHub
 dependency_installation_mode: PIP
 generate_requirements_txt: true
 include_wkhtmltopdf: false
 odoo_version: 14.0
+org_name: Odoo Community Association (OCA)
+org_slug: OCA
 rebel_module_groups: []
-repo_description: "TODO: add repo description."
+repo_description: Electronic Data Interchange modules
 repo_name: edi
 repo_slug: edi
-travis_apt_packages: []
+repo_website: https://github.com/OCA/edi
+travis_apt_packages:
+- poppler-utils
+- mupdf-tools
+- mupdf
+- libmupdf-dev
 travis_apt_sources: []

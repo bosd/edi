@@ -16,14 +16,21 @@ from ..exceptions import EDIValidationError
 _logger = logging.getLogger(__name__)
 
 
+def _get_exception_msg(exc):
+    if hasattr(exc, "args") and isinstance(exc.args[0], str):
+        return exc.args[0]
+    return repr(exc)
+
+
 class EDIBackend(models.Model):
     """Generic backend to control EDI exchanges.
 
     Backends can be organized with types.
 
-    The backend should be responsible for generating export records.
+    The backend should be responsible for managing records.
     For each record it can generate or parse their values
-    depending on their direction (incoming, outgoing).
+    depending on their direction (incoming, outgoing)
+    and send or receive them automatically depending on their state.
     """
 
     _name = "edi.backend"
@@ -37,6 +44,12 @@ class EDIBackend(models.Model):
         required=True,
         ondelete="restrict",
     )
+    output_sent_processed_auto = fields.Boolean(
+        help="""
+    Automatically set the record as processed after sending.
+    Usecase: the web service you send the file to processes it on the fly.
+    """
+    )
 
     def _get_component(self, exchange_record, key):
         candidates = self._get_component_usage_candidates(exchange_record, key)
@@ -47,7 +60,13 @@ class EDIBackend(models.Model):
         match_attrs = self._component_match_attrs(exchange_record, key)
         # Model is not granted to be there
         model = exchange_record.model or self._name
-        return self._find_component(
+        # Load additional ctx keys if any
+        collection = self
+        # TODO: document this
+        env_ctx = record_conf.get("env_ctx", {})
+        if env_ctx:
+            collection = collection.with_context(**env_ctx)
+        return collection._find_component(
             model,
             candidates,
             work_ctx=work_ctx,
@@ -124,8 +143,8 @@ class EDIBackend(models.Model):
         return candidates
 
     def _get_component_conf_for_record(self, exchange_record, key):
-        adv_settings = exchange_record.type_id.advanced_settings
-        return adv_settings.get("components", {}).get(key, {})
+        settings = exchange_record.type_id.get_settings()
+        return settings.get("components", {}).get(key, {})
 
     @property
     def exchange_record_model(self):
@@ -144,11 +163,11 @@ class EDIBackend(models.Model):
 
     def _create_record_prepare_values(self, type_code, values):
         res = values.copy()  # do not pollute original dict
-        export_type = self.env["edi.exchange.type"].search(
+        exchange_type = self.env["edi.exchange.type"].search(
             self._get_exchange_type_domain(type_code), limit=1
         )
-        export_type.ensure_one()
-        res["type_id"] = export_type.id
+        exchange_type.ensure_one()
+        res["type_id"] = exchange_type.id
         res["backend_id"] = self.id
         return res
 
@@ -159,6 +178,14 @@ class EDIBackend(models.Model):
             ("backend_type_id", "=", self.backend_type_id.id),
             ("backend_id", "=", self.id),
         ]
+
+    def _delay_action(self, rec):
+        # TODO: Remove this on 16.0
+        _logger.warning(
+            "This function has been replaced by rec.with_delay(). "
+            "It will be removed on 16.0."
+        )
+        return self.with_delay(**rec._job_delay_params())
 
     def exchange_generate(self, exchange_record, store=True, force=False, **kw):
         """Generate output content for given exchange record.
@@ -185,7 +212,7 @@ class EDIBackend(models.Model):
             try:
                 self._validate_data(exchange_record, output)
             except EDIValidationError as err:
-                error = repr(err)
+                error = _get_exception_msg(err)
                 state = "validate_error"
                 message = exchange_record._exchange_status_message("validate_ko")
                 exchange_record.update(
@@ -250,7 +277,7 @@ class EDIBackend(models.Model):
         except self._swallable_exceptions() as err:
             if self.env.context.get("_edi_send_break_on_error"):
                 raise
-            error = repr(err)
+            error = _get_exception_msg(err)
             state = "output_error_on_send"
             message = exchange_record._exchange_status_message("send_ko")
             res = False
@@ -258,7 +285,11 @@ class EDIBackend(models.Model):
             # TODO: maybe the send handler should return desired message and state
             message = exchange_record._exchange_status_message("send_ok")
             error = None
-            state = "output_sent"
+            state = (
+                "output_sent_and_processed"
+                if self.output_sent_processed_auto
+                else "output_sent"
+            )
             res = True
         finally:
             exchange_record.write(
@@ -325,7 +356,7 @@ class EDIBackend(models.Model):
             len(new_records),
         )
         for rec in new_records:
-            self.with_delay().exchange_generate(rec)
+            rec.with_delay().action_exchange_generate()
 
         if skip_send:
             return
@@ -338,7 +369,7 @@ class EDIBackend(models.Model):
         )
         for rec in pending_records:
             if rec.edi_exchange_state == "output_pending":
-                self.with_delay().exchange_send(rec)
+                rec.with_delay().action_exchange_send()
             else:
                 # TODO: run in job as well?
                 self._exchange_output_check_state(rec)
@@ -395,18 +426,15 @@ class EDIBackend(models.Model):
             return False
         state = exchange_record.edi_exchange_state
         error = False
-        message = None
         try:
             self._exchange_process(exchange_record)
         except self._swallable_exceptions() as err:
             if self.env.context.get("_edi_receive_break_on_error"):
                 raise
-            error = repr(err)
+            error = _get_exception_msg(err)
             state = "input_processed_error"
-            message = exchange_record._exchange_status_message("process_ko")
             res = False
         else:
-            message = exchange_record._exchange_status_message("process_ok")
             error = None
             state = "input_processed"
             res = True
@@ -420,8 +448,10 @@ class EDIBackend(models.Model):
                     "exchanged_on": fields.Datetime.now(),
                 }
             )
-            if message:
-                exchange_record._notify_related_record(message)
+            if state == "input_processed_error":
+                exchange_record._notify_error("process_ko")
+            elif state == "input_processed":
+                exchange_record._notify_done()
         return res
 
     def _exchange_process(self, exchange_record):
@@ -448,14 +478,14 @@ class EDIBackend(models.Model):
                 exchange_record._set_file_content(content)
                 self._validate_data(exchange_record)
         except EDIValidationError as err:
-            error = repr(err)
+            error = _get_exception_msg(err)
             state = "validate_error"
             message = exchange_record._exchange_status_message("validate_ko")
             res = False
         except self._swallable_exceptions() as err:
             if self.env.context.get("_edi_receive_break_on_error"):
                 raise
-            error = repr(err)
+            error = _get_exception_msg(err)
             state = "input_receive_error"
             message = exchange_record._exchange_status_message("receive_ko")
             res = False
@@ -517,7 +547,7 @@ class EDIBackend(models.Model):
             len(pending_records),
         )
         for rec in pending_records:
-            self.with_delay().exchange_receive(rec)
+            rec.with_delay().action_exchange_receive()
 
         pending_process_records = self.exchange_record_model.search(
             self._input_pending_process_records_domain()
@@ -527,7 +557,7 @@ class EDIBackend(models.Model):
             len(pending_process_records),
         )
         for rec in pending_process_records:
-            self.with_delay().exchange_process(rec)
+            rec.with_delay().action_exchange_process()
 
         # TODO: test it!
         self._exchange_check_ack_needed(pending_process_records)
@@ -555,9 +585,33 @@ class EDIBackend(models.Model):
             len(ack_pending_records),
         )
         for rec in ack_pending_records:
-            self.with_delay().exchange_create_ack_record(rec)
+            rec.with_delay().exchange_create_ack_record()
 
-    def exchange_create_ack_record(self, exchange_record):
-        ack_type = exchange_record.type_id.ack_type_id
-        values = {"parent_id": exchange_record.id}
-        return self.create_record(ack_type.code, values)
+    def _find_existing_exchange_records(
+        self, exchange_type, extra_domain=None, count_only=False
+    ):
+        domain = [
+            ("backend_id", "=", self.id),
+            ("type_id", "=", exchange_type.id),
+        ] + extra_domain or []
+        return self.env["edi.exchange.record"].search(domain, count=count_only)
+
+    def action_view_exchanges(self):
+        xmlid = "edi_oca.act_open_edi_exchange_record_view"
+        action = self.env["ir.actions.act_window"]._for_xml_id(xmlid)
+        action["context"] = {
+            "search_default_backend_id": self.id,
+            "default_backend_id": self.id,
+            "default_backend_type_id": self.backend_type_id.id,
+        }
+        return action
+
+    def action_view_exchange_types(self):
+        xmlid = "edi_oca.act_open_edi_exchange_type_view"
+        action = self.env["ir.actions.act_window"]._for_xml_id(xmlid)
+        action["context"] = {
+            "search_default_backend_id": self.id,
+            "default_backend_id": self.id,
+            "default_backend_type_id": self.backend_type_id.id,
+        }
+        return action

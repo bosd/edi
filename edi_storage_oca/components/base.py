@@ -1,10 +1,12 @@
 # Copyright 2020 ACSONE
 # @author: Simone Orsi <simahawk@gmail.com>
 # License LGPL-3.0 or later (http://www.gnu.org/licenses/lgpl).
-
+import logging
 from pathlib import PurePath
 
 from odoo.addons.component.core import AbstractComponent
+
+_logger = logging.getLogger(__file__)
 
 
 class EDIStorageComponentMixin(AbstractComponent):
@@ -36,7 +38,9 @@ class EDIStorageComponentMixin(AbstractComponent):
         """
         assert direction in ("input", "output")
         assert state in ("pending", "done", "error")
-        return PurePath((self.backend[direction + "_dir_" + state] or "").strip(" /"))
+        return PurePath(
+            (self.backend[direction + "_dir_" + state] or "").strip().rstrip("/")
+        )
 
     def _remote_file_path(self, direction, state, filename):
         """Return remote file path by direction and state for give filename.
@@ -63,4 +67,19 @@ class EDIStorageComponentMixin(AbstractComponent):
             # (the date will never match)
             return self.storage.get(path.as_posix(), binary=binary)
         except FileNotFoundError:
+            _logger.info(
+                "Ignored FileNotFoundError when trying "
+                "to get file %s into path %s for state %s",
+                filename,
+                path,
+                state,
+            )
+            return None
+        except OSError:
+            _logger.info(
+                "Ignored OSError when trying to get file %s into path %s for state %s",
+                filename,
+                path,
+                state,
+            )
             return None
