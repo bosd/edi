@@ -19,13 +19,13 @@ class TestInvoice2dataTemplate(SavepointCase):
         self.templates = self.env["invoice2data.template"]
 
     def test_01_invoice2data_template(self):
-        """ Test if we cancreate a template. """
+        """Test if we cancreate a template."""
         self.assertEqual(0, len(self.templates.get_templates("purchase_invoice")))
         self._create_template()
         self.assertEqual(1, len(self.templates.get_templates("purchase_invoice")))
 
     def test_02_import_custom_invoice_template(self):
-        """ Test if a created template is used to import the pdf invoice. """
+        """Test if a created template is used to import the pdf invoice."""
         config.__setitem__("invoice2data_exclude_built_in_templates", True)
         # Be sure we exclude built in templates
         self.assertTrue(config.get("invoice2data_exclude_built_in_templates"))
@@ -106,7 +106,7 @@ class TestInvoice2dataTemplate(SavepointCase):
         self.assertEqual(fields.Date.to_string(inv.invoice_date), "2015-07-05")
 
     def _create_template(self):
-        """ Create a template for free adsl fiber. """
+        """Create a template for free adsl fiber."""
         # Swapped date_due and date for testing purpose, so that this won't
         # map with the built in templates
         self.templates.create(
