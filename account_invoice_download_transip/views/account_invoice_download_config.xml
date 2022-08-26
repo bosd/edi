@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+  Copyright 2018-2021 Akretion France (http://www.akretion.com/)
+  @author: Alexis de Lattre <alexis.delattre@akretion.com>
+  License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
+-->
+<odoo>
+
+
+    <record id="account_invoice_download_config_form" model="ir.ui.view">
+        <field name="name">transip.account.invoice.download.config.form</field>
+        <field name="model">account.invoice.download.config</field>
+        <field
+            name="inherit_id"
+            ref="account_invoice_download.account_invoice_download_config_form"
+        />
+        <field name="arch" type="xml">
+            <header position="inside">
+                <button
+                    name="%(transip_api_credentials_action)d"
+                    type="action"
+                    string="Generate Transip API Credentials"
+                    class="btn-primary"
+                    attrs="{'invisible': ['|', ('backend', '!=', 'transip'), ('transip_consumer_key', '!=', False)]}"
+                />
+            </header>
+            <field name="password" position="after">
+                <field
+                    name="transip_endpoint"
+                    attrs="{'invisible': [('backend', '!=', 'transip')]}"
+                />
+                <field
+                    name="transip_application_key"
+                    attrs="{'invisible': [('backend', '!=', 'transip')]}"
+                />
+                <field
+                    name="transip_login"
+                    attrs="{'invisible': [('backend', '!=', 'transip')]}"
+                />
+            </field>
+            <field name="password" position="attributes">
+                <attribute
+                    name="attrs"
+                >{'invisible': [('backend', '=', 'transip')]}</attribute>
+            </field>
+            <field name="login" position="attributes">
+                <attribute
+                    name="attrs"
+                >{'invisible': [('backend', '=', 'transip')]}</attribute>
+            </field>
+        </field>
+    </record>
+
+
+</odoo>

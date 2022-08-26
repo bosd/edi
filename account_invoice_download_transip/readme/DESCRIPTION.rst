@@ -1,0 +1,1 @@
+This module adds an transip backend to the **account_invoice_download** module. It allows you to auto-download `transip <https://www.transip.nl>`_ invoices via the `transip API <https://api.transip.nl/>`_.

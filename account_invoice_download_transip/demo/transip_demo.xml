@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <data noupdate="1">
+
+        <record id="transip" model="res.partner">
+            <field name="name">Transip</field>
+            <field name="is_company" eval="1" />
+            <field name="supplier_rank">1</field>
+            <field name="street">Vondellaan 47</field>
+            <field name="zip">2332 AA</field>
+            <field name="city">Leiden</field>
+            <field name="country_id" ref="base.nl" />
+            <field name="email">support@transip.nl</field>
+            <field name="website">www.transip.nl</field>
+            <field name="vat">NL812334966B01</field>
+        </record>
+
+        <record id="transip_vps_product" model="product.product">
+            <field name="name">Transip VPS</field>
+            <field name="default_code">Transip-vps</field>
+            <field name="categ_id" ref="product.product_category_5" />
+            <field name="sale_ok" eval="False" />
+            <field name="purchase_ok" eval="True" />
+            <field name="type">service</field>
+            <field name="uom_id" ref="uom.product_uom_unit" />
+            <field name="uom_po_id" ref="uom.product_uom_unit" />
+        </record>
+
+        <record id="transip_vps_addon_product" model="product.product">
+            <field name="name">Transip VPS Addon</field>
+            <field name="default_code">Transip-vps-addon</field>
+            <field name="categ_id" ref="product.product_category_5" />
+            <field name="sale_ok" eval="False" />
+            <field name="purchase_ok" eval="True" />
+            <field name="type">service</field>
+            <field name="uom_id" ref="uom.product_uom_unit" />
+            <field name="uom_po_id" ref="uom.product_uom_unit" />
+        </record>
+
+<!--         <record id="transip_ip_product" model="product.product">
+            <field name="name">Transip IPs</field>
+            <field name="default_code">Transip-ip.</field>
+            <field name="categ_id" ref="product.product_category_5" />
+            <field name="sale_ok" eval="False" />
+            <field name="purchase_ok" eval="True" />
+            <field name="type">service</field>
+            <field name="uom_id" ref="uom.product_uom_unit" />
+            <field name="uom_po_id" ref="uom.product_uom_unit" />
+        </record> -->
+
+<!--         <record id="transip_sms_product" model="product.product">
+            <field name="name">Transip SMS service</field>
+            <field name="default_code">Transip-voip.sms.</field>
+            <field name="categ_id" ref="product.product_category_5" />
+            <field name="sale_ok" eval="False" />
+            <field name="purchase_ok" eval="True" />
+            <field name="type">service</field>
+            <field name="uom_id" ref="uom.product_uom_unit" />
+            <field name="uom_po_id" ref="uom.product_uom_unit" />
+        </record>
+
+        <record id="transip_sdsl_product" model="product.product">
+            <field name="name">Transip SDSL</field>
+            <field name="default_code">Transip-pack.sdsl.</field>
+            <field name="categ_id" ref="product.product_category_5" />
+            <field name="sale_ok" eval="False" />
+            <field name="purchase_ok" eval="True" />
+            <field name="type">service</field>
+            <field name="uom_id" ref="uom.product_uom_unit" />
+            <field name="uom_po_id" ref="uom.product_uom_unit" />
+        </record> -->
+
+        <record id="transip_domain_product" model="product.product">
+            <field name="name">Transip Domain Name</field>
+            <field name="default_code">Transip-dom.</field>
+            <field name="categ_id" ref="product.product_category_5" />
+            <field name="sale_ok" eval="False" />
+            <field name="purchase_ok" eval="True" />
+            <field name="type">service</field>
+            <field name="uom_id" ref="uom.product_uom_unit" />
+            <field name="uom_po_id" ref="uom.product_uom_unit" />
+        </record>
+
+        <record id="transip_dedicated_server_product" model="product.product">
+            <field name="name">Transip Dedicated Server</field>
+            <field name="default_code">Transip-sd.</field>
+            <field name="categ_id" ref="product.product_category_5" />
+            <field name="sale_ok" eval="False" />
+            <field name="purchase_ok" eval="True" />
+            <field name="type">service</field>
+            <field name="uom_id" ref="uom.product_uom_unit" />
+            <field name="uom_po_id" ref="uom.product_uom_unit" />
+        </record>
+
+        <record id="transip_shared_hosting_product" model="product.product">
+            <field name="name">Transip Shared Hosting</field>
+            <field name="default_code">Transip-mut.</field>
+            <field name="categ_id" ref="product.product_category_5" />
+            <field name="sale_ok" eval="False" />
+            <field name="purchase_ok" eval="True" />
+            <field name="type">service</field>
+            <field name="uom_id" ref="uom.product_uom_unit" />
+            <field name="uom_po_id" ref="uom.product_uom_unit" />
+        </record>
+
+<!--         <record id="transip_license_product" model="product.product">
+            <field name="name">Transip Licence</field>
+            <field name="default_code">Transip-license.</field>
+            <field name="categ_id" ref="product.product_category_5" />
+            <field name="sale_ok" eval="False" />
+            <field name="purchase_ok" eval="True" />
+            <field name="type">service</field>
+            <field name="uom_id" ref="uom.product_uom_unit" />
+            <field name="uom_po_id" ref="uom.product_uom_unit" />
+        </record> -->
+
+<!--         <record id="transip_loyalty_point_product" model="product.product">
+            <field name="name">Transip Loyalty Points</field>
+            <field name="default_code">Transip-pp.debit</field>
+            <field name="categ_id" ref="product.product_category_5" />
+            <field name="sale_ok" eval="False" />
+            <field name="purchase_ok" eval="True" />
+            <field name="type">service</field>
+            <field name="uom_id" ref="uom.product_uom_unit" />
+            <field name="uom_po_id" ref="uom.product_uom_unit" />
+        </record> -->
+
+
+    </data>
+</odoo>
