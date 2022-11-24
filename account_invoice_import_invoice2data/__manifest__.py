@@ -11,7 +11,7 @@
     "author": "Akretion,Odoo Community Association (OCA)",
     "maintainers": ["alexis-via"],
     "website": "https://github.com/OCA/edi",
-    "depends": ["account_invoice_import"],
+    "depends": ["account_invoice_import", "mail"],
     # "excludes": ["account_invoice_import_simple_pdf"],
     "external_dependencies": {
         "python": [

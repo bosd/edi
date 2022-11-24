@@ -25,7 +25,7 @@
             <field name="arch" type="xml">
                 <form>
                     <sheet>
-                        <group name="main" col="4">
+                        <group name="main" col="2">
                             <field name="name" />
                             <field name="template_type" />
                         </group>
@@ -48,20 +48,28 @@
                                 class="oe_highlight"
                             />
                         </group>
+                        <separator string="separator string"/>
+                        end separator
+                        </separator>
                         <field
                             name="preview"
                             attrs="{'invisible': [('preview', '=', False)]}"
                         />
+                        <group name="results" col="2">
                         <field
                             name="preview_text"
                             attrs="{'invisible': [('preview', '=', False)]}"
                             style="width:50%"
+                            class="oe_left"
                         />
+
                         <field
                             name="test_results"
                             attrs="{'invisible': [('test_results', '=', False)]}"
                             style="width:50%"
+                            class="oe_right"
                         />
+                        </group>
                     </sheet>
                 </form>
             </field>
