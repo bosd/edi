@@ -24,17 +24,31 @@
             <field name="model">invoice2data.template</field>
             <field name="arch" type="xml">
                 <form>
+				<script>
+    				$( document).ready(function() {
+      				$("button.o_ChatterTopbar_buttonAttachments").click();
+      				// $("div.o_Attachment_imageOverlay").click(); opens pdf in preview pane after btn prevw
+    				});
+
+				</script>
                     <sheet>
                         <group name="main" col="2">
                             <field name="name" />
                             <field name="template_type" />
                         </group>
-                        <field name="template" />
+                        <field name="template" widget="ace" />
+                        <!-- old code below move to chatter attachment -->
+
                         <group name="preview_buttons" col="4">
+                            <!--
                             <field
                                 name="preview_file"
                                 placeholder="Upload file for preview"
+                                filename="name"
+                                mimetype="mimetype"
+                                widget="preview_binary"
                             />
+                            -->
                             <button
                                 type="object"
                                 name="action_preview"
@@ -44,25 +58,28 @@
                             <button
                                 type="object"
                                 name="action_test"
-                                string="Test"
+                                string="Test the template"
                                 class="oe_highlight"
                             />
                         </group>
                         <separator string="separator string"/>
-                        end separator
-                        </separator>
+                        <group
+                            name="account_invoice2data_template_fields"
+                            string="Field Extraction Rules"
+                            col="1"
+                        >
+                        </group>
+                        <group name="preview_buttons" col="2">
                         <field
                             name="preview"
-                            attrs="{'invisible': [('preview', '=', False)]}"
+                            attrs="{'invisible': [('preview', '=', False)]}" class="oe_edit_only"
                         />
-                        <group name="results" col="2">
                         <field
                             name="preview_text"
                             attrs="{'invisible': [('preview', '=', False)]}"
                             style="width:50%"
                             class="oe_left"
                         />
-
                         <field
                             name="test_results"
                             attrs="{'invisible': [('test_results', '=', False)]}"
@@ -71,9 +88,65 @@
                         />
                         </group>
                     </sheet>
+                    <sheet>
+                        <separator string="Result of invoice2data text extraction" attrs="{'invisible': [('test_results', '=', False)]}"/>
+                        <field name="test_warnings" class="alert alert-warning" />
+                        <field
+                            name="test_results"
+                            attrs="{'invisible': [('test_results', '=', False)]}"
+                            style="width:50%"
+                        />
+
+
+                            <!-- attrs="{'invisible': [('same_mobile_partner_id', '=', False)]}" -->
+
+
+
+                    </sheet>
+                    <div class="o_attachment_preview" options="{types: ['image', 'pdf'], 'order': 'desc'}" />
+                    	<div class="oe_chatter">
+                        	<field name="message_follower_ids" widget="mail_followers"/>
+                        	<field name="message_ids" widget="mail_thread"/>
+                    	</div>
                 </form>
             </field>
         </record>
+
+        <record id="account_invoice2data_template_fields_tree" model="ir.ui.view">
+            <field name="model">invoice2data.template</field>
+            <field name="arch" type="xml">
+                    <tree editable="bottom">
+                            <!-- <field name="sequence" widget="handle" />
+                    <field
+                        name="partner_id"
+                        invisible="not context.get('account_invoice2data_template_fields_main_view')"
+                    /> -->
+                                    <field name="name" />
+                                    <field name="start" />
+                                    <field name="end" />
+                                    <field name="extract_rule" />
+                                    <field
+                        name="position"
+                        attrs="{'invisible': [('extract_rule', 'not in', ('position_start', 'position_end', 'position_min', 'position_max'))], 'required': [('extract_rule', 'in', ('position_start', 'position_end', 'position_min', 'position_max'))]}"
+                    />
+                                    <field
+                        name="regexp"
+                        attrs="{'required': [('name', '=', 'description')]}"
+                    />
+                    <!--
+                                    <field
+                        name="date_format"
+                        attrs="{'invisible': [('name', 'not in', ('date', 'date_due', 'date_start', 'date_end'))]}"
+                    />
+                                    <field
+                        name="date_separator"
+                        attrs="{'invisible': [('name', 'not in', ('date', 'date_due', 'date_start', 'date_end'))]}"
+                    />
+                    -->
+                                        </tree>
+            </field>
+        </record>
+
         <record id="action_invoice2data_template" model="ir.actions.act_window">
             <field name="name">Invoice2data templates</field>
             <field name="res_model">invoice2data.template</field>
