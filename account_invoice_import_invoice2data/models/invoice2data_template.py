@@ -37,6 +37,8 @@ Write warning level messages of invoice2data to the form. (End line not found)
 Template validation assertion errors?
 
 https://github.com/OCA/server-tools/tree/14.0/jsonifier
+or use method in:
+https://odoo-community.org/shop/attribute-set-10356?page=2&search=json#attr=17905
 
 '''
 class Invoice2dataTemplate(models.Model):
@@ -49,6 +51,17 @@ class Invoice2dataTemplate(models.Model):
         [("purchase_invoice", "Purchase Invoice")], "Type", required=False
     )
     template = fields.Text(required=True, help="Invoice2data template in JSON format")
+
+    template_serialized = fields.Serialized()
+    boolean = fields.Boolean(sparse='template_serialized')
+    integer = fields.Integer(sparse='template_serialized')
+    floati = fields.Float(sparse='template_serialized')
+    char = fields.Char(sparse='template_serialized')
+    # template_serialized_char = fields.Serialized(sparse='template_serialized')
+    # char_inside = fields.Char(sparse='template_serialized_char', help="Char inside")
+    selection = fields.Selection([('one', 'One'), ('two', 'Two')], sparse='template_serialized')
+    partner = fields.Many2one('res.partner', sparse='template_serialized')
+
     preview = fields.Html(readonly=True)
     preview_text = fields.Text(readonly=True, help="This is the extracted text from the file")
     test_results = fields.Text(readonly=True)

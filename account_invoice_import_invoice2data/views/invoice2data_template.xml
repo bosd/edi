@@ -36,7 +36,15 @@
                             <field name="name" />
                             <field name="template_type" />
                         </group>
-                        <field name="template" widget="ace" />
+                        <field name="template" widget="ace" ace-mode="json"/>
+                        <field name="template_serialized" widget="ace" />
+                        <field name="char" />
+                        <!-- <field name="char_inside" /> -->
+                        <field name="boolean" />
+                        <field name="integer" />
+                        <field name="floati" />
+                        <field name="selection" />
+                        <field name="partner" />
                         <!-- old code below move to chatter attachment -->
 
                         <group name="preview_buttons" col="4">
