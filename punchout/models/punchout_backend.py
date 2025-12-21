@@ -1,4 +1,5 @@
 # Copyright 2023 ACSONE SA/NV
+# Copyright 2025 Bosd
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
 
 
@@ -19,57 +20,20 @@ class PunchoutBackend(models.Model):
     description = fields.Char(
         required=True,
     )
+    protocol = fields.Selection(
+        selection="_selection_protocol",
+        required=True,
+        default="cxml",
+        help="The punchout protocol used by this backend.",
+    )
     url = fields.Char(
         string="URL",
-        required=True,
-    )
-    from_domain = fields.Char(
-        string="From domain",
-        required=True,
-        groups="base.group_system",
-    )
-    from_identity = fields.Char(
-        string="From identity",
-        required=True,
-        groups="base.group_system",
-    )
-    to_domain = fields.Char(
-        string="To domain",
-        required=True,
-    )
-    to_identity = fields.Char(
-        string="To identity",
-        required=True,
-        groups="base.group_system",
-    )
-    shared_secret = fields.Char(
-        string="Shared secret",
-        required=True,
-        groups="base.group_system",
-    )
-    user_agent = fields.Char(
-        string="User agent",
-        required=True,
-    )
-    deployment_mode = fields.Char(
-        string="Deployment mode",
-        help="Test or production",
         required=True,
     )
     browser_form_post_url = fields.Char(
         string="Browser form post URL",
         help="Exposed URL where the shopping cart must be sent back to.",
         required=True,
-    )
-    dtd_version = fields.Char(
-        default="1.2.008",
-    )
-    dtd_file = fields.Binary(
-        string="DTD File for validation",
-        groups="base.group_system",
-    )
-    dtd_filename = fields.Char(
-        groups="base.group_system",
     )
     state = fields.Selection(selection="_selection_state", default="draft")
     session_duration = fields.Integer(
@@ -82,6 +46,13 @@ class PunchoutBackend(models.Model):
         string="UoM Mappings",
         help="Map supplier-specific UoM codes to Odoo UoMs.",
     )
+
+    @api.model
+    def _selection_protocol(self):
+        """Return available protocols. Extended by protocol modules."""
+        return [
+            ("cxml", "cXML"),
+        ]
 
     @api.constrains("session_duration")
     def _check_session_duration(self):
@@ -101,30 +72,21 @@ class PunchoutBackend(models.Model):
             ("closed", _("Closed")),
         ]
 
-    def _get_domain_and_identity(self, credential_type):
-        self.ensure_one()
-        if credential_type in ("From", "Sender"):
-            return self.from_domain, self.from_identity
-        if credential_type == "To":
-            return self.to_domain, self.to_identity
-        return False, False
-
     def _get_browser_form_post_url(self):
+        """Build the full browser form post URL."""
         self.ensure_one()
         url = self.browser_form_post_url
-        if url and url.startswith("http://") or url.startswith("https://"):
+        if url and (url.startswith("http://") or url.startswith("https://")):
             return url
         base_url = self.env["ir.config_parameter"].sudo().get_param("web.base.url")
         if base_url.endswith("/"):
-            base_url = "".join(base_url[:-1])
+            base_url = base_url[:-1]
         if url and url.startswith("/"):
-            url = "".join(url[1:])
+            url = url[1:]
         if not url:
             raise UserError(
-                _(
-                    f"Browser form post url is not configured on "
-                    f"the backend. {self.display_name}"
-                )
+                _("Browser form post url is not configured on " "the backend. %(name)s")
+                % {"name": self.display_name}
             )
 
         return "/".join([base_url, url, str(self.id), f"?db={self.env.cr.dbname}"])
@@ -150,14 +112,3 @@ class PunchoutBackend(models.Model):
     def _get_redirect_url(self):
         self.ensure_one()
         return "/web"
-
-    def _get_cxml_version(self):
-        self.ensure_one()
-        return self.dtd_version
-
-    def _get_cxml_dtd_declaration(self):
-        self.ensure_one()
-        version = self._get_cxml_version()
-        dtd_link = f"http://xml.cxml.org/schemas/cXML/{version}/cXML.dtd"
-        declaration = f'<!DOCTYPE cXML SYSTEM "{dtd_link}">'
-        return declaration

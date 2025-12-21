@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <!-- Copyright 2023 ACSONE SA/NV
+     Copyright 2025 Bosd
      License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl). -->
 <odoo>
     <record model="ir.ui.view" id="punchout_session_form_view">
@@ -15,7 +16,7 @@
                         string="Process"
                         class="btn-primary"
                         icon="fa-rocket"
-                        attrs="{'invisible': [('action_process_allowed', '=', False)]}"
+                        invisible="not action_process_allowed"
                     />
                     <field
                         name="state"
@@ -24,7 +25,7 @@
                     />
                 </header>
                 <div
-                    attrs="{'invisible': [('state', '!=', 'error')]}"
+                    invisible="state != 'error'"
                     class="alert alert-danger"
                     role="alert"
                 >
@@ -41,24 +42,20 @@
                         <group>
                             <field name="create_date" />
                             <field name="expiration_date" />
-                            <field name="cxml_response_date" />
+                            <field name="response_date" />
                         </group>
                     </group>
                     <notebook>
                         <page string="Setup" name="punchout_setup">
                             <separator string="Sent" name="sent" />
-                            <field name="cxml_setup_request" widget="ace" />
+                            <field name="setup_request" widget="ace" />
                             <separator string="Received" name="received" />
-                            <field name="cxml_setup_request_response" widget="ace" />
+                            <field name="setup_request_response" widget="ace" />
                         </page>
                         <page string="Response" name="response">
-                            <field name="cxml_response" widget="ace" />
+                            <field name="response" widget="ace" />
                         </page>
-                        <page
-                            string="Erreur"
-                            name="error"
-                            attrs="{'invisible': [('error_message', '=', False)]}"
-                        >
+                        <page string="Error" name="error" invisible="not error_message">
                             <field name="error_message" />
                         </page>
                     </notebook>

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Copyright 2023 ACSONE SA/NV
+     Copyright 2025 Bosd
+     License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl). -->
+<odoo>
+    <!-- Extend session form view with cXML-specific labels -->
+    <record model="ir.ui.view" id="punchout_session_form_view_cxml">
+        <field name="name">punchout.session.form.cxml</field>
+        <field name="model">punchout.session</field>
+        <field name="inherit_id" ref="punchout.punchout_session_form_view" />
+        <field name="arch" type="xml">
+            <!-- Update page titles for cXML context -->
+            <xpath expr="//page[@name='punchout_setup']" position="attributes">
+                <attribute name="string">cXML Setup</attribute>
+            </xpath>
+            <xpath expr="//page[@name='response']" position="attributes">
+                <attribute name="string">cXML Response</attribute>
+            </xpath>
+        </field>
+    </record>
+</odoo>

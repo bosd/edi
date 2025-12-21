@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <!-- Copyright 2023 ACSONE SA/NV
+     Copyright 2025 Bosd
      License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl). -->
 <odoo>
     <template id="cxml_punchout_PunchOutSetupRequest">
-        <t t-call="punchout.cxml_punchout_request">
+        <t t-call="punchout_cxml.cxml_punchout_request">
             <PunchOutSetupRequest operation="create">
                 <BuyerCookie>
                     <t t-esc="session.buyer_cookie_id" />

@@ -1,4 +1,5 @@
 # Copyright 2023 ACSONE SA/NV
+# Copyright 2025 Bosd
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
 
 import logging
@@ -9,7 +10,7 @@ from odoo.http import Controller, request, route
 _logger = logging.getLogger(__name__)
 
 
-class PunchoutController(Controller):
+class PunchoutCxmlController(Controller):
     @route(
         "/punchout/cxml/receive/<int:backend_id>",
         type="http",
@@ -19,6 +20,7 @@ class PunchoutController(Controller):
         csrf=False,
     )
     def receive_punchout_response(self, backend_id, *args, **kwargs):
+        """Receive cXML PunchOutOrderMessage response."""
         env = request.env
         cxml_b64_string = kwargs.get("cXML-base64")
         cxml_string = False
@@ -34,7 +36,7 @@ class PunchoutController(Controller):
         if not punchout_session:
             redirect_url = backend._get_redirect_url()
             _logger.error(
-                "Unable to link the punchout response to a punchout.request "
+                "Unable to link the punchout response to a punchout.session "
                 "with given XML: \n%s",
                 cxml_string,
             )
