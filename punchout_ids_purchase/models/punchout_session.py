@@ -224,20 +224,20 @@ class PunchoutSession(models.Model):
         if not currency:
             currency = company.currency_id
 
+        # Backend-driven defaults — see
+        # ``punchout.backend._get_auto_create_product_defaults``.
+        # Replaces the previously hardcoded ``type="consu"`` so
+        # spare-parts vendors can default to storable inventory in
+        # one config knob.
         product_vals = {
             "name": description,
-            "type": "consu",
-            "purchase_ok": True,
             "description_purchase": long_text if long_text else None,
             "uom_id": reference_uom.id if reference_uom else uom.id,
+            **backend._get_auto_create_product_defaults(),
         }
 
         if ean:
             product_vals["barcode"] = ean
-
-        # Add category if configured
-        if backend.product_category_id:
-            product_vals["categ_id"] = backend.product_category_id.id
 
         # Add taxes
         if purchase_tax:
