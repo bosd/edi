@@ -207,6 +207,35 @@ class TestPunchoutPurchase(TestPunchoutPurchaseCommon):
         # State transitioned successfully.
         self.assertEqual(session.state, "to_process")
 
+    def test_state_change_under_public_user_attributes_to_odoobot(self):
+        """``auth="none"`` controllers in Odoo 19 resolve ``env.user``
+        to the public user — truthy, so the empty-user guard alone
+        wouldn't catch it. The write override must still re-enter
+        under OdooBot so deeper writes (tracking message, auto-process
+        chain) attribute to a real author and don't run under the
+        public user.
+
+        Verified via ``write_uid``: the ORM stamps it from
+        ``env.user`` at write time, so an OdooBot ``write_uid``
+        proves the re-entry fired even though the caller passed in
+        the public user."""
+        self.backend.partner_id = False
+        session = self.session_model.create(
+            {"backend_id": self.backend.id, "state": "draft"}
+        )
+        public_user = self.env.ref("base.public_user")
+        # Sanity: public user is NOT internal — exactly the case our
+        # widened guard targets.
+        self.assertFalse(public_user._is_internal())
+        session.with_user(public_user).sudo().write({"state": "to_process"})
+        self.assertEqual(session.state, "to_process")
+        # write_uid reflects the actual user the ORM ran the write
+        # under — must be OdooBot, not the public user that the
+        # caller handed in.
+        session.invalidate_recordset(["write_uid"])
+        odoobot = self.env.ref("base.user_root")
+        self.assertEqual(session.write_uid, odoobot)
+
     def test_partner_has_punchout_backend_false_when_not_supplier(self):
         """A non-supplier partner (supplier_rank=0) shouldn't show
         the Browse button regardless of backend state — covered by

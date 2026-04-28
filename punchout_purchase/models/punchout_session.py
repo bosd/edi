@@ -5,7 +5,7 @@
 
 import logging
 
-from odoo import _, api, fields, models
+from odoo import api, fields, models
 from odoo.exceptions import UserError
 
 _logger = logging.getLogger(__name__)
@@ -51,7 +51,7 @@ class PunchoutSession(models.Model):
         """Open the related purchase order."""
         self.ensure_one()
         if not self.purchase_order_id:
-            raise UserError(_("No purchase order linked to this session."))
+            raise UserError(self.env._("No purchase order linked to this session."))
         return {
             "type": "ir.actions.act_window",
             "res_model": "purchase.order",
@@ -84,7 +84,9 @@ class PunchoutSession(models.Model):
         self.ensure_one()
         if self.state != "to_process":
             raise UserError(
-                _("Session must be in 'To Process' state to create a purchase order.")
+                self.env._(
+                    "Session must be in 'To Process' state to create a purchase order."
+                )
             )
         # The supplier-callback path is ``auth="none"``; ``env.user``
         # there can be the public user OR an empty recordset
@@ -104,26 +106,32 @@ class PunchoutSession(models.Model):
             # signals "system action" in the chatter (no confusion
             # with manual admin edits) and runs in superuser mode.
             author = self.env.ref("base.user_root")
+        # Switch to the backend's company too — admin (or whichever
+        # human ``author`` resolves to) may not have the backend's
+        # company in ``company_ids``, in which case PO create trips a
+        # cross-company record-rule wall on tax / account lookups.
+        company = self.backend_id._get_company()
+        scoped = self.with_user(author).with_company(company)
         if self.purchase_order_id:
             # Append-to-existing flow (started from a draft PO).
             if self.purchase_order_id.state not in ("draft", "sent"):
                 raise UserError(
-                    _(
+                    self.env._(
                         "Purchase order %(name)s is no longer editable; "
-                        "cannot append lines from a punchout session."
+                        "cannot append lines from a punchout session.",
+                        name=self.purchase_order_id.display_name,
                     )
-                    % {"name": self.purchase_order_id.display_name}
                 )
             new_line_cmds = self._tag_lines_with_session(
                 self._prepare_purchase_order_lines()
             )
             if new_line_cmds:
-                self.purchase_order_id.with_user(author).write(
+                self.purchase_order_id.with_user(author).with_company(company).write(
                     {"order_line": new_line_cmds}
                 )
             self.write({"state": "done"})
         else:
-            order = self.with_user(author)._create_purchase_order_from_response()
+            order = scoped._create_purchase_order_from_response()
             self.write(
                 {
                     "purchase_order_id": order.id,
@@ -136,7 +144,7 @@ class PunchoutSession(models.Model):
             lambda line: line.punchout_session_id == self
         )
         self._post_punchout_line_warnings(
-            self.purchase_order_id.with_user(author), new_lines
+            self.purchase_order_id.with_user(author).with_company(company), new_lines
         )
         return self.action_view_purchase_order()
 
@@ -160,19 +168,17 @@ class PunchoutSession(models.Model):
         )
         if line_uom and product and product.uom_id and line_uom != product.uom_id:
             warnings.append(
-                _(
+                self.env._(
                     "%(name)s: cart UoM <strong>%(cart)s</strong> differs "
                     "from the product's primary UoM <strong>%(prod)s</strong>. "
                     "Verify the line quantity before confirming — Odoo "
                     "applies any same-category conversion automatically, "
                     "but cross-category or unmapped supplier UoMs may "
-                    "have been silently coerced to the product default."
+                    "have been silently coerced to the product default.",
+                    name=product.display_name,
+                    cart=line_uom.display_name,
+                    prod=product.uom_id.display_name,
                 )
-                % {
-                    "name": product.display_name,
-                    "cart": line_uom.display_name,
-                    "prod": product.uom_id.display_name,
-                }
             )
         return warnings
 
@@ -202,17 +208,16 @@ class PunchoutSession(models.Model):
         mismatched = {c for c in cart_currencies if c != order.currency_id}
         if not mismatched:
             return None
-        return _(
+        return self.env._(
             "PO currency is <strong>%(po)s</strong> but the cart's "
             "supplier prices are in <strong>%(cart)s</strong>. Odoo "
             "stores raw cart numbers as ``price_unit``, so each line's "
             "price is a %(cart)s value being treated as %(po)s. "
             "Verify the lines (and consider switching the PO's pricelist) "
-            "before confirming."
-        ) % {
-            "po": order.currency_id.display_name,
-            "cart": ", ".join(c.display_name for c in mismatched),
-        }
+            "before confirming.",
+            po=order.currency_id.display_name,
+            cart=", ".join(c.display_name for c in mismatched),
+        )
 
     def _post_punchout_line_warnings(self, order, new_lines):
         """Post one chatter message on the PO bundling all warnings
@@ -237,7 +242,7 @@ class PunchoutSession(models.Model):
         if not all_warnings:
             return
         body = (
-            _("Punchout cart vs Odoo product data — discrepancies on this PO:")
+            self.env._("Punchout cart vs Odoo product data — discrepancies on this PO:")
             + "<ul><li>"
             + "</li><li>".join(all_warnings)
             + "</li></ul>"
@@ -267,8 +272,10 @@ class PunchoutSession(models.Model):
         backend = self.backend_id
         if not backend.partner_id:
             raise UserError(
-                _("Please configure a supplier on the backend %(name)s.")
-                % {"name": backend.display_name}
+                self.env._(
+                    "Please configure a supplier on the backend %(name)s.",
+                    name=backend.display_name,
+                )
             )
 
         order_vals = self._prepare_purchase_order_vals()
@@ -321,22 +328,33 @@ class PunchoutSession(models.Model):
         on the pre-linked PO's chatter so the purchaser is notified
         next to the affected record instead of having to dig through
         server logs."""
-        # Detect controller-path writes (env.uid is None / empty) and
-        # re-enter under OdooBot's identity. ``not self.env.uid``
-        # covers both the literal-None case and the public-user case
-        # where the public user can't even read its own res.users
-        # record. OdooBot (``base.user_root``, the SUPERUSER) is the
-        # right choice over a human admin: it signals "system action"
-        # in the chatter (avoids confusion with manual admin edits),
-        # and ``with_user(SUPERUSER)`` implicitly enables superuser
-        # mode (per Odoo docstring: "by convention, the superuser is
+        # Detect controller-path writes (env.user is empty OR the
+        # public user from an ``auth="none"`` controller) and re-enter
+        # under OdooBot's identity. The existing check ``not env.uid``
+        # alone wasn't enough: in Odoo 19 ``auth="none"`` resolves
+        # ``env.user`` to the public user (truthy uid + truthy
+        # recordset), so the re-entry didn't fire and ``mail.thread``
+        # attributed the state-tracking message to the public user
+        # (renders as "no user" in the chatter).
+        # ``_is_internal()`` is the canonical helper for "real Odoo
+        # user", excluding both public and portal users — exactly the
+        # population we want to redirect to OdooBot. OdooBot
+        # (``base.user_root``, the SUPERUSER) is the right choice over
+        # a human admin: it signals "system action" in the chatter
+        # (avoids confusion with manual admin edits), and
+        # ``with_user(SUPERUSER)`` implicitly enables superuser mode
+        # (per Odoo docstring: "by convention, the superuser is
         # always in superuser mode") so the deeper product-create
         # chain bypasses any partner / company ACLs that would
         # otherwise resolve env.user to an empty recordset.
         if (
             vals.get("state") == "to_process"
             and not self.env.context.get("skip_punchout_auto_process")
-            and (not self.env.uid or not self.env.user)
+            and (
+                not self.env.uid
+                or not self.env.user
+                or not self.env.user._is_internal()
+            )
         ):
             odoobot = self.env.ref("base.user_root")
             return self.with_user(odoobot).write(vals)
@@ -377,12 +395,18 @@ class PunchoutSession(models.Model):
         author = self.user_id or self.env.user
         if not author or not author.id:
             author = self.env.ref("base.user_root")
-        body = _(
-            "Auto-creation of the purchase order failed. The session "
+        # Include the session's display name in the body — when several
+        # sessions exist for the same partner the chatter on the PO
+        # otherwise can't be traced back to a specific session.
+        body = self.env._(
+            "Auto-creation of the purchase order failed for punchout "
+            "session <strong>%(session)s</strong>. The session "
             "remains in <strong>To Process</strong> — open it and "
             "click Process to retry once the issue is resolved.<br/>"
-            "Error: <code>%(err)s</code>"
-        ) % {"err": exc}
+            "Error: <code>%(err)s</code>",
+            session=self.display_name,
+            err=exc,
+        )
         # Both message_posts wrapped in their own try/except — even the
         # safety-net author resolution can't help if message_post itself
         # raises (e.g. mail module misconfigured). The session stays in
