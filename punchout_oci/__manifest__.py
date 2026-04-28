@@ -4,7 +4,7 @@
 
 {
     "name": "Punchout OCI",
-    "version": "19.0.1.0.0",
+    "version": "19.0.1.0.1",
     "license": "AGPL-3",
     "summary": "OCI (Open Catalog Interface) protocol support for Punchout",
     "author": "Hunki Enterprises BV, Odoo Community Association (OCA)",

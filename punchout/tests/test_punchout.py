@@ -15,7 +15,19 @@ class TestPunchout(TestPunchoutCommon):
         """Test that backend is created with correct values."""
         self.assertTrue(self.backend.id)
         self.assertEqual(self.backend.protocol, "cxml")
-        self.assertEqual(self.backend.state, "draft")
+        # ``state`` defaults to ``draft`` on the field — verify with
+        # a fresh backend (the test-common one is forced to ``open``
+        # so downstream tests work).
+        fresh = self.backend_model.create(
+            {
+                "name": "draft-default-check",
+                "description": "default-state check",
+                "protocol": "cxml",
+                "url": "https://example.com/punchout",
+                "browser_form_post_url": "/punchout/receive/",
+            }
+        )
+        self.assertEqual(fresh.state, "draft")
 
     def test_session_creation(self):
         """Test that session is created with correct values."""
@@ -48,6 +60,24 @@ class TestPunchout(TestPunchoutCommon):
         """``max_response_size = 0`` disables the check (any size passes)."""
         self.backend.max_response_size = 0
         self.backend._check_response_size("x" * 10_000_000)
+
+    def test_check_open_for_traffic_blocks_draft(self):
+        """A draft backend refuses traffic — never been live."""
+        self.backend.state = "draft"
+        with self.assertRaises(UserError):
+            self.backend._check_open_for_traffic()
+
+    def test_check_open_for_traffic_blocks_closed(self):
+        """A closed backend refuses traffic — explicitly decommissioned."""
+        self.backend.state = "closed"
+        with self.assertRaises(UserError):
+            self.backend._check_open_for_traffic()
+
+    def test_check_open_for_traffic_allows_open(self):
+        """The only state that may receive traffic."""
+        self.backend.state = "open"
+        # Must not raise.
+        self.backend._check_open_for_traffic()
 
     def test_gc_deletes_sessions_older_than_retention(self):
         """Sessions older than backend.session_retention_days get unlinked."""

@@ -13,7 +13,7 @@ from uuid import uuid4
 import pytz
 from dateutil.relativedelta import relativedelta
 
-from odoo import _, api, fields, models
+from odoo import api, fields, models
 from odoo.exceptions import UserError
 
 _logger = logging.getLogger(__name__)
@@ -89,7 +89,7 @@ class PunchoutSession(models.Model):
     @api.depends("backend_id.name", "create_date")
     def _compute_name(self):
         for rec in self:
-            backend_name = rec.backend_id.name or _("(no backend)")
+            backend_name = rec.backend_id.name or self.env._("(no backend)")
             if rec.create_date:
                 stamp = rec.create_date.strftime("%Y-%m-%d %H:%M")
                 rec.name = f"{backend_name} / {stamp}"
@@ -110,10 +110,10 @@ class PunchoutSession(models.Model):
     @api.model
     def _selection_state(self):
         return [
-            ("draft", _("Draft")),
-            ("error", _("Error")),
-            ("to_process", _("To Process")),
-            ("done", _("Done")),
+            ("draft", self.env._("Draft")),
+            ("error", self.env._("Error")),
+            ("to_process", self.env._("To Process")),
+            ("done", self.env._("Done")),
         ]
 
     @api.model
@@ -146,8 +146,10 @@ class PunchoutSession(models.Model):
     def _get_post_punchout_setup_url(self, session):
         """Post setup request and get start URL. Override in protocol modules."""
         raise NotImplementedError(
-            _("Protocol %(protocol)s does not implement setup request.")
-            % {"protocol": session.backend_id.protocol}
+            self.env._(
+                "Protocol %(protocol)s does not implement setup request.",
+                protocol=session.backend_id.protocol,
+            )
         )
 
     @api.model
@@ -164,6 +166,10 @@ class PunchoutSession(models.Model):
     @api.model
     def _create_punchout_session(self):
         punchout_backend = self._get_punchout_backend_to_use()
+        # Refuse to start a session against a non-open backend.
+        # Symmetric to the controller-side check — a draft / closed
+        # backend shouldn't be reachable from either direction.
+        punchout_backend._check_open_for_traffic()
         buyer_cookie_id = self._get_punchout_buyer_cookie()
         session = self.env["punchout.session"].create(
             {
@@ -187,14 +193,16 @@ class PunchoutSession(models.Model):
             backend = punchout_backend_model.search([], limit=1)
         if not backend:
             raise UserError(
-                _("No punchout backend found to initialize the connection.")
+                self.env._("No punchout backend found to initialize the connection.")
             )
         return backend
 
     @api.model
     def _store_punchout_session_response(self, backend_id, response_data):
         """Store response and find matching session. Override in protocol modules."""
-        raise NotImplementedError(_("Protocol does not implement response storage."))
+        raise NotImplementedError(
+            self.env._("Protocol does not implement response storage.")
+        )
 
     def _validate_response(self):
         """Validate the response. Override in protocol modules."""
@@ -204,8 +212,10 @@ class PunchoutSession(models.Model):
         for rec in self:
             if not rec.action_process_allowed:
                 raise UserError(
-                    _("You are not allowed to process this request. %(name)s")
-                    % {"name": rec.display_name}
+                    self.env._(
+                        "You are not allowed to process this request. %(name)s",
+                        name=rec.display_name,
+                    )
                 )
 
     def action_process(self):

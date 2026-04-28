@@ -29,6 +29,17 @@ class PunchoutCxmlController(Controller):
         """Receive cXML PunchOutOrderMessage response."""
         env = request.env
         backend = env["punchout.backend"].sudo().browse(backend_id)
+        # Refuse traffic to non-open backends (draft / closed).
+        try:
+            backend._check_open_for_traffic()
+        except Exception as e:  # noqa: BLE001
+            _logger.warning(
+                "[punchout.cxml.receive] backend=%s state=%s — refusing cart: %s",
+                backend_id,
+                getattr(backend, "state", "?"),
+                e,
+            )
+            return request.redirect(backend._get_redirect_url())
         cxml_b64_string = kwargs.get("cXML-base64")
         cxml_string = False
         if cxml_b64_string:

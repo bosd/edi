@@ -4,7 +4,7 @@
 
 {
     "name": "Punchout IDS",
-    "version": "19.0.1.0.0",
+    "version": "19.0.1.0.1",
     "license": "AGPL-3",
     "summary": "IDS (German standard) protocol support for Punchout",
     "author": "Hunki Enterprises BV, Odoo Community Association (OCA)",

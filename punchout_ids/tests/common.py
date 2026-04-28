@@ -25,6 +25,9 @@ class TestPunchoutIdsCommon(TransactionCase):
                 "ids_name_kunde": "TestCustomer",
                 "ids_kndnr": "CUST001",
                 "ids_pw_kunde": "secret",
+                # Default to ``open`` so HTTP controller tests work
+                # without each having to flip the state.
+                "state": "open",
             }
         )
 

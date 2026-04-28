@@ -23,6 +23,9 @@ class TestPunchoutOciCommon(TransactionCase):
                 # OCI-specific fields
                 "oci_version": "5.0",
                 "oci_custom_parameters": "username=test&password=secret",
+                # Default to ``open`` so HTTP controller tests work
+                # without each having to flip the state.
+                "state": "open",
             }
         )
 

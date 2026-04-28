@@ -69,3 +69,35 @@ class TestPunchoutOciController(HttpCase, TestPunchoutOciCommon):
         self.session.invalidate_recordset()
         self.assertEqual(self.session.state, "draft")
         self.assertFalse(self.session.response)
+
+    @mute_logger("odoo.addons.punchout_oci.controllers.main")
+    def test_controller_refuses_draft_backend(self):
+        """A draft backend silently refuses traffic — the cart is
+        not stored on the session and no state transition happens.
+        Same redirect as the happy path so a misbehaving supplier
+        doesn't see internal error pages."""
+        self.backend.state = "draft"
+        form = self._get_sample_oci_form_data()
+        response = self._post_oci(
+            self.backend,
+            form,
+            query=f"punchout_session_token={self.session.buyer_cookie_id}",
+        )
+        self.assertEqual(response.status_code, 303)
+        self.session.invalidate_recordset()
+        self.assertEqual(self.session.state, "draft")
+        self.assertFalse(self.session.response)
+
+    @mute_logger("odoo.addons.punchout_oci.controllers.main")
+    def test_controller_refuses_closed_backend(self):
+        """A closed backend refuses traffic — explicit decommission."""
+        self.backend.state = "closed"
+        form = self._get_sample_oci_form_data()
+        response = self._post_oci(
+            self.backend,
+            form,
+            query=f"punchout_session_token={self.session.buyer_cookie_id}",
+        )
+        self.assertEqual(response.status_code, 303)
+        self.session.invalidate_recordset()
+        self.assertEqual(self.session.state, "draft")

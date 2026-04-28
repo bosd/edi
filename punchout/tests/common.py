@@ -20,6 +20,12 @@ class TestPunchoutCommon(TransactionCase):
                 "protocol": "cxml",
                 "url": "https://example.com/punchout",
                 "browser_form_post_url": "/punchout/receive/",
+                # Default to ``open`` so downstream tests (controllers,
+                # session creation) work without each having to flip
+                # the state. The default-draft assertion is covered
+                # explicitly in ``test_backend_creation`` with a fresh
+                # backend.
+                "state": "open",
             }
         )
 

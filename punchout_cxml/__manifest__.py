@@ -4,7 +4,7 @@
 
 {
     "name": "Punchout cXML",
-    "version": "19.0.1.0.0",
+    "version": "19.0.1.0.1",
     "license": "AGPL-3",
     "summary": "cXML protocol support for Punchout",
     "author": "Odoo Community Association (OCA), ACSONE SA/NV",

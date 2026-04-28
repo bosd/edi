@@ -39,6 +39,19 @@ class PunchoutOciController(Controller):
         """
         env = request.env
         backend = env["punchout.backend"].sudo().browse(backend_id)
+        # Refuse traffic to non-open backends. Done before payload
+        # parsing so a draft / closed backend doesn't even consume
+        # response-size budget.
+        try:
+            backend._check_open_for_traffic()
+        except Exception as e:  # noqa: BLE001
+            _logger.warning(
+                "[punchout.oci.receive] backend=%s state=%s — refusing cart: %s",
+                backend_id,
+                getattr(backend, "state", "?"),
+                e,
+            )
+            return request.redirect(backend._get_redirect_url())
         form_data = dict(request.httprequest.form)
         response_data = json.dumps(form_data)
         try:

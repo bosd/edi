@@ -28,6 +28,9 @@ class TestPunchoutCxmlCommon(TransactionCase):
                 "shared_secret": "secret",
                 "user_agent": "Odoo Punchout",
                 "deployment_mode": "test",
+                # Default to ``open`` so HTTP controller tests work
+                # without each having to flip the state.
+                "state": "open",
             }
         )
 

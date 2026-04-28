@@ -3,7 +3,7 @@
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
 
 
-from odoo import _, api, fields, models
+from odoo import api, fields, models
 from odoo.exceptions import UserError, ValidationError
 
 
@@ -98,7 +98,7 @@ class PunchoutBackend(models.Model):
         self.ensure_one()
         return {
             "type": "ir.actions.act_window",
-            "name": _("Punchout Sessions"),
+            "name": self.env._("Punchout Sessions"),
             "res_model": "punchout.session",
             "view_mode": "list,form",
             "domain": [("backend_id", "=", self.id)],
@@ -117,9 +117,10 @@ class PunchoutBackend(models.Model):
         for rec in self:
             if rec.session_duration <= 0:
                 raise ValidationError(
-                    _(
-                        "The duration of the session must be greater than 0. {name}"
-                    ).format(name=rec.display_name)
+                    self.env._(
+                        "The duration of the session must be greater than 0. %(name)s",
+                        name=rec.display_name,
+                    )
                 )
 
     @api.model
@@ -143,11 +144,37 @@ class PunchoutBackend(models.Model):
             url = url[1:]
         if not url:
             raise UserError(
-                _("Browser form post url is not configured on the backend. %(name)s")
-                % {"name": self.display_name}
+                self.env._(
+                    "Browser form post url is not configured on the backend. %(name)s",
+                    name=self.display_name,
+                )
             )
 
         return f"{base_url}/{url.rstrip('/')}/{self.id}?db={self.env.cr.dbname}"
+
+    def _check_open_for_traffic(self):
+        """Refuse incoming supplier traffic when the backend isn't
+        live. Called from the protocol controllers as the first
+        line of defence after backend lookup.
+
+        ``draft`` = configuration in progress, never live yet.
+        ``closed`` = decommissioned, must not silently keep
+        accepting carts. Either way: refuse and log.
+
+        Raises ``UserError`` (the controller catches and converts
+        into a redirect to the backend's fallback URL so the user
+        gets a clean message instead of a 500)."""
+        self.ensure_one()
+        if self.state != "open":
+            raise UserError(
+                self.env._(
+                    "Punchout backend %(name)s is not open (current "
+                    "state: %(state)s). Set the backend to 'Open' "
+                    "before exposing it to suppliers.",
+                    name=self.display_name,
+                    state=self.state,
+                )
+            )
 
     def _check_response_size(self, payload):
         """Raise ``UserError`` if ``payload`` exceeds the backend's
@@ -159,16 +186,14 @@ class PunchoutBackend(models.Model):
         cap = self.max_response_size
         if cap and payload is not None and len(payload) > cap:
             raise UserError(
-                _(
+                self.env._(
                     "Punchout cart payload (%(size)s bytes) exceeds the "
                     "configured limit of %(cap)s bytes for backend "
-                    "%(name)s."
+                    "%(name)s.",
+                    size=len(payload),
+                    cap=cap,
+                    name=self.display_name,
                 )
-                % {
-                    "size": len(payload),
-                    "cap": cap,
-                    "name": self.display_name,
-                }
             )
 
     def _check_access_backend(self):
