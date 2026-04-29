@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Copyright 2026 Bosd
+     License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl). -->
+<!--
+    Pre-configured OCI supplier presets shipped with the module.
+
+    Each preset is created with ``active=False`` and ``state="draft"``
+    so it sits in the catalog without showing up in default views or
+    accepting traffic. To adopt a preset:
+
+        1. Filter the backend list to "Archived" (or browse from the
+           kanban with the archive filter on).
+        2. Open the supplier you want, unarchive.
+        3. Link your ``partner_id`` (the supplier's existing res.partner).
+        4. Set the credentials in ``auth_username`` / ``auth_password``
+           (and ``auth_customer_number`` where the supplier requires
+           one).
+        5. Switch state to ``open``.
+
+    ``noupdate="1"`` so module upgrades don't reset customer changes.
+
+    Community-curated, not endorsed. Each preset reflects the public
+    documentation of the supplier at the time of contribution; APIs
+    change. Verify against the supplier's current docs before going
+    live, and PR fixes here when they drift.
+-->
+<odoo noupdate="1">
+    <!-- ====================================================
+         INDI (NL) — industrial supply
+         Public docs: https://www.indi.nl/nl-nl/slim-inkopen/erp-connecties/oci-punchout
+         Auth pattern: USERNAME + PASSWORD form params (matches OCI defaults).
+         No customer number required.
+    ==================================================== -->
+    <record id="preset_indi" model="punchout.backend">
+        <field name="name">INDI</field>
+        <field
+            name="description"
+        >Industrial supplier (NL). OCI Roundtrip catalog with USERNAME/PASSWORD authentication.</field>
+        <field name="protocol">oci</field>
+        <field
+            name="url"
+        >https://www.indi.nl/INTERSHOP/web/WFS/org-webshop-Site/nl_NL/-/EUR/ViewOCICatalog-Start</field>
+        <field name="browser_form_post_url">/punchout/oci/receive/</field>
+        <field name="oci_version">4.0</field>
+        <!-- Defaults USERNAME / PASSWORD apply — INDI uses the
+             standard names. No customer number required. -->
+        <field name="active" eval="False" />
+        <field name="state">draft</field>
+    </record>
+
+    <!-- ====================================================
+         TVH (BE) — forklift / material-handling parts
+         Public spec: TVH OCI EMEA documentation (provided to customers).
+         Auth pattern: lowercase ``username`` / ``password`` form params
+         (deviates from the OCI-conventional uppercase).
+         No customer number param — TVH embeds account context in
+         the username.
+
+         Three URL options depending on TVH account type:
+           - Industrial:   https://eshop.tvh.com/punch_out_cred
+           - Agricultural: https://shop.bepcoparts.com/punch_out_cred
+                           https://agri.shop.tvh.com/punch_out_cred
+         The preset uses Industrial; switch the URL after unarchiving
+         if you have a different account type.
+    ==================================================== -->
+    <record id="preset_tvh_industrial" model="punchout.backend">
+        <field name="name">TVH (Industrial)</field>
+        <field
+            name="description"
+        >Forklift / material-handling parts supplier (BE/global). OCI 4.0 PunchOut. Industrial e-shop URL — switch to bepcoparts/agri.shop for an Agricultural account.</field>
+        <field name="protocol">oci</field>
+        <field name="url">https://eshop.tvh.com/punch_out_cred</field>
+        <field name="browser_form_post_url">/punchout/oci/receive/</field>
+        <field name="oci_version">4.0</field>
+        <field name="oci_param_username">username</field>
+        <field name="oci_param_password">password</field>
+        <!-- TVH doesn't take a customer number parameter; clearing the
+             default keeps the generic field unused on the form. -->
+        <field name="oci_param_customer" />
+        <field name="active" eval="False" />
+        <field name="state">draft</field>
+    </record>
+</odoo>

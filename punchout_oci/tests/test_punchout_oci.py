@@ -28,6 +28,61 @@ class TestPunchoutOci(TestPunchoutOciCommon):
         self.assertIn("HOOK_URL=", url)
         self.assertIn("username=test", url)
 
+    def test_oci_setup_url_uses_generic_auth_fields(self):
+        """Generic auth_username / auth_password / auth_customer_number
+        get spliced into the form-POST URL using the per-supplier
+        param-name mapping. Default mapping is the OCI-conventional
+        UPPERCASE names."""
+        # Wipe the test-common's oci_custom_parameters so we exercise
+        # the new generic-auth path in isolation.
+        self.backend.oci_custom_parameters = False
+        self.backend.auth_username = "alice"
+        self.backend.auth_password = "s3cret"
+        self.backend.auth_customer_number = "C-42"
+        url = self.session_model._get_post_punchout_setup_url(self.session)
+        self.assertIn("USERNAME=alice", url)
+        self.assertIn("PASSWORD=s3cret", url)
+        self.assertIn("CUSTOMER=C-42", url)
+
+    def test_oci_setup_url_param_mapping_overrides(self):
+        """Each preset can override the param names — TVH uses
+        lowercase ``username``/``password`` and no customer number."""
+        self.backend.oci_custom_parameters = False
+        self.backend.auth_username = "alice"
+        self.backend.auth_password = "s3cret"
+        self.backend.auth_customer_number = False
+        self.backend.oci_param_username = "username"
+        self.backend.oci_param_password = "password"
+        self.backend.oci_param_customer = False
+        url = self.session_model._get_post_punchout_setup_url(self.session)
+        self.assertIn("username=alice", url)
+        self.assertIn("password=s3cret", url)
+        # No customer number in the URL — auth_customer_number is
+        # empty; the default ``CUSTOMER`` doesn't get a stray empty
+        # value.
+        self.assertNotIn("CUSTOMER=", url)
+
+    def test_oci_setup_url_custom_parameters_override_generic(self):
+        """``oci_custom_parameters`` is the technical escape hatch —
+        when it sets a key the generic auth splice would also set,
+        the explicit admin override wins."""
+        self.backend.auth_username = "alice"
+        self.backend.oci_custom_parameters = "USERNAME=overridden"
+        url = self.session_model._get_post_punchout_setup_url(self.session)
+        self.assertIn("USERNAME=overridden", url)
+        self.assertNotIn("USERNAME=alice", url)
+
+    def test_oci_setup_url_empty_auth_skipped(self):
+        """Empty auth fields don't pollute the URL with bare keys."""
+        self.backend.oci_custom_parameters = False
+        self.backend.auth_username = False
+        self.backend.auth_password = False
+        self.backend.auth_customer_number = False
+        url = self.session_model._get_post_punchout_setup_url(self.session)
+        self.assertNotIn("USERNAME=", url)
+        self.assertNotIn("PASSWORD=", url)
+        self.assertNotIn("CUSTOMER=", url)
+
     def test_oci_setup_url_includes_session_token(self):
         """HOOK_URL should carry the session's buyer_cookie as
         ``punchout_session_token`` so the receive controller can

@@ -8,17 +8,22 @@
         <field name="model">punchout.backend</field>
         <field name="inherit_id" ref="punchout.punchout_backend_form_view" />
         <field name="arch" type="xml">
-            <xpath expr="//group[@name='group_main']" position="after">
+            <xpath expr="//group[@name='group_advanced']" position="inside">
+                <!-- OCI-specific technical knobs. The mapping fields
+                     translate the generic auth_* values into whatever
+                     form-param names the supplier expects (USERNAME vs
+                     username vs LOGIN, etc.). Defaults work for most
+                     OCI suppliers; presets override per supplier. -->
                 <group
                     name="group_oci_settings"
-                    string="OCI Settings"
+                    string="OCI"
                     invisible="protocol != 'oci'"
                 >
-                    <group>
-                        <field name="oci_version" />
-                        <field name="oci_custom_parameters" password="True" />
-                    </group>
-                    <group />
+                    <field name="oci_version" />
+                    <field name="oci_param_username" />
+                    <field name="oci_param_password" />
+                    <field name="oci_param_customer" />
+                    <field name="oci_custom_parameters" password="True" />
                 </group>
             </xpath>
         </field>

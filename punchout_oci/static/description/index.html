@@ -389,22 +389,140 @@ back to the ERP system.</p>
 <p><strong>Table of contents</strong></p>
 <div class="contents local topic" id="contents">
 <ul class="simple">
-<li><a class="reference internal" href="#known-issues-roadmap" id="toc-entry-1">Known issues / Roadmap</a></li>
-<li><a class="reference internal" href="#changelog" id="toc-entry-2">Changelog</a><ul>
-<li><a class="reference internal" href="#section-1" id="toc-entry-3">18.0.1.0.0 (2026)</a></li>
+<li><a class="reference internal" href="#configuration" id="toc-entry-1">Configuration</a><ul>
+<li><a class="reference internal" href="#adopting-a-shipped-supplier-preset" id="toc-entry-2">Adopting a shipped supplier preset</a></li>
+<li><a class="reference internal" href="#configuring-a-new-supplier-no-preset-yet" id="toc-entry-3">Configuring a new supplier (no preset yet)</a></li>
+<li><a class="reference internal" href="#known-suppliers" id="toc-entry-4">Known suppliers</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#bug-tracker" id="toc-entry-4">Bug Tracker</a></li>
-<li><a class="reference internal" href="#credits" id="toc-entry-5">Credits</a><ul>
-<li><a class="reference internal" href="#authors" id="toc-entry-6">Authors</a></li>
-<li><a class="reference internal" href="#contributors" id="toc-entry-7">Contributors</a></li>
-<li><a class="reference internal" href="#maintainers" id="toc-entry-8">Maintainers</a></li>
+<li><a class="reference internal" href="#known-issues-roadmap" id="toc-entry-5">Known issues / Roadmap</a></li>
+<li><a class="reference internal" href="#changelog" id="toc-entry-6">Changelog</a><ul>
+<li><a class="reference internal" href="#section-1" id="toc-entry-7">18.0.1.0.0 (2026)</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#bug-tracker" id="toc-entry-8">Bug Tracker</a></li>
+<li><a class="reference internal" href="#credits" id="toc-entry-9">Credits</a><ul>
+<li><a class="reference internal" href="#authors" id="toc-entry-10">Authors</a></li>
+<li><a class="reference internal" href="#contributors" id="toc-entry-11">Contributors</a></li>
+<li><a class="reference internal" href="#maintainers" id="toc-entry-12">Maintainers</a></li>
 </ul>
 </li>
 </ul>
 </div>
+<div class="section" id="configuration">
+<h2><a class="toc-backref" href="#toc-entry-1">Configuration</a></h2>
+<div class="section" id="adopting-a-shipped-supplier-preset">
+<h3><a class="toc-backref" href="#toc-entry-2">Adopting a shipped supplier preset</a></h3>
+<p>This module ships pre-configured backend records for a growing list of
+OCI suppliers. They install in archived state so the catalog stays
+uncluttered. To adopt one:</p>
+<ol class="arabic simple">
+<li>Open <strong>PunchOut → PunchOut Backends</strong>.</li>
+<li>Toggle the <strong>Archived</strong> filter on (or open the Archived saved
+search).</li>
+<li>Pick the supplier you want, click <strong>Unarchive</strong>.</li>
+<li>On the form:<ul>
+<li>Link <strong>Partner</strong> (your existing <tt class="docutils literal">res.partner</tt> for that supplier).</li>
+<li>Enter <strong>Username</strong> and <strong>Password</strong> (and <strong>Customer Number</strong> if the
+supplier uses one — see the table below).</li>
+<li>Optionally upload a <strong>Logo</strong> if the shipped one isn’t suitable.</li>
+</ul>
+</li>
+<li>Switch the <strong>State</strong> to <strong>Open</strong>.</li>
+<li>The Browse Supplier Catalog button now appears on that partner’s
+Purchase Orders, and the supplier shows up on the kanban landing
+view.</li>
+</ol>
+<p>The “Closed” state acts as a hard kill-switch (controllers refuse
+traffic, <tt class="docutils literal">_create_punchout_session</tt> refuses to start) — useful when
+retiring a supplier without deleting the historical sessions.</p>
+</div>
+<div class="section" id="configuring-a-new-supplier-no-preset-yet">
+<h3><a class="toc-backref" href="#toc-entry-3">Configuring a new supplier (no preset yet)</a></h3>
+<p>Three things determine whether your supplier works out of the box:</p>
+<ul class="simple">
+<li><strong>The catalog URL.</strong> The full HTTPS URL of the supplier’s PunchOut
+catalog endpoint.</li>
+<li><strong>The auth field names.</strong> Most OCI suppliers use the conventional
+<tt class="docutils literal">USERNAME</tt> / <tt class="docutils literal">PASSWORD</tt> form-POST parameters. A few use lowercase
+or supplier-specific names. The defaults in the <strong>OCI Settings</strong> group
+cover the common case; override per-supplier as needed.</li>
+<li><strong>Whether a customer number is required.</strong> Set
+<tt class="docutils literal">auth_customer_number</tt> and the matching param name (e.g. <tt class="docutils literal">CUSTNR</tt>,
+<tt class="docutils literal">KUNDEN_NR</tt>) — or leave both empty for suppliers that don’t use one.</li>
+</ul>
+<p>If your supplier needs auth params beyond the username/password/customer
+trio (e.g. a session token, an extra branch ID), use the
+<strong>Vendor-specific parameters</strong> field as a query-string escape hatch:
+<tt class="docutils literal">token=abc123&amp;branch=NL01</tt>. Keys here override the generic-auth splice
+on collision.</p>
+<p>When you’ve got a supplier working, please open a PR adding a preset
+record to <tt class="docutils literal">data/supplier_presets.xml</tt> and a row to the table below —
+that’s how the catalog grows.</p>
+</div>
+<div class="section" id="known-suppliers">
+<h3><a class="toc-backref" href="#toc-entry-4">Known suppliers</a></h3>
+<blockquote>
+Community-curated, not endorsed. Each entry reflects the public
+documentation of the supplier at the time of contribution; APIs
+change. Verify against the supplier’s current docs before going live,
+and PR fixes when they drift.</blockquote>
+<table border="1" class="docutils">
+<colgroup>
+<col width="14%" />
+<col width="19%" />
+<col width="27%" />
+<col width="20%" />
+<col width="20%" />
+</colgroup>
+<thead valign="bottom">
+<tr><th class="head">Supplier</th>
+<th class="head">Country</th>
+<th class="head">Industry</th>
+<th class="head">Auth params</th>
+<th class="head">Preset</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr><td>INDI</td>
+<td>NL</td>
+<td>Industrial supply</td>
+<td><tt class="docutils literal">USERNAME</tt>
++
+<tt class="docutils literal">PASSWORD</tt>
+(no customer
+number)</td>
+<td>✅ shipped</td>
+</tr>
+<tr><td>TVH</td>
+<td>BE / global</td>
+<td>Forklift /
+material-handling
+parts</td>
+<td><tt class="docutils literal">username</tt>
++
+<tt class="docutils literal">password</tt>
+(lowercase,
+no customer
+number)</td>
+<td>✅ shipped
+(Industrial
+URL by
+default;
+switch URL
+for
+Agricultural
+account)</td>
+</tr>
+</tbody>
+</table>
+<p>To add an entry: create the preset under <tt class="docutils literal">data/supplier_presets.xml</tt>,
+then add a row above with the <tt class="docutils literal">auth_*</tt> column filled in and a link to
+the supplier’s public docs in the description.</p>
+</div>
+</div>
 <div class="section" id="known-issues-roadmap">
-<h2><a class="toc-backref" href="#toc-entry-1">Known issues / Roadmap</a></h2>
+<h2><a class="toc-backref" href="#toc-entry-5">Known issues / Roadmap</a></h2>
 <p>The current implementation supports the OCI <strong>SELECT</strong> function (browse
 a supplier’s catalog, return a cart, parse <tt class="docutils literal"><span class="pre">NEW_ITEM-*</span></tt> fields). The
 <tt class="docutils literal">oci_version</tt> field accepts 3.0 / 4.0 / 5.0 and is passed to the
@@ -435,9 +553,9 @@ and encrypted credential fields are supplier-specific.</li>
 </ul>
 </div>
 <div class="section" id="changelog">
-<h2><a class="toc-backref" href="#toc-entry-2">Changelog</a></h2>
+<h2><a class="toc-backref" href="#toc-entry-6">Changelog</a></h2>
 <div class="section" id="section-1">
-<h3><a class="toc-backref" href="#toc-entry-3">18.0.1.0.0 (2026)</a></h3>
+<h3><a class="toc-backref" href="#toc-entry-7">18.0.1.0.0 (2026)</a></h3>
 <ul class="simple">
 <li>[MIG] Migration to Odoo 18.0. Original OCI protocol implementation by
 Hunki Enterprises BV (Holger Brunn).</li>
@@ -454,7 +572,7 @@ session for backend”, which mis-routed concurrent sessions.</li>
 </div>
 </div>
 <div class="section" id="bug-tracker">
-<h2><a class="toc-backref" href="#toc-entry-4">Bug Tracker</a></h2>
+<h2><a class="toc-backref" href="#toc-entry-8">Bug Tracker</a></h2>
 <p>Bugs are tracked on <a class="reference external" href="https://github.com/OCA/edi/issues">GitHub Issues</a>.
 In case of trouble, please check there if your issue has already been reported.
 If you spotted it first, help us to smash it by providing a detailed and welcomed
@@ -462,22 +580,22 @@ If you spotted it first, help us to smash it by providing a detailed and welcome
 <p>Do not contact contributors directly about support or help with technical issues.</p>
 </div>
 <div class="section" id="credits">
-<h2><a class="toc-backref" href="#toc-entry-5">Credits</a></h2>
+<h2><a class="toc-backref" href="#toc-entry-9">Credits</a></h2>
 <div class="section" id="authors">
-<h3><a class="toc-backref" href="#toc-entry-6">Authors</a></h3>
+<h3><a class="toc-backref" href="#toc-entry-10">Authors</a></h3>
 <ul class="simple">
 <li>Hunki Enterprises BV</li>
 </ul>
 </div>
 <div class="section" id="contributors">
-<h3><a class="toc-backref" href="#toc-entry-7">Contributors</a></h3>
+<h3><a class="toc-backref" href="#toc-entry-11">Contributors</a></h3>
 <ul class="simple">
 <li>Holger Brunn &lt;<a class="reference external" href="mailto:hbrunn&#64;therp.nl">hbrunn&#64;therp.nl</a>&gt;</li>
 <li>Bosd (migration to 18.0)</li>
 </ul>
 </div>
 <div class="section" id="maintainers">
-<h3><a class="toc-backref" href="#toc-entry-8">Maintainers</a></h3>
+<h3><a class="toc-backref" href="#toc-entry-12">Maintainers</a></h3>
 <p>This module is maintained by the OCA.</p>
 <a class="reference external image-reference" href="https://odoo-community.org">
 <img alt="Odoo Community Association" src="https://odoo-community.org/logo.png" />

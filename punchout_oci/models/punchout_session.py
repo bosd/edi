@@ -6,7 +6,7 @@ import json
 import logging
 from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 
-from odoo import _, api, fields, models
+from odoo import api, fields, models
 from odoo.exceptions import UserError
 
 _logger = logging.getLogger(__name__)
@@ -30,8 +30,10 @@ class PunchoutSession(models.Model):
         base_url = backend.url
         if not base_url:
             raise UserError(
-                _("OCI catalog URL not configured on backend %(name)s.")
-                % {"name": backend.display_name}
+                self.env._(
+                    "OCI catalog URL not configured on backend %(name)s.",
+                    name=backend.display_name,
+                )
             )
 
         # Parse existing URL and query string
@@ -43,7 +45,22 @@ class PunchoutSession(models.Model):
         for key, value in existing_params.items():
             params[key] = value[0] if len(value) == 1 else value
 
-        # Add custom parameters from backend
+        # Splice the generic auth credentials through each supplier's
+        # param-name mapping. Done BEFORE ``oci_custom_parameters`` so
+        # the technical escape hatch wins on key collision (admin's
+        # explicit override beats the manager's credential trio).
+        # Empty values are skipped so non-required params stay
+        # unset (e.g. INDI doesn't need a customer number).
+        auth_map = (
+            (backend.auth_username, backend.oci_param_username),
+            (backend.auth_password, backend.oci_param_password),
+            (backend.auth_customer_number, backend.oci_param_customer),
+        )
+        for value, key in auth_map:
+            if value and key:
+                params[key] = value
+
+        # Add custom parameters from backend (escape hatch).
         if backend.oci_custom_parameters:
             custom_params = parse_qs(backend.oci_custom_parameters)
             for key, value in custom_params.items():
