@@ -192,7 +192,14 @@
                                 <div class="text-muted small">
                                     <field name="description" />
                                 </div>
-                                <div class="mt-1">
+                                <!-- Protocol badge is setup-tier info;
+                                     gated to managers so end-users see
+                                     a clean catalog (logo + supplier
+                                     name + description + button). -->
+                                <div
+                                    class="mt-1"
+                                    groups="punchout.group_punchout_manager"
+                                >
                                     <span class="badge text-bg-info">
                                         <field name="protocol" />
                                     </span>
