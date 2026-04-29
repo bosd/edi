@@ -3,7 +3,7 @@
 
 {
     "name": "Punchout",
-    "version": "19.0.1.0.1",
+    "version": "19.0.1.1.0",
     "license": "AGPL-3",
     "author": "Odoo Community Association (OCA), ACSONE SA/NV",
     "website": "https://github.com/OCA/edi",
@@ -15,6 +15,9 @@
         "uom_unece",  # For UNECE UoM codes
     ],
     "data": [
+        # Security groups must load before model-access entries
+        # that reference them.
+        "security/punchout_security.xml",
         "security/punchout_backend.xml",
         "security/punchout_session.xml",
         "security/punchout_uom_mapping.xml",

@@ -1,6 +1,14 @@
 <?xml version="1.0" encoding="utf-8" ?>
+<!-- Copyright 2023 ACSONE SA/NV
+     Copyright 2026 Bosd
+     License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl). -->
 <odoo>
-    <!--FORM view-->
+    <!--FORM view: split into Connection (manager) + Advanced (system).
+        The manager tier is the functional consultant / application
+        manager — they should be able to set up a backend (link the
+        partner, enter credentials, switch state, archive what they
+        don't need) without exposure to URL / timeout / retention
+        knobs. Those live in the Advanced group, ``groups=base.group_system``. -->
     <record model="ir.ui.view" id="punchout_backend_form_view">
         <field name="model">punchout.backend</field>
         <field name="arch" type="xml">
@@ -11,10 +19,23 @@
                         type="object"
                         icon="fa-sign-in"
                         string="Access"
+                        invisible="state != 'open' or not active"
                     />
                     <field name="state" widget="statusbar" options="{'clickable': 1}" />
                 </header>
                 <sheet>
+                    <!-- Standard archived ribbon — visible whenever
+                         the backend is archived. Compose with
+                         ``state="closed"`` for fully decommissioned
+                         backends; ``active=False`` alone is the "park
+                         a shipped preset I haven't adopted" state. -->
+                    <widget
+                        name="web_ribbon"
+                        title="Archived"
+                        bg_color="text-bg-danger"
+                        invisible="active"
+                    />
+                    <field name="active" invisible="1" />
                     <div name="button_box" class="oe_button_box">
                         <button
                             name="action_view_sessions"
@@ -29,6 +50,7 @@
                             />
                         </button>
                     </div>
+                    <field name="image_128" widget="image" class="oe_avatar" />
                     <div class="oe_title">
                         <label
                             for="name"
@@ -41,9 +63,22 @@
                         </h1>
                     </div>
                     <group name="group_main">
-                        <group>
+                        <group name="group_connection" string="Connection">
                             <field name="description" />
                             <field name="protocol" />
+                        </group>
+                        <group name="group_credentials" string="Credentials">
+                            <field name="auth_username" />
+                            <field name="auth_password" password="True" />
+                            <field name="auth_customer_number" />
+                        </group>
+                    </group>
+                    <group
+                        name="group_advanced"
+                        string="Advanced (technical)"
+                        groups="base.group_system"
+                    >
+                        <group>
                             <field name="url" />
                             <field name="browser_form_post_url" />
                         </group>
@@ -54,7 +89,11 @@
                         </group>
                     </group>
                     <notebook>
-                        <page string="UoM Mappings" name="uom_mappings">
+                        <page
+                            string="UoM Mappings"
+                            name="uom_mappings"
+                            groups="base.group_system"
+                        >
                             <field
                                 name="uom_mapping_ids"
                                 context="{'default_backend_id': id}"
@@ -80,8 +119,8 @@
                 <field name="name" />
                 <field name="description" />
                 <field name="protocol" />
-                <field name="url" />
                 <field name="state" />
+                <field name="active" column_invisible="True" />
             </list>
         </field>
     </record>
@@ -93,6 +132,21 @@
                 <field name="name" />
                 <field name="url" />
                 <field name="protocol" />
+                <filter
+                    name="filter_open"
+                    string="Open"
+                    domain="[('state', '=', 'open')]"
+                />
+                <filter
+                    name="filter_draft"
+                    string="Draft (needs setup)"
+                    domain="[('state', '=', 'draft')]"
+                />
+                <filter
+                    name="filter_archived"
+                    string="Archived"
+                    domain="[('active', '=', False)]"
+                />
                 <group name="groupby">
                     <filter
                         name="group_by_protocol"
@@ -108,39 +162,51 @@
             </search>
         </field>
     </record>
+    <!--KANBAN view: tile-per-supplier picker. The default action
+        domain pins this to ``state=open`` (which already implies
+        ``active=True`` since archived records are auto-filtered),
+        so users see only suppliers they can actually punch out to. -->
     <record model="ir.ui.view" id="punchout_backend_kanban_view">
         <field name="model">punchout.backend</field>
         <field name="arch" type="xml">
-            <kanban>
+            <kanban class="o_kanban_dashboard" default_order="name" sample="1">
+                <field name="id" />
                 <field name="name" />
                 <field name="description" />
                 <field name="protocol" />
+                <field name="image_128" />
+                <field name="state" />
                 <templates>
                     <t t-name="card">
-                        <div
-                            class="oe_kanban_vignette"
-                            style="padding: 5px 5px 5px 5px;"
-                        >
-                            <h2>
-                                <field name="description" />
-                            </h2>
-                            <div class="oe_kanban_details">
-                                <span class="badge bg-info">
-                                    <field name="protocol" />
-                                </span>
-                            </div>
-                            <div class="o_kanban_record_bottom">
-                                <div class="oe_kanban_bottom_left" />
-                                <div class="oe_kanban_bottom_right">
-                                    <button
-                                        name="redirect_to_backend"
-                                        type="object"
-                                        class="btn btn-primary"
-                                    >
-                                        <i class="fa fa-sign-in" /> Access
-                                    </button>
+                        <div class="d-flex flex-row align-items-center">
+                            <field
+                                name="image_128"
+                                widget="image"
+                                class="o_image_64_cover me-3"
+                                options="{'preview_image': 'image_128'}"
+                            />
+                            <div class="flex-grow-1">
+                                <strong>
+                                    <field name="name" />
+                                </strong>
+                                <div class="text-muted small">
+                                    <field name="description" />
+                                </div>
+                                <div class="mt-1">
+                                    <span class="badge text-bg-info">
+                                        <field name="protocol" />
+                                    </span>
                                 </div>
                             </div>
+                        </div>
+                        <div class="o_kanban_record_bottom mt-2">
+                            <button
+                                name="redirect_to_backend"
+                                type="object"
+                                class="btn btn-primary btn-sm w-100"
+                            >
+                                <i class="fa fa-sign-in me-1" /> Open Catalog
+                            </button>
                         </div>
                     </t>
                 </templates>
@@ -151,7 +217,7 @@
     <record model="ir.actions.act_window" id="punchout_backend_act_window">
         <field name="name">Punchout Backends</field>
         <field name="res_model">punchout.backend</field>
-        <field name="view_mode">list,form</field>
+        <field name="view_mode">kanban,list,form</field>
         <field name="domain">[]</field>
         <field name="context">{}</field>
     </record>

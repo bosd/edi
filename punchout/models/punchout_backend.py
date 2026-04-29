@@ -24,6 +24,55 @@ class PunchoutBackend(models.Model):
         required=True,
         tracking=True,
     )
+    active = fields.Boolean(
+        default=True,
+        tracking=True,
+        help=(
+            "Archived backends are hidden from default views. Used to "
+            "park shipped supplier presets that haven't been adopted "
+            "yet — managers unarchive the ones they want to set up."
+        ),
+    )
+    image_128 = fields.Image(
+        max_width=128,
+        max_height=128,
+        help=(
+            "Supplier logo shown on the backend kanban tile. Bundled "
+            "with shipped presets so the catalog looks polished from "
+            "first install; managers can replace it."
+        ),
+    )
+    auth_username = fields.Char(
+        string="Username",
+        tracking=True,
+        help=(
+            "Generic supplier-login username. Per-protocol session-"
+            "setup code maps this onto whatever form-param name the "
+            "supplier expects (USERNAME / USER / LOGIN / etc.). Most "
+            "OCI / IDS suppliers fit this trio of generic credentials; "
+            "the protocol-specific escape hatch (e.g. "
+            "``oci_custom_parameters``) stays available for the long "
+            "tail."
+        ),
+    )
+    auth_password = fields.Char(
+        string="Password",
+        tracking=True,
+        help=(
+            "Generic supplier-login password. Stored plain-text; "
+            "protect via field-level groups and DB-level encryption "
+            "as appropriate."
+        ),
+    )
+    auth_customer_number = fields.Char(
+        string="Customer Number",
+        tracking=True,
+        help=(
+            "Generic customer / account number. Many suppliers (TVH, "
+            "Würth, Hoffmann …) require this alongside username + "
+            "password to identify the buyer's contract."
+        ),
+    )
     protocol = fields.Selection(
         selection="_selection_protocol",
         required=True,

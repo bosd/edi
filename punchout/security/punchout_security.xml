@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Copyright 2026 Bosd
+     License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl). -->
+<odoo>
+    <!-- Three-tier access model:
+         * base.group_user        — read backends; can use Browse
+                                    Catalog and view their sessions.
+         * group_punchout_manager — curate: link partner, set
+                                    credentials, flip state, archive
+                                    presets they don't need. The
+                                    "functional consultant /
+                                    application manager" tier — low
+                                    barrier to entry, no exposure to
+                                    raw URL / timeout / retention
+                                    knobs.
+         * base.group_system      — implies manager + the technical
+                                    fields gated by ``groups=`` in
+                                    the form view (URL, browser-form-
+                                    post URL, timeouts, retention,
+                                    raw protocol params, UoM mappings).
+         The manager group is implied by the system group so admins
+         keep all manager rights without needing two assignments. -->
+    <record id="group_punchout_manager" model="res.groups">
+        <field name="name">Punchout Manager</field>
+        <field name="implied_ids" eval="[Command.link(ref('base.group_user'))]" />
+        <field
+            name="comment"
+        >Curate punchout backends: set credentials, link suppliers, archive / unarchive presets, switch state. Doesn't see the technical fields (URL, timeouts, raw protocol parameters) — those stay reserved for Settings administrators.</field>
+    </record>
+    <record id="base.group_system" model="res.groups">
+        <field
+            name="implied_ids"
+            eval="[Command.link(ref('punchout.group_punchout_manager'))]"
+        />
+    </record>
+</odoo>
