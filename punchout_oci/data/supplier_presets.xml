@@ -88,6 +88,63 @@
     </record>
 
     <!-- ====================================================
+         Kramp (NL/EU) — agricultural / forestry / earthmoving parts
+         Public docs: https://developer.kramp.com/oci (developer-portal
+         page; the form-spec used here was downloaded from Kramp's site
+         and reproduced in this preset's comments).
+
+         Auth pattern is *different* from most OCI suppliers:
+
+         * No password. Kramp validates incoming sessions by
+           **HOOK_URL domain match** — the customer's domain is
+           registered up-front with Kramp's Business Solution
+           Consultant. ``logonId`` is sent (mapped through
+           ``oci_param_username``) but Kramp's docs explicitly note
+           "will NOT be used for an automatic login!!".
+         * Per-customer URL. The catalog endpoint is provisioned by
+           Kramp per organisation (static URL) or per-organisation
+           domain (dynamic URL); the preset URL below is the
+           example from the docs (``OCITesting``) and **must be
+           replaced** with the URL Kramp gives you after
+           registration.
+
+         Cart-return quirks Kramp expects to be echoed back:
+
+         * ``NEW_ITEM-EXT_QUOTE_ID`` — Kramp's quotation identifier;
+           Kramp sends it in the punchout form and expects it back
+           on each line so it can match the cart to the originating
+           quote.
+         * ``NEW_ITEM-CUST_FIELD5`` — per-line user remark (optional).
+           Mappers downstream of this preset shouldn't assume
+           CUST_FIELD5 is generic supplier metadata for Kramp.
+
+         Optional URL params worth knowing about (set via the
+         ``oci_custom_parameters`` escape hatch when needed):
+           - ``OCI_VERSION``   already handled by backend.oci_version
+           - ``storeId``       which KRAMP-WebShop the user lands on
+    ==================================================== -->
+    <record id="preset_kramp" model="punchout.backend">
+        <field name="name">Kramp</field>
+        <field
+            name="description"
+        >Agricultural / forestry / earthmoving parts (NL/EU). OCI PunchOut. URL is provisioned per-customer by Kramp — REPLACE the example URL after Kramp registers your HOOK_URL domain. Auth is via domain validation; logonId only, no password.</field>
+        <field name="protocol">oci</field>
+        <!-- Example URL only — Kramp Business Solution Consultant
+             will provision the real one for your account. -->
+        <field name="url">https://www.kramp.com/do/action/OCITesting</field>
+        <field name="browser_form_post_url">/punchout/oci/receive/</field>
+        <field name="oci_version">4.0</field>
+        <!-- Kramp uses ``logonId`` (not USERNAME) for the user
+             identifier. No password — clear the field so the URL
+             builder doesn't emit an empty PASSWORD=. -->
+        <field name="oci_param_username">logonId</field>
+        <field name="oci_param_password" />
+        <field name="oci_param_customer" />
+        <field name="active" eval="False" />
+        <field name="state">draft</field>
+    </record>
+
+    <!-- ====================================================
          DiscountOffice (NL) — office supplies
          Public docs: https://oci.discountoffice.nl/docs/default/configure
          Auth pattern: lowercase ``username`` / ``password`` form params

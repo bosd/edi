@@ -56,12 +56,19 @@ table below — that's how the catalog grows.
 > change. Verify against the supplier's current docs before going
 > live, and PR fixes when they drift.
 
-| Supplier | Country | Industry | Auth params | Preset |
-|---|---|---|---|---|
-| [INDI](https://www.indi.nl/nl-nl/slim-inkopen/erp-connecties/oci-punchout) | NL | Industrial supply | `USERNAME` + `PASSWORD` (no customer number) | ✅ shipped |
-| [DiscountOffice](https://oci.discountoffice.nl/docs/default/configure) | NL | Office supplies | `username` + `password` (lowercase, no customer number); `NEW_ITEM-CUST_FIELD1` = VAT percent on cart return | ✅ shipped |
-| [Phoenix Contact](https://assets.phoenixcontact.com/file/6cdb9294-a10c-4032-ab0a-1c5c9044c324/media/original?Dokumentation_Punchout_V1_EN.pdf) | DE | Industrial automation / electrical | `USERNAME` + `PASSWORD` (no customer number); `NEW_ITEM-MATGROUP` = eCl@ss 11.0; `NEW_ITEM-CUST_FIELD1` = delivery date | ✅ shipped |
-| TVH | BE / global | Forklift / material-handling parts | `username` + `password` (lowercase, no customer number) | ✅ shipped (Industrial URL by default; switch URL for Agricultural account) |
+Each row's logo links to the same PNG stored under
+`static/description/suppliers/`, also loaded into the preset's
+`image_128` field for the kanban tile — see
+[that directory's README](../static/description/suppliers/README.md)
+for the conventions and how to add a logo for an existing preset.
+
+| Logo | Supplier | Country | Industry | Auth params | Preset |
+|---|---|---|---|---|---|
+| ![INDI](../static/description/suppliers/indi.png) | [INDI](https://www.indi.nl/nl-nl/slim-inkopen/erp-connecties/oci-punchout) | NL | Industrial supply | `USERNAME` + `PASSWORD` (no customer number) | ✅ shipped |
+| ![DiscountOffice](../static/description/suppliers/discountoffice.png) | [DiscountOffice](https://oci.discountoffice.nl/docs/default/configure) | NL | Office supplies | `username` + `password` (lowercase, no customer number); `NEW_ITEM-CUST_FIELD1` = VAT percent on cart return | ✅ shipped |
+| ![Phoenix Contact](../static/description/suppliers/phoenix_contact.png) | [Phoenix Contact](https://assets.phoenixcontact.com/file/6cdb9294-a10c-4032-ab0a-1c5c9044c324/media/original?Dokumentation_Punchout_V1_EN.pdf) | DE | Industrial automation / electrical | `USERNAME` + `PASSWORD` (no customer number); `NEW_ITEM-MATGROUP` = eCl@ss 11.0; `NEW_ITEM-CUST_FIELD1` = delivery date | ✅ shipped |
+| ![Kramp](../static/description/suppliers/kramp.png) | [Kramp](https://developer.kramp.com/oci) | NL / EU | Agricultural / forestry / earthmoving parts | `logonId` only — no password (Kramp validates by HOOK_URL domain registered with their consultant); `NEW_ITEM-EXT_QUOTE_ID` and `NEW_ITEM-CUST_FIELD5` echoed back per line | ✅ shipped (URL is per-customer; replace the example URL after Kramp registers your domain) |
+| ![TVH](../static/description/suppliers/tvh.png) | TVH | BE / global | Forklift / material-handling parts | `username` + `password` (lowercase, no customer number) | ✅ shipped (Industrial URL by default; switch URL for Agricultural account) |
 
 To add an entry: create the preset under
 `data/supplier_presets.xml`, then add a row above with the

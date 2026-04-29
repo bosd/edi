@@ -113,41 +113,63 @@ Known suppliers
    change. Verify against the supplier's current docs before going live,
    and PR fixes when they drift.
 
-+------------------------------------------------------------------------------------------------------------------------------------------+-------------+-------------------+--------------------------+--------------+
-| Supplier                                                                                                                                 | Country     | Industry          | Auth params              | Preset       |
-+==========================================================================================================================================+=============+===================+==========================+==============+
-| `INDI <https://www.indi.nl/nl-nl/slim-inkopen/erp-connecties/oci-punchout>`__                                                            | NL          | Industrial supply | ``USERNAME`` +           | ✅ shipped   |
-|                                                                                                                                          |             |                   | ``PASSWORD`` (no         |              |
-|                                                                                                                                          |             |                   | customer number)         |              |
-+------------------------------------------------------------------------------------------------------------------------------------------+-------------+-------------------+--------------------------+--------------+
-| `DiscountOffice <https://oci.discountoffice.nl/docs/default/configure>`__                                                                | NL          | Office supplies   | ``username`` +           | ✅ shipped   |
-|                                                                                                                                          |             |                   | ``password`` (lowercase, |              |
-|                                                                                                                                          |             |                   | no customer number);     |              |
-|                                                                                                                                          |             |                   | ``NEW_ITEM-CUST_FIELD1`` |              |
-|                                                                                                                                          |             |                   | = VAT percent on cart    |              |
-|                                                                                                                                          |             |                   | return                   |              |
-+------------------------------------------------------------------------------------------------------------------------------------------+-------------+-------------------+--------------------------+--------------+
-| `Phoenix                                                                                                                                 | DE          | Industrial        | ``USERNAME`` +           | ✅ shipped   |
-| Contact <https://assets.phoenixcontact.com/file/6cdb9294-a10c-4032-ab0a-1c5c9044c324/media/original?Dokumentation_Punchout_V1_EN.pdf>`__ |             | automation /      | ``PASSWORD`` (no         |              |
-|                                                                                                                                          |             | electrical        | customer number);        |              |
-|                                                                                                                                          |             |                   | ``NEW_ITEM-MATGROUP`` =  |              |
-|                                                                                                                                          |             |                   | eCl@ss 11.0;             |              |
-|                                                                                                                                          |             |                   | ``NEW_ITEM-CUST_FIELD1`` |              |
-|                                                                                                                                          |             |                   | = delivery date          |              |
-+------------------------------------------------------------------------------------------------------------------------------------------+-------------+-------------------+--------------------------+--------------+
-| TVH                                                                                                                                      | BE / global | Forklift /        | ``username`` +           | ✅ shipped   |
-|                                                                                                                                          |             | material-handling | ``password`` (lowercase, | (Industrial  |
-|                                                                                                                                          |             | parts             | no customer number)      | URL by       |
-|                                                                                                                                          |             |                   |                          | default;     |
-|                                                                                                                                          |             |                   |                          | switch URL   |
-|                                                                                                                                          |             |                   |                          | for          |
-|                                                                                                                                          |             |                   |                          | Agricultural |
-|                                                                                                                                          |             |                   |                          | account)     |
-+------------------------------------------------------------------------------------------------------------------------------------------+-------------+-------------------+--------------------------+--------------+
+Each row's logo links to the same PNG stored under
+``static/description/suppliers/``, also loaded into the preset's
+``image_128`` field for the kanban tile — see `that directory's
+README <../static/description/suppliers/README.md>`__ for the
+conventions and how to add a logo for an existing preset.
+
++------------------+------------------------------------------------------------------------------------------------------------------------------------------+-------------+-------------------+---------------------------+---------------+
+| Logo             | Supplier                                                                                                                                 | Country     | Industry          | Auth params               | Preset        |
++==================+==========================================================================================================================================+=============+===================+===========================+===============+
+| |INDI|           | `INDI <https://www.indi.nl/nl-nl/slim-inkopen/erp-connecties/oci-punchout>`__                                                            | NL          | Industrial supply | ``USERNAME`` +            | ✅ shipped    |
+|                  |                                                                                                                                          |             |                   | ``PASSWORD`` (no customer |               |
+|                  |                                                                                                                                          |             |                   | number)                   |               |
++------------------+------------------------------------------------------------------------------------------------------------------------------------------+-------------+-------------------+---------------------------+---------------+
+| |DiscountOffice| | `DiscountOffice <https://oci.discountoffice.nl/docs/default/configure>`__                                                                | NL          | Office supplies   | ``username`` +            | ✅ shipped    |
+|                  |                                                                                                                                          |             |                   | ``password`` (lowercase,  |               |
+|                  |                                                                                                                                          |             |                   | no customer number);      |               |
+|                  |                                                                                                                                          |             |                   | ``NEW_ITEM-CUST_FIELD1``  |               |
+|                  |                                                                                                                                          |             |                   | = VAT percent on cart     |               |
+|                  |                                                                                                                                          |             |                   | return                    |               |
++------------------+------------------------------------------------------------------------------------------------------------------------------------------+-------------+-------------------+---------------------------+---------------+
+| |Phoenix         | `Phoenix                                                                                                                                 | DE          | Industrial        | ``USERNAME`` +            | ✅ shipped    |
+| Contact|         | Contact <https://assets.phoenixcontact.com/file/6cdb9294-a10c-4032-ab0a-1c5c9044c324/media/original?Dokumentation_Punchout_V1_EN.pdf>`__ |             | automation /      | ``PASSWORD`` (no customer |               |
+|                  |                                                                                                                                          |             | electrical        | number);                  |               |
+|                  |                                                                                                                                          |             |                   | ``NEW_ITEM-MATGROUP`` =   |               |
+|                  |                                                                                                                                          |             |                   | eCl@ss 11.0;              |               |
+|                  |                                                                                                                                          |             |                   | ``NEW_ITEM-CUST_FIELD1``  |               |
+|                  |                                                                                                                                          |             |                   | = delivery date           |               |
++------------------+------------------------------------------------------------------------------------------------------------------------------------------+-------------+-------------------+---------------------------+---------------+
+| |Kramp|          | `Kramp <https://developer.kramp.com/oci>`__                                                                                              | NL / EU     | Agricultural /    | ``logonId`` only — no     | ✅ shipped    |
+|                  |                                                                                                                                          |             | forestry /        | password (Kramp validates | (URL is       |
+|                  |                                                                                                                                          |             | earthmoving parts | by HOOK_URL domain        | per-customer; |
+|                  |                                                                                                                                          |             |                   | registered with their     | replace the   |
+|                  |                                                                                                                                          |             |                   | consultant);              | example URL   |
+|                  |                                                                                                                                          |             |                   | ``NEW_ITEM-EXT_QUOTE_ID`` | after Kramp   |
+|                  |                                                                                                                                          |             |                   | and                       | registers     |
+|                  |                                                                                                                                          |             |                   | ``NEW_ITEM-CUST_FIELD5``  | your domain)  |
+|                  |                                                                                                                                          |             |                   | echoed back per line      |               |
++------------------+------------------------------------------------------------------------------------------------------------------------------------------+-------------+-------------------+---------------------------+---------------+
+| |TVH|            | TVH                                                                                                                                      | BE / global | Forklift /        | ``username`` +            | ✅ shipped    |
+|                  |                                                                                                                                          |             | material-handling | ``password`` (lowercase,  | (Industrial   |
+|                  |                                                                                                                                          |             | parts             | no customer number)       | URL by        |
+|                  |                                                                                                                                          |             |                   |                           | default;      |
+|                  |                                                                                                                                          |             |                   |                           | switch URL    |
+|                  |                                                                                                                                          |             |                   |                           | for           |
+|                  |                                                                                                                                          |             |                   |                           | Agricultural  |
+|                  |                                                                                                                                          |             |                   |                           | account)      |
++------------------+------------------------------------------------------------------------------------------------------------------------------------------+-------------+-------------------+---------------------------+---------------+
 
 To add an entry: create the preset under ``data/supplier_presets.xml``,
 then add a row above with the ``auth_*`` column filled in and a link to
 the supplier's public docs in the description.
+
+.. |INDI| image:: https://raw.githubusercontent.com/OCA/edi/19.0/punchout_oci/static/description/suppliers/indi.png
+.. |DiscountOffice| image:: https://raw.githubusercontent.com/OCA/edi/19.0/punchout_oci/static/description/suppliers/discountoffice.png
+.. |Phoenix Contact| image:: https://raw.githubusercontent.com/OCA/edi/19.0/punchout_oci/static/description/suppliers/phoenix_contact.png
+.. |Kramp| image:: https://raw.githubusercontent.com/OCA/edi/19.0/punchout_oci/static/description/suppliers/kramp.png
+.. |TVH| image:: https://raw.githubusercontent.com/OCA/edi/19.0/punchout_oci/static/description/suppliers/tvh.png
 
 Known issues / Roadmap
 ======================

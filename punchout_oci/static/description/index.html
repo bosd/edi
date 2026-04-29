@@ -467,16 +467,23 @@ Community-curated, not endorsed. Each entry reflects the public
 documentation of the supplier at the time of contribution; APIs
 change. Verify against the supplier’s current docs before going live,
 and PR fixes when they drift.</blockquote>
+<p>Each row’s logo links to the same PNG stored under
+<tt class="docutils literal">static/description/suppliers/</tt>, also loaded into the preset’s
+<tt class="docutils literal">image_128</tt> field for the kanban tile — see <a class="reference external" href="../static/description/suppliers/README.md">that directory’s
+README</a> for the
+conventions and how to add a logo for an existing preset.</p>
 <table border="1" class="docutils">
 <colgroup>
-<col width="66%" />
+<col width="8%" />
+<col width="60%" />
 <col width="6%" />
-<col width="9%" />
+<col width="8%" />
 <col width="12%" />
 <col width="7%" />
 </colgroup>
 <thead valign="bottom">
-<tr><th class="head">Supplier</th>
+<tr><th class="head">Logo</th>
+<th class="head">Supplier</th>
 <th class="head">Country</th>
 <th class="head">Industry</th>
 <th class="head">Auth params</th>
@@ -484,15 +491,17 @@ and PR fixes when they drift.</blockquote>
 </tr>
 </thead>
 <tbody valign="top">
-<tr><td><a class="reference external" href="https://www.indi.nl/nl-nl/slim-inkopen/erp-connecties/oci-punchout">INDI</a></td>
+<tr><td><img alt="INDI" src="https://raw.githubusercontent.com/OCA/edi/19.0/punchout_oci/static/description/suppliers/indi.png" /></td>
+<td><a class="reference external" href="https://www.indi.nl/nl-nl/slim-inkopen/erp-connecties/oci-punchout">INDI</a></td>
 <td>NL</td>
 <td>Industrial supply</td>
 <td><tt class="docutils literal">USERNAME</tt> +
-<tt class="docutils literal">PASSWORD</tt> (no
-customer number)</td>
+<tt class="docutils literal">PASSWORD</tt> (no customer
+number)</td>
 <td>✅ shipped</td>
 </tr>
-<tr><td><a class="reference external" href="https://oci.discountoffice.nl/docs/default/configure">DiscountOffice</a></td>
+<tr><td><img alt="DiscountOffice" src="https://raw.githubusercontent.com/OCA/edi/19.0/punchout_oci/static/description/suppliers/discountoffice.png" /></td>
+<td><a class="reference external" href="https://oci.discountoffice.nl/docs/default/configure">DiscountOffice</a></td>
 <td>NL</td>
 <td>Office supplies</td>
 <td><tt class="docutils literal">username</tt> +
@@ -503,22 +512,48 @@ no customer number);
 return</td>
 <td>✅ shipped</td>
 </tr>
-<tr><td><a class="reference external" href="https://assets.phoenixcontact.com/file/6cdb9294-a10c-4032-ab0a-1c5c9044c324/media/original?Dokumentation_Punchout_V1_EN.pdf">Phoenix
+<tr><td><img alt="Phoenix Contact" src="https://raw.githubusercontent.com/OCA/edi/19.0/punchout_oci/static/description/suppliers/phoenix_contact.png" /></td>
+<td><a class="reference external" href="https://assets.phoenixcontact.com/file/6cdb9294-a10c-4032-ab0a-1c5c9044c324/media/original?Dokumentation_Punchout_V1_EN.pdf">Phoenix
 Contact</a></td>
 <td>DE</td>
 <td>Industrial
 automation /
 electrical</td>
 <td><tt class="docutils literal">USERNAME</tt> +
-<tt class="docutils literal">PASSWORD</tt> (no
-customer number);
+<tt class="docutils literal">PASSWORD</tt> (no customer
+number);
 <tt class="docutils literal"><span class="pre">NEW_ITEM-MATGROUP</span></tt> =
 <a class="reference external" href="mailto:eCl&#64;ss">eCl&#64;ss</a> 11.0;
 <tt class="docutils literal"><span class="pre">NEW_ITEM-CUST_FIELD1</span></tt>
 = delivery date</td>
 <td>✅ shipped</td>
 </tr>
-<tr><td>TVH</td>
+<tr><td><img alt="Kramp" src="https://raw.githubusercontent.com/OCA/edi/19.0/punchout_oci/static/description/suppliers/kramp.png" /></td>
+<td><a class="reference external" href="https://developer.kramp.com/oci">Kramp</a></td>
+<td>NL / EU</td>
+<td>Agricultural /
+forestry /
+earthmoving parts</td>
+<td><tt class="docutils literal">logonId</tt> only — no
+password (Kramp validates
+by HOOK_URL domain
+registered with their
+consultant);
+<tt class="docutils literal"><span class="pre">NEW_ITEM-EXT_QUOTE_ID</span></tt>
+and
+<tt class="docutils literal"><span class="pre">NEW_ITEM-CUST_FIELD5</span></tt>
+echoed back per line</td>
+<td>✅ shipped
+(URL is
+per-customer;
+replace the
+example URL
+after Kramp
+registers
+your domain)</td>
+</tr>
+<tr><td><img alt="TVH" src="https://raw.githubusercontent.com/OCA/edi/19.0/punchout_oci/static/description/suppliers/tvh.png" /></td>
+<td>TVH</td>
 <td>BE / global</td>
 <td>Forklift /
 material-handling
