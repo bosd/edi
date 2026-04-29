@@ -83,6 +83,7 @@ Authors
 -------
 
 * Hunki Enterprises BV
+* OBS Solutions Netherlands
 
 Contributors
 ------------
@@ -106,10 +107,13 @@ promote its widespread use.
 .. |maintainer-hbrunn| image:: https://github.com/hbrunn.png?size=40px
     :target: https://github.com/hbrunn
     :alt: hbrunn
+.. |maintainer-bosd| image:: https://github.com/bosd.png?size=40px
+    :target: https://github.com/bosd
+    :alt: bosd
 
-Current `maintainer <https://odoo-community.org/page/maintainer-role>`__:
+Current `maintainers <https://odoo-community.org/page/maintainer-role>`__:
 
-|maintainer-hbrunn| 
+|maintainer-hbrunn| |maintainer-bosd| 
 
 This module is part of the `OCA/edi <https://github.com/OCA/edi/tree/19.0/punchout_ids>`_ project on GitHub.
 

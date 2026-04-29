@@ -7,7 +7,10 @@
     "version": "19.0.1.0.1",
     "license": "AGPL-3",
     "summary": "cXML protocol support for Punchout",
-    "author": "Odoo Community Association (OCA), ACSONE SA/NV",
+    "author": (
+        "ACSONE SA/NV, OBS Solutions Netherlands, Odoo Community Association (OCA)"
+    ),
+    "maintainers": ["bosd"],
     "website": "https://github.com/OCA/edi",
     "depends": [
         "punchout",

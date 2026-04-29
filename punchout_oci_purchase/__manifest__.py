@@ -7,8 +7,11 @@
     "version": "19.0.1.0.0",
     "license": "AGPL-3",
     "summary": "Create purchase orders from OCI shopping carts",
-    "author": "Hunki Enterprises BV, Odoo Community Association (OCA)",
-    "maintainers": ["hbrunn"],
+    "author": (
+        "Hunki Enterprises BV, OBS Solutions Netherlands, "
+        "Odoo Community Association (OCA)"
+    ),
+    "maintainers": ["hbrunn", "bosd"],
     "website": "https://github.com/OCA/edi",
     "depends": [
         "punchout_oci",

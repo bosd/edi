@@ -7,7 +7,10 @@
     "version": "19.0.1.0.0",
     "license": "AGPL-3",
     "summary": "Create purchase orders from cXML shopping carts",
-    "author": "ACSONE SA/NV, Odoo Community Association (OCA)",
+    "author": (
+        "ACSONE SA/NV, OBS Solutions Netherlands, Odoo Community Association (OCA)"
+    ),
+    "maintainers": ["bosd"],
     "website": "https://github.com/OCA/edi",
     "depends": [
         "punchout_cxml",

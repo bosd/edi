@@ -104,6 +104,7 @@ Authors
 -------
 
 * Bosd
+* OBS Solutions Netherlands
 
 Contributors
 ------------
@@ -122,6 +123,14 @@ This module is maintained by the OCA.
 OCA, or the Odoo Community Association, is a nonprofit organization whose
 mission is to support the collaborative development of Odoo features and
 promote its widespread use.
+
+.. |maintainer-bosd| image:: https://github.com/bosd.png?size=40px
+    :target: https://github.com/bosd
+    :alt: bosd
+
+Current `maintainer <https://odoo-community.org/page/maintainer-role>`__:
+
+|maintainer-bosd| 
 
 This module is part of the `OCA/edi <https://github.com/OCA/edi/tree/19.0/punchout_oci_mock_supplier>`_ project on GitHub.
 

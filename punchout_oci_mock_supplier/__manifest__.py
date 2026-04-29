@@ -6,7 +6,8 @@
     "version": "19.0.1.0.0",
     "license": "AGPL-3",
     "summary": "Self-contained mock OCI supplier for end-to-end testing",
-    "author": "Bosd, Odoo Community Association (OCA)",
+    "author": "Bosd, OBS Solutions Netherlands, Odoo Community Association (OCA)",
+    "maintainers": ["bosd"],
     "website": "https://github.com/OCA/edi",
     "depends": [
         # Depend on the OCI purchase glue (rather than just punchout_oci)

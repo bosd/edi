@@ -8,7 +8,11 @@
     "version": "19.0.1.0.1",
     "license": "AGPL-3",
     "summary": "Create purchase orders from Punchout shopping carts",
-    "author": "ACSONE SA/NV, Hunki Enterprises BV, Odoo Community Association (OCA)",
+    "author": (
+        "ACSONE SA/NV, Hunki Enterprises BV, OBS Solutions Netherlands, "
+        "Odoo Community Association (OCA)"
+    ),
+    "maintainers": ["bosd"],
     "website": "https://github.com/OCA/edi",
     "depends": [
         "punchout",

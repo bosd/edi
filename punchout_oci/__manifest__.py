@@ -7,8 +7,11 @@
     "version": "19.0.1.1.4",
     "license": "AGPL-3",
     "summary": "OCI (Open Catalog Interface) protocol support for Punchout",
-    "author": "Hunki Enterprises BV, Odoo Community Association (OCA)",
-    "maintainers": ["hbrunn"],
+    "author": (
+        "Hunki Enterprises BV, OBS Solutions Netherlands, "
+        "Odoo Community Association (OCA)"
+    ),
+    "maintainers": ["hbrunn", "bosd"],
     "website": "https://github.com/OCA/edi",
     "depends": [
         "punchout",
