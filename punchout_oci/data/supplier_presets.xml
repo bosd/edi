@@ -44,6 +44,11 @@
         <field name="oci_version">4.0</field>
         <!-- Defaults USERNAME / PASSWORD apply — INDI uses the
              standard names. No customer number required. -->
+        <field
+            name="image_128"
+            type="base64"
+            file="punchout_oci/static/description/suppliers/indi.png"
+        />
         <field name="active" eval="False" />
         <field name="state">draft</field>
     </record>
@@ -83,6 +88,11 @@
         <!-- Defaults USERNAME / PASSWORD apply. No customer number
              param — the doc explicitly omits it. -->
         <field name="oci_param_customer" />
+        <field
+            name="image_128"
+            type="base64"
+            file="punchout_oci/static/description/suppliers/phoenix_contact.png"
+        />
         <field name="active" eval="False" />
         <field name="state">draft</field>
     </record>
@@ -140,6 +150,11 @@
         <field name="oci_param_username">logonId</field>
         <field name="oci_param_password" />
         <field name="oci_param_customer" />
+        <field
+            name="image_128"
+            type="base64"
+            file="punchout_oci/static/description/suppliers/kramp.png"
+        />
         <field name="active" eval="False" />
         <field name="state">draft</field>
     </record>
@@ -167,6 +182,11 @@
         <field name="oci_param_password">password</field>
         <!-- DiscountOffice doesn't take a customer number param. -->
         <field name="oci_param_customer" />
+        <field
+            name="image_128"
+            type="base64"
+            file="punchout_oci/static/description/suppliers/discount_office.png"
+        />
         <field name="active" eval="False" />
         <field name="state">draft</field>
     </record>
@@ -200,6 +220,11 @@
         <!-- TVH doesn't take a customer number parameter; clearing the
              default keeps the generic field unused on the form. -->
         <field name="oci_param_customer" />
+        <field
+            name="image_128"
+            type="base64"
+            file="punchout_oci/static/description/suppliers/tvh-parts.png"
+        />
         <field name="active" eval="False" />
         <field name="state">draft</field>
     </record>

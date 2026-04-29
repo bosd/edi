@@ -166,10 +166,10 @@ then add a row above with the ``auth_*`` column filled in and a link to
 the supplier's public docs in the description.
 
 .. |INDI| image:: https://raw.githubusercontent.com/OCA/edi/19.0/punchout_oci/static/description/suppliers/indi.png
-.. |DiscountOffice| image:: https://raw.githubusercontent.com/OCA/edi/19.0/punchout_oci/static/description/suppliers/discountoffice.png
+.. |DiscountOffice| image:: https://raw.githubusercontent.com/OCA/edi/19.0/punchout_oci/static/description/suppliers/discount_office.png
 .. |Phoenix Contact| image:: https://raw.githubusercontent.com/OCA/edi/19.0/punchout_oci/static/description/suppliers/phoenix_contact.png
 .. |Kramp| image:: https://raw.githubusercontent.com/OCA/edi/19.0/punchout_oci/static/description/suppliers/kramp.png
-.. |TVH| image:: https://raw.githubusercontent.com/OCA/edi/19.0/punchout_oci/static/description/suppliers/tvh.png
+.. |TVH| image:: https://raw.githubusercontent.com/OCA/edi/19.0/punchout_oci/static/description/suppliers/tvh-parts.png
 
 Known issues / Roadmap
 ======================
