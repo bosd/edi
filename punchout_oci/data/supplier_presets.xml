@@ -49,6 +49,33 @@
     </record>
 
     <!-- ====================================================
+         DiscountOffice (NL) — office supplies
+         Public docs: https://oci.discountoffice.nl/docs/default/configure
+         Auth pattern: lowercase ``username`` / ``password`` form params
+         (like TVH; deviates from the OCI-conventional uppercase).
+         No customer number required — auth is purely user/pass.
+         Quirk: ``NEW_ITEM-CUST_FIELD1`` carries the line's VAT
+         percentage. Mappers downstream of the cart-import shouldn't
+         assume CUST_FIELD1 is free-text for this supplier.
+    ==================================================== -->
+    <record id="preset_discountoffice" model="punchout.backend">
+        <field name="name">DiscountOffice</field>
+        <field
+            name="description"
+        >Office supplies (NL). OCI PunchOut with lowercase username / password authentication. Cart returns NEW_ITEM-CUST_FIELD1 = VAT percent.</field>
+        <field name="protocol">oci</field>
+        <field name="url">https://oci.discountoffice.nl/login</field>
+        <field name="browser_form_post_url">/punchout/oci/receive/</field>
+        <field name="oci_version">4.0</field>
+        <field name="oci_param_username">username</field>
+        <field name="oci_param_password">password</field>
+        <!-- DiscountOffice doesn't take a customer number param. -->
+        <field name="oci_param_customer" />
+        <field name="active" eval="False" />
+        <field name="state">draft</field>
+    </record>
+
+    <!-- ====================================================
          TVH (BE) — forklift / material-handling parts
          Public spec: TVH OCI EMEA documentation (provided to customers).
          Auth pattern: lowercase ``username`` / ``password`` form params

@@ -58,7 +58,8 @@ table below — that's how the catalog grows.
 
 | Supplier | Country | Industry | Auth params | Preset |
 |---|---|---|---|---|
-| INDI | NL | Industrial supply | `USERNAME` + `PASSWORD` (no customer number) | ✅ shipped |
+| [INDI](https://www.indi.nl/nl-nl/slim-inkopen/erp-connecties/oci-punchout) | NL | Industrial supply | `USERNAME` + `PASSWORD` (no customer number) | ✅ shipped |
+| [DiscountOffice](https://oci.discountoffice.nl/docs/default/configure) | NL | Office supplies | `username` + `password` (lowercase, no customer number); `NEW_ITEM-CUST_FIELD1` = VAT percent on cart return | ✅ shipped |
 | TVH | BE / global | Forklift / material-handling parts | `username` + `password` (lowercase, no customer number) | ✅ shipped (Industrial URL by default; switch URL for Agricultural account) |
 
 To add an entry: create the preset under

@@ -113,24 +113,29 @@ Known suppliers
    change. Verify against the supplier's current docs before going live,
    and PR fixes when they drift.
 
-+----------+-------------+-------------------+--------------+--------------+
-| Supplier | Country     | Industry          | Auth params  | Preset       |
-+==========+=============+===================+==============+==============+
-| INDI     | NL          | Industrial supply | ``USERNAME`` | ✅ shipped   |
-|          |             |                   | +            |              |
-|          |             |                   | ``PASSWORD`` |              |
-|          |             |                   | (no customer |              |
-|          |             |                   | number)      |              |
-+----------+-------------+-------------------+--------------+--------------+
-| TVH      | BE / global | Forklift /        | ``username`` | ✅ shipped   |
-|          |             | material-handling | +            | (Industrial  |
-|          |             | parts             | ``password`` | URL by       |
-|          |             |                   | (lowercase,  | default;     |
-|          |             |                   | no customer  | switch URL   |
-|          |             |                   | number)      | for          |
-|          |             |                   |              | Agricultural |
-|          |             |                   |              | account)     |
-+----------+-------------+-------------------+--------------+--------------+
++-------------------------------------------------------------------------------+-------------+-------------------+--------------------------+--------------+
+| Supplier                                                                      | Country     | Industry          | Auth params              | Preset       |
++===============================================================================+=============+===================+==========================+==============+
+| `INDI <https://www.indi.nl/nl-nl/slim-inkopen/erp-connecties/oci-punchout>`__ | NL          | Industrial supply | ``USERNAME`` +           | ✅ shipped   |
+|                                                                               |             |                   | ``PASSWORD`` (no         |              |
+|                                                                               |             |                   | customer number)         |              |
++-------------------------------------------------------------------------------+-------------+-------------------+--------------------------+--------------+
+| `DiscountOffice <https://oci.discountoffice.nl/docs/default/configure>`__     | NL          | Office supplies   | ``username`` +           | ✅ shipped   |
+|                                                                               |             |                   | ``password`` (lowercase, |              |
+|                                                                               |             |                   | no customer number);     |              |
+|                                                                               |             |                   | ``NEW_ITEM-CUST_FIELD1`` |              |
+|                                                                               |             |                   | = VAT percent on cart    |              |
+|                                                                               |             |                   | return                   |              |
++-------------------------------------------------------------------------------+-------------+-------------------+--------------------------+--------------+
+| TVH                                                                           | BE / global | Forklift /        | ``username`` +           | ✅ shipped   |
+|                                                                               |             | material-handling | ``password`` (lowercase, | (Industrial  |
+|                                                                               |             | parts             | no customer number)      | URL by       |
+|                                                                               |             |                   |                          | default;     |
+|                                                                               |             |                   |                          | switch URL   |
+|                                                                               |             |                   |                          | for          |
+|                                                                               |             |                   |                          | Agricultural |
+|                                                                               |             |                   |                          | account)     |
++-------------------------------------------------------------------------------+-------------+-------------------+--------------------------+--------------+
 
 To add an entry: create the preset under ``data/supplier_presets.xml``,
 then add a row above with the ``auth_*`` column filled in and a link to

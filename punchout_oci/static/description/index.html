@@ -469,11 +469,11 @@ change. Verify against the supplier’s current docs before going live,
 and PR fixes when they drift.</blockquote>
 <table border="1" class="docutils">
 <colgroup>
-<col width="14%" />
-<col width="19%" />
-<col width="27%" />
-<col width="20%" />
-<col width="20%" />
+<col width="52%" />
+<col width="9%" />
+<col width="13%" />
+<col width="17%" />
+<col width="9%" />
 </colgroup>
 <thead valign="bottom">
 <tr><th class="head">Supplier</th>
@@ -484,14 +484,23 @@ and PR fixes when they drift.</blockquote>
 </tr>
 </thead>
 <tbody valign="top">
-<tr><td>INDI</td>
+<tr><td><a class="reference external" href="https://www.indi.nl/nl-nl/slim-inkopen/erp-connecties/oci-punchout">INDI</a></td>
 <td>NL</td>
 <td>Industrial supply</td>
-<td><tt class="docutils literal">USERNAME</tt>
-+
-<tt class="docutils literal">PASSWORD</tt>
-(no customer
-number)</td>
+<td><tt class="docutils literal">USERNAME</tt> +
+<tt class="docutils literal">PASSWORD</tt> (no
+customer number)</td>
+<td>✅ shipped</td>
+</tr>
+<tr><td><a class="reference external" href="https://oci.discountoffice.nl/docs/default/configure">DiscountOffice</a></td>
+<td>NL</td>
+<td>Office supplies</td>
+<td><tt class="docutils literal">username</tt> +
+<tt class="docutils literal">password</tt> (lowercase,
+no customer number);
+<tt class="docutils literal"><span class="pre">NEW_ITEM-CUST_FIELD1</span></tt>
+= VAT percent on cart
+return</td>
 <td>✅ shipped</td>
 </tr>
 <tr><td>TVH</td>
@@ -499,12 +508,9 @@ number)</td>
 <td>Forklift /
 material-handling
 parts</td>
-<td><tt class="docutils literal">username</tt>
-+
-<tt class="docutils literal">password</tt>
-(lowercase,
-no customer
-number)</td>
+<td><tt class="docutils literal">username</tt> +
+<tt class="docutils literal">password</tt> (lowercase,
+no customer number)</td>
 <td>✅ shipped
 (Industrial
 URL by
