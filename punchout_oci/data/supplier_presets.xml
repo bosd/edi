@@ -49,6 +49,45 @@
     </record>
 
     <!-- ====================================================
+         Phoenix Contact (DE) — industrial automation / electrical
+         connection components
+         Public PDF docs:
+             https://assets.phoenixcontact.com/file/6cdb9294-a10c-4032-ab0a-1c5c9044c324/media/original?Dokumentation_Punchout_V1_EN.pdf
+         Title: "PhoenixContact OCI 4.0 / 5.0 PunchOut" v1.1, 22.06.2022.
+         Doc explicitly supports OCI 4.0 + a subset of OCI 5.0 (cart
+         transfer; no Detailed-Product-Display / Validation /
+         Sourcing). Treat as 4.0 for safety — preset uses that.
+         Auth pattern: uppercase ``USERNAME`` / ``PASSWORD`` (matches
+         OCI defaults). No customer number — auth is purely user/pass,
+         account identity bound to credentials server-side.
+         Quirks documented for downstream cart-import mappers:
+           * NEW_ITEM-MATGROUP = eCl@ss 11.0 number (same vocabulary
+             as TVH).
+           * NEW_ITEM-CUST_FIELD1 = delivery date (NOT free-text).
+           * NEW_ITEM-VENDORMAT, EXT_PRODUCT_ID, MANUFACTMAT all
+             carry the same Product No. (redundant but harmless).
+           * Phoenix Contact will configure custom mappings per
+             customer on request — verify yours before going live.
+    ==================================================== -->
+    <record id="preset_phoenix_contact" model="punchout.backend">
+        <field name="name">Phoenix Contact</field>
+        <field
+            name="description"
+        >Industrial automation / electrical connection components (DE). OCI 4.0 PunchOut with USERNAME/PASSWORD authentication. Cart return uses eCl@ss in NEW_ITEM-MATGROUP and CUST_FIELD1 = delivery date.</field>
+        <field name="protocol">oci</field>
+        <field
+            name="url"
+        >https://punchout.phoenixcontact.com/gateway/v1/oci/handle</field>
+        <field name="browser_form_post_url">/punchout/oci/receive/</field>
+        <field name="oci_version">4.0</field>
+        <!-- Defaults USERNAME / PASSWORD apply. No customer number
+             param — the doc explicitly omits it. -->
+        <field name="oci_param_customer" />
+        <field name="active" eval="False" />
+        <field name="state">draft</field>
+    </record>
+
+    <!-- ====================================================
          DiscountOffice (NL) — office supplies
          Public docs: https://oci.discountoffice.nl/docs/default/configure
          Auth pattern: lowercase ``username`` / ``password`` form params

@@ -60,6 +60,7 @@ table below — that's how the catalog grows.
 |---|---|---|---|---|
 | [INDI](https://www.indi.nl/nl-nl/slim-inkopen/erp-connecties/oci-punchout) | NL | Industrial supply | `USERNAME` + `PASSWORD` (no customer number) | ✅ shipped |
 | [DiscountOffice](https://oci.discountoffice.nl/docs/default/configure) | NL | Office supplies | `username` + `password` (lowercase, no customer number); `NEW_ITEM-CUST_FIELD1` = VAT percent on cart return | ✅ shipped |
+| [Phoenix Contact](https://assets.phoenixcontact.com/file/6cdb9294-a10c-4032-ab0a-1c5c9044c324/media/original?Dokumentation_Punchout_V1_EN.pdf) | DE | Industrial automation / electrical | `USERNAME` + `PASSWORD` (no customer number); `NEW_ITEM-MATGROUP` = eCl@ss 11.0; `NEW_ITEM-CUST_FIELD1` = delivery date | ✅ shipped |
 | TVH | BE / global | Forklift / material-handling parts | `username` + `password` (lowercase, no customer number) | ✅ shipped (Industrial URL by default; switch URL for Agricultural account) |
 
 To add an entry: create the preset under
