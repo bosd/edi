@@ -64,7 +64,7 @@ errors before exposing the backend to purchasers.
 
 | Logo | Supplier | Country | Industry | Notes | Preset |
 |---|---|---|---|---|---|
-| ![Fabory](../static/description/suppliers/fabory.png) | Fabory | NL / EU | Fasteners, fixings, industrial supply | `NetworkId` From, `DUNS` To = `404789992`. Demo credentials available — see `demo/fabory_demo.xml`. | ✅ shipped (replace `from_identity` + `shared_secret` after registering with Fabory) |
+| ![Fabory](../static/description/suppliers/fabory.png) | Fabory | NL / EU | Fasteners, fixings, industrial supply | `NetworkId` From, `DUNS` To = `404789992`. Ships with Fabory's published demo credentials so unarchiving gives a working test connection out of the box. | ✅ shipped (replace `from_identity` + `shared_secret` with your assigned values before going live) |
 
 To add an entry: create the preset under
 `data/supplier_presets.xml`, optionally add a `demo/<supplier>_demo.xml`

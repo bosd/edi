@@ -122,17 +122,23 @@ Known suppliers
    change. Verify against the supplier's current docs before going live,
    and PR fixes when they drift.
 
-+----------+----------+---------+------------+---------------------------+-------------------+
-| Logo     | Supplier | Country | Industry   | Notes                     | Preset            |
-+==========+==========+=========+============+===========================+===================+
-| |Fabory| | Fabory   | NL / EU | Fasteners, | ``NetworkId`` From,       | ✅ shipped        |
-|          |          |         | fixings,   | ``DUNS`` To =             | (replace          |
-|          |          |         | industrial | ``404789992``. Demo       | ``from_identity`` |
-|          |          |         | supply     | credentials available —   | +                 |
-|          |          |         |            | see                       | ``shared_secret`` |
-|          |          |         |            | ``demo/fabory_demo.xml``. | after registering |
-|          |          |         |            |                           | with Fabory)      |
-+----------+----------+---------+------------+---------------------------+-------------------+
++----------+----------+---------+------------+----------------+-------------------+
+| Logo     | Supplier | Country | Industry   | Notes          | Preset            |
++==========+==========+=========+============+================+===================+
+| |Fabory| | Fabory   | NL / EU | Fasteners, | ``NetworkId``  | ✅ shipped        |
+|          |          |         | fixings,   | From, ``DUNS`` | (replace          |
+|          |          |         | industrial | To =           | ``from_identity`` |
+|          |          |         | supply     | ``404789992``. | +                 |
+|          |          |         |            | Ships with     | ``shared_secret`` |
+|          |          |         |            | Fabory's       | with your         |
+|          |          |         |            | published demo | assigned values   |
+|          |          |         |            | credentials so | before going      |
+|          |          |         |            | unarchiving    | live)             |
+|          |          |         |            | gives a        |                   |
+|          |          |         |            | working test   |                   |
+|          |          |         |            | connection out |                   |
+|          |          |         |            | of the box.    |                   |
++----------+----------+---------+------------+----------------+-------------------+
 
 To add an entry: create the preset under ``data/supplier_presets.xml``,
 optionally add a ``demo/<supplier>_demo.xml`` record with public demo

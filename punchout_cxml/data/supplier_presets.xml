@@ -33,12 +33,10 @@
     <!-- ====================================================
          Fabory (NL/EU) — fasteners, fixings, industrial supply
          Public docs: provided directly by Fabory's punchout team
-         on request. Demo credentials below are the "FaboryDemo"
-         buyer they publish for testing — see demo/fabory_demo.xml
-         for an active+open record runboat users can click.
+         on request.
 
-         cXML credential model (Fabory uses NetworkId for From
-         AND Sender, DUNS for To):
+         cXML credential model (Fabory uses NetworkId for From AND
+         Sender, DUNS for To):
            - from_domain   = NetworkId  (used for both From and Sender)
            - from_identity = REPLACE_ME (your assigned NetworkId
                              buyer ID — Fabory provisions per customer)
@@ -49,6 +47,12 @@
 
          Punchout setup endpoint:
            https://www.fabory.com/punchout/v2/cxml/setup
+
+         Demo installs (runboat / sandbox) get an active+open
+         override of this same record under demo/fabory_demo.xml,
+         pre-filled with Fabory's published "FaboryDemo" /
+         "F@bory12" public demo credentials so the tile is
+         clickable out of the box.
     ==================================================== -->
     <record id="preset_fabory" model="punchout.backend">
         <field name="name">Fabory</field>

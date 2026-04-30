@@ -2,43 +2,27 @@
 <!-- Copyright 2026 Bosd
      License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl). -->
 <!--
-    Active Fabory cXML demo backend. Loaded only when Odoo is
-    started with demo data enabled (``without_demo=False``,
-    runboat default); never present on production installs that
-    omit demo data.
+    Fabory cXML demo override. Loaded only when Odoo is started
+    with demo data enabled (``without_demo=False``, runboat default);
+    never present on production installs that omit demo data.
 
-    Uses the public ``FaboryDemo`` buyer credentials Fabory publishes
-    for test integrations, so runboat / sandbox users can click
-    "Open Catalog" without configuring anything. Production users
-    should adopt the archived preset
-    (``data/supplier_presets.xml#preset_fabory``) and replace the
-    placeholders with their own assigned values.
+    Reuses the SAME XML id as the archived preset
+    (``preset_fabory``) — Odoo loads demo files after data files,
+    so the second load overrides the first. Result on a demo
+    install: the Fabory record exists, is active, is in state
+    "open", and ships with Fabory's published "FaboryDemo" public
+    demo credentials so users can click "Open Catalog" to test
+    end-to-end without manager intervention.
 
-    Distinct ``id`` from the archived preset so the two records
-    coexist on a demo install.
+    Production users who pull the regular (non-demo) install
+    still get the archived ``REPLACE_ME`` preset and adopt it as
+    documented in CONFIGURE.md.
 -->
 <odoo noupdate="1">
-    <record id="demo_fabory" model="punchout.backend">
-        <field name="name">Fabory (demo)</field>
-        <field
-            name="description"
-        >Live Fabory demo backend (runboat / sandbox). Public FaboryDemo credentials baked in; click Open Catalog to test.</field>
-        <field name="protocol">cxml</field>
-        <field name="url">https://www.fabory.com/punchout/v2/cxml/setup</field>
-        <field name="browser_form_post_url">/punchout/cxml/receive/</field>
-        <field name="cxml_version">1.2.008</field>
-        <field name="from_domain">NetworkId</field>
+    <record id="preset_fabory" model="punchout.backend">
         <field name="from_identity">FaboryDemo</field>
-        <field name="to_domain">DUNS</field>
-        <field name="to_identity">404789992</field>
         <field name="shared_secret">F@bory12</field>
-        <field name="user_agent">Odoo Punchout Demo</field>
-        <field name="deployment_mode">test</field>
-        <field
-            name="image_128"
-            type="base64"
-            file="punchout_cxml/static/description/suppliers/fabory.png"
-        />
+        <field name="active" eval="True" />
         <field name="state">open</field>
     </record>
 </odoo>
