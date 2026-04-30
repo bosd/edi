@@ -122,19 +122,27 @@ class PunchoutBackend(models.Model):
             url = self.env["punchout.session"]._get_post_punchout_setup_url(session)
         except Exception as e:  # noqa: BLE001
             # Mark the session as errored so it stands out in the
-            # session list, but keep the row so the user can open it
-            # and read setup_request / setup_request_response.
+            # session list, with the exception text on it for the
+            # user to inspect alongside setup_request /
+            # setup_request_response.
             session.sudo().write({"state": "error", "error_message": str(e)})
-            raise UserError(
-                self.env._(
-                    "Test connection failed: %(err)s\n\n"
-                    "Inspect the failed test session for the raw cXML we "
-                    "sent and the supplier's response — Punchout > "
-                    "Punchout Backends, open the backend, click the "
-                    "Sessions smart button.",
-                    err=e,
-                )
-            ) from e
+            # Return — instead of raising — so the current
+            # transaction commits normally and the diagnostic session
+            # row is persisted. Raising ``UserError`` here would roll
+            # back the transaction, undoing the session we just
+            # created and the request/response trace stored on it
+            # (defeating the whole point of keeping it for
+            # inspection). The action below opens the failed session
+            # directly so the user lands on the form with the error
+            # message visible and the cXML viewable in the Setup tab.
+            return {
+                "type": "ir.actions.act_window",
+                "name": self.env._("Test connection failed"),
+                "res_model": "punchout.session",
+                "res_id": session.id,
+                "view_mode": "form",
+                "target": "current",
+            }
         session.unlink()
         if not url:
             raise UserError(
