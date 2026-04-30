@@ -5,6 +5,8 @@
 
 import logging
 
+from markupsafe import Markup
+
 from odoo import api, fields, models
 from odoo.exceptions import UserError
 
@@ -106,12 +108,20 @@ class PunchoutSession(models.Model):
             # signals "system action" in the chatter (no confusion
             # with manual admin edits) and runs in superuser mode.
             author = self.env.ref("base.user_root")
-        # Switch to the backend's company too — admin (or whichever
-        # human ``author`` resolves to) may not have the backend's
-        # company in ``company_ids``, in which case PO create trips a
-        # cross-company record-rule wall on tax / account lookups.
+        # Run the technical PO create / append under SUPERUSER
+        # (sudo) to bypass cross-company ACLs. The session-initiating
+        # user (``session.user_id``) typically doesn't have the
+        # backend's company in their ``company_ids``, so a plain
+        # ``with_user(author)`` trips the record rule on
+        # ``account.tax`` (and similar) the moment Odoo computes
+        # taxes during PO create. We keep ``with_company`` so default
+        # field values (currency, fiscal position, payment terms…)
+        # resolve from the BACKEND's company, not the user's default.
+        # Audit attribution to the human is preserved via
+        # ``message_post(author_id=...)`` on the warning chatter
+        # below — no information is lost.
         company = self.backend_id._get_company()
-        scoped = self.with_user(author).with_company(company)
+        scoped = self.sudo().with_company(company)
         if self.purchase_order_id:
             # Append-to-existing flow (started from a draft PO).
             if self.purchase_order_id.state not in ("draft", "sent"):
@@ -126,7 +136,7 @@ class PunchoutSession(models.Model):
                 self._prepare_purchase_order_lines()
             )
             if new_line_cmds:
-                self.purchase_order_id.with_user(author).with_company(company).write(
+                self.purchase_order_id.sudo().with_company(company).write(
                     {"order_line": new_line_cmds}
                 )
             self.write({"state": "done"})
@@ -139,12 +149,16 @@ class PunchoutSession(models.Model):
                 }
             )
         # Post any cart-vs-product mismatch warnings to the PO chatter
-        # so the purchaser sees them before confirming.
+        # so the purchaser sees them before confirming. Author
+        # attribution = the session's initiating user when set; falls
+        # back to OdooBot for system-driven flows.
         new_lines = self.purchase_order_id.order_line.filtered(
             lambda line: line.punchout_session_id == self
         )
         self._post_punchout_line_warnings(
-            self.purchase_order_id.with_user(author).with_company(company), new_lines
+            self.purchase_order_id.sudo().with_company(company),
+            new_lines,
+            author,
         )
         return self.action_view_purchase_order()
 
@@ -219,7 +233,7 @@ class PunchoutSession(models.Model):
             cart=", ".join(c.display_name for c in mismatched),
         )
 
-    def _post_punchout_line_warnings(self, order, new_lines):
+    def _post_punchout_line_warnings(self, order, new_lines, author=None):
         """Post one chatter message on the PO bundling all warnings
         from the cart vs the resolved PO/product data — keeps the
         audit trail compact.
@@ -229,6 +243,12 @@ class PunchoutSession(models.Model):
         * PO-level currency mismatch (cart prices in a different
           currency than the PO's pricelist resolved to)
         Override / extend in subclasses for protocol-specific checks.
+
+        ``author`` (optional, ``res.users``): explicit attribution
+        for ``message_post``. Used by ``action_create_purchase_order``
+        to route the chatter under the session-initiating human even
+        though the technical write runs under SUPERUSER. Falls back
+        to the env's default attribution when omitted.
         """
         self.ensure_one()
         if not new_lines:
@@ -241,13 +261,18 @@ class PunchoutSession(models.Model):
             all_warnings.append(currency_msg)
         if not all_warnings:
             return
-        body = (
+        # ``Markup`` so the <strong>/<ul>/<code> tags render as HTML
+        # in the chatter instead of being shown as escaped text.
+        body = Markup(
             self.env._("Punchout cart vs Odoo product data — discrepancies on this PO:")
             + "<ul><li>"
             + "</li><li>".join(all_warnings)
             + "</li></ul>"
         )
-        order.message_post(body=body)
+        post_kwargs = {"body": body}
+        if author and author.partner_id:
+            post_kwargs["author_id"] = author.partner_id.id
+        order.message_post(**post_kwargs)
 
     def _tag_lines_with_session(self, line_cmds):
         """Inject ``punchout_session_id`` into every (0, 0, vals) command.
@@ -398,21 +423,34 @@ class PunchoutSession(models.Model):
         # Include the session's display name in the body — when several
         # sessions exist for the same partner the chatter on the PO
         # otherwise can't be traced back to a specific session.
-        body = self.env._(
-            "Auto-creation of the purchase order failed for punchout "
-            "session <strong>%(session)s</strong>. The session "
-            "remains in <strong>To Process</strong> — open it and "
-            "click Process to retry once the issue is resolved.<br/>"
-            "Error: <code>%(err)s</code>",
-            session=self.display_name,
-            err=exc,
+        # ``Markup`` so the <strong>/<br/>/<code> tags render as HTML
+        # in the chatter rather than being shown as escaped text.
+        body = Markup(
+            self.env._(
+                "Auto-creation of the purchase order failed for punchout "
+                "session <strong>%(session)s</strong>. The session "
+                "remains in <strong>To Process</strong> — open it and "
+                "click Process to retry once the issue is resolved.<br/>"
+                "Error: <code>%(err)s</code>",
+                session=self.display_name,
+                err=exc,
+            )
         )
+        # Author attribution via ``message_post(author_id=...)`` rather
+        # than ``with_user(author).message_post(...)`` — the latter
+        # also runs ACL checks under the author, which can fail for the
+        # same reason that brought us here (admin lacking the
+        # backend's company in ``company_ids``). sudo() bypasses ACLs;
+        # author_id sets the visible chatter author.
+        post_kwargs = {"body": body}
+        if author and author.partner_id:
+            post_kwargs["author_id"] = author.partner_id.id
         # Both message_posts wrapped in their own try/except — even the
         # safety-net author resolution can't help if message_post itself
         # raises (e.g. mail module misconfigured). The session stays in
         # to_process and the user can still click Process manually.
         try:
-            self.sudo().with_user(author).message_post(body=body)
+            self.sudo().message_post(**post_kwargs)
         except Exception as inner_exc:  # noqa: BLE001
             _logger.warning(
                 "Punchout session %s: failed to post auto-process "
@@ -422,7 +460,7 @@ class PunchoutSession(models.Model):
             )
         if self.purchase_order_id:
             try:
-                self.purchase_order_id.sudo().with_user(author).message_post(body=body)
+                self.purchase_order_id.sudo().message_post(**post_kwargs)
             except Exception as inner_exc:  # noqa: BLE001
                 _logger.warning(
                     "Punchout session %s: failed to post auto-process "

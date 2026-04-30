@@ -476,11 +476,18 @@ class TestPunchoutPurchase(TestPunchoutPurchaseCommon):
         self.session._post_punchout_line_warnings(po, po.order_line)
         self.assertEqual(len(po.message_ids), before)
 
-    def test_auto_processed_po_attributed_to_session_user(self):
-        """Auto-process runs sudo'd from the supplier callback; the PO
-        and its chatter messages must be attributed to the user who
-        started the punchout, not the public/sudo user that env carries
-        at callback time.
+    def test_auto_processed_po_created_under_superuser(self):
+        """Auto-process runs the technical PO create under SUPERUSER
+        (sudo) to bypass cross-company ACLs — the session-initiating
+        user often doesn't have the backend's company in their
+        ``company_ids``, so a plain ``with_user(author)`` would trip
+        ``account.tax`` record rules during PO creation.
+
+        Audit attribution to the human is preserved via
+        ``message_post(author_id=...)`` on the warning chatter (see
+        ``test_chatter_warning_attributed_to_session_user``); the
+        ``create_uid`` on the PO itself reflects the system-driven
+        nature of the auto-process and is OdooBot.
         """
         purchaser = self.env["res.users"].create(
             {
@@ -492,9 +499,6 @@ class TestPunchoutPurchase(TestPunchoutPurchaseCommon):
                 ],
             }
         )
-        # Build a session owned by the purchaser, then trigger
-        # auto-process from a sudo'd context (simulating the supplier
-        # callback path).
         session = self.session_model.create(
             {
                 "backend_id": self.backend.id,
@@ -503,7 +507,13 @@ class TestPunchoutPurchase(TestPunchoutPurchaseCommon):
             }
         )
         session.with_user(self.env.ref("base.public_user")).sudo().state = "to_process"
-        self.assertEqual(session.purchase_order_id.create_uid, purchaser)
+        # PO exists and is well-formed.
+        self.assertTrue(session.purchase_order_id)
+        # ``create_uid`` is OdooBot because the create was sudo'd.
+        self.assertEqual(
+            session.purchase_order_id.create_uid,
+            self.env.ref("base.user_root"),
+        )
 
     def test_chatter_warning_attributed_to_session_user(self):
         """Cart-vs-product mismatch chatter posts must be attributed to
