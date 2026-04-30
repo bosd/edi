@@ -176,16 +176,19 @@
         </field>
     </record>
     <!--KANBAN (catalog): manager-facing view of every backend
-        including archived presets. State badges + protocol badge
-        (manager-only). The "Open Catalog" button is hidden on non-
-        live tiles — clicking those tiles opens the form for setup
-        instead. Used by ``punchout_backend_act_window`` (Settings
-        menu, manager-gated) with ``active_test: False`` so archived
-        presets are visible. -->
+        including archived presets. Layout follows Odoo's
+        payment.provider kanban: 64×64 logo on the left in an
+        ``<aside>``, supplier name + description + state badges in
+        ``o_record_main`` on the right. Click anywhere on the tile
+        opens the form (default kanban behaviour). The explicit
+        "Open Catalog" button is shown only on live tiles —
+        non-live tiles get an "Activate" button instead, which also
+        opens the form so the manager can fill in credentials and
+        flip the state to Open. -->
     <record model="ir.ui.view" id="punchout_backend_kanban_view">
         <field name="model">punchout.backend</field>
         <field name="arch" type="xml">
-            <kanban class="o_kanban_dashboard" default_order="name" sample="1">
+            <kanban default_order="name" sample="1">
                 <field name="id" />
                 <field name="name" />
                 <field name="description" />
@@ -195,118 +198,106 @@
                 <field name="active" />
                 <templates>
                     <t t-name="card">
-                        <div class="d-flex flex-row align-items-center">
+                        <aside>
                             <field
                                 name="image_128"
                                 widget="image"
-                                class="o_image_64_cover me-3"
+                                class="o_image_64_max"
                                 options="{'preview_image': 'image_128'}"
                             />
-                            <div class="flex-grow-1">
-                                <strong>
-                                    <field name="name" />
-                                </strong>
-                                <div class="text-muted small">
-                                    <field name="description" />
-                                </div>
-                                <div class="mt-1">
-                                    <!-- State badges (always visible;
-                                         the colour cue is what users
-                                         act on first). -->
-                                    <span
-                                        t-if="!record.active.raw_value"
-                                        class="badge text-bg-secondary me-1"
-                                    >Archived</span>
-                                    <span
-                                        t-if="record.active.raw_value and record.state.raw_value === 'open'"
-                                        class="badge text-bg-success me-1"
-                                    >Live</span>
-                                    <span
-                                        t-if="record.active.raw_value and record.state.raw_value === 'draft'"
-                                        class="badge text-bg-warning me-1"
-                                    >Setup needed</span>
-                                    <span
-                                        t-if="record.active.raw_value and record.state.raw_value === 'closed'"
-                                        class="badge text-bg-danger me-1"
-                                    >Closed</span>
-                                    <!-- Protocol badge is setup-tier
-                                         info; gated to managers. -->
-                                    <span
-                                        class="badge text-bg-info"
-                                        groups="punchout.group_punchout_manager"
-                                    >
-                                        <field name="protocol" />
-                                    </span>
-                                </div>
+                        </aside>
+                        <div class="ms-2 o_record_main">
+                            <span class="mb-0 fw-bold fs-4">
+                                <field name="name" />
+                            </span>
+                            <span class="fs-6 text-muted mb-1">
+                                <field name="description" />
+                            </span>
+                            <div class="d-flex flex-wrap">
+                                <!-- State badges (rounded-pill, same
+                                     style as payment.provider). Order
+                                     of t-if matches form ribbon
+                                     order: archived overrides state. -->
+                                <span
+                                    t-if="!record.active.raw_value"
+                                    class="badge rounded-pill text-bg-secondary me-1"
+                                >Archived</span>
+                                <span
+                                    t-if="record.active.raw_value and record.state.raw_value === 'open'"
+                                    class="badge rounded-pill text-bg-success me-1"
+                                >Live</span>
+                                <span
+                                    t-if="record.active.raw_value and record.state.raw_value === 'draft'"
+                                    class="badge rounded-pill text-bg-warning me-1"
+                                >Setup needed</span>
+                                <span
+                                    t-if="record.active.raw_value and record.state.raw_value === 'closed'"
+                                    class="badge rounded-pill text-bg-danger me-1"
+                                >Closed</span>
+                                <!-- Protocol badge: manager-only, sits
+                                     last so it doesn't dominate the
+                                     state-cue colour. -->
+                                <span
+                                    class="badge rounded-pill text-bg-info"
+                                    groups="punchout.group_punchout_manager"
+                                >
+                                    <field name="protocol" />
+                                </span>
                             </div>
-                        </div>
-                        <div class="o_kanban_record_bottom mt-2">
-                            <!-- Live: explicit "Open Catalog" button
-                                 to start a session. Non-live: no
-                                 button — clicking the tile opens the
-                                 form for the manager to fill in
-                                 credentials / activate. -->
-                            <button
-                                name="redirect_to_backend"
-                                type="object"
-                                class="btn btn-primary btn-sm w-100"
-                                invisible="state != 'open' or not active"
-                            >
-                                <i class="fa fa-sign-in me-1" /> Open Catalog
-                            </button>
+                            <footer class="mt-2">
+                                <button
+                                    name="redirect_to_backend"
+                                    type="object"
+                                    class="btn btn-primary btn-sm"
+                                    invisible="state != 'open' or not active"
+                                >
+                                    <i class="fa fa-sign-in me-1" /> Open Catalog
+                                </button>
+                            </footer>
                         </div>
                     </t>
                 </templates>
             </kanban>
         </field>
     </record>
-    <!--KANBAN (picker): end-user-facing view. Strict domain on the
-        action limits this to ``active=True AND state=open`` so users
-        only see suppliers they can actually punch out to. Single
-        prominent "Open Catalog" button per tile. No protocol badge
-        (gated, would render empty for end users) and no state badge
-        (only one possible state in this view). Used by
-        ``punchout_supplier_picker_act_window`` from the
-        purchaser-facing menu. -->
+    <!--KANBAN (picker): end-user-facing view. Same payment-provider
+        layout as the catalog kanban but minimal: just a 64×64 logo
+        and the supplier name. No description (avoids leaking
+        configuration details set by managers), no state badges
+        (strict domain pre-filters to live + active), no protocol
+        badge (technical info, gated to manager anyway). Single big
+        "Open Catalog" button. Strict domain (``state=open AND
+        active=True``) is on the action, not the view. -->
     <record model="ir.ui.view" id="punchout_backend_picker_kanban_view">
         <field name="model">punchout.backend</field>
         <field name="arch" type="xml">
-            <kanban
-                class="o_kanban_dashboard"
-                default_order="name"
-                sample="1"
-                create="0"
-            >
+            <kanban default_order="name" sample="1" create="0">
                 <field name="id" />
                 <field name="name" />
-                <field name="description" />
                 <field name="image_128" />
                 <templates>
                     <t t-name="card">
-                        <div class="d-flex flex-row align-items-center">
+                        <aside>
                             <field
                                 name="image_128"
                                 widget="image"
-                                class="o_image_64_cover me-3"
+                                class="o_image_64_max"
                                 options="{'preview_image': 'image_128'}"
                             />
-                            <div class="flex-grow-1">
-                                <strong>
-                                    <field name="name" />
-                                </strong>
-                                <div class="text-muted small">
-                                    <field name="description" />
-                                </div>
-                            </div>
-                        </div>
-                        <div class="o_kanban_record_bottom mt-2">
-                            <button
-                                name="redirect_to_backend"
-                                type="object"
-                                class="btn btn-primary btn-sm w-100"
-                            >
-                                <i class="fa fa-sign-in me-1" /> Open Catalog
-                            </button>
+                        </aside>
+                        <div class="ms-2 o_record_main">
+                            <span class="mb-0 fw-bold fs-4">
+                                <field name="name" />
+                            </span>
+                            <footer class="mt-2">
+                                <button
+                                    name="redirect_to_backend"
+                                    type="object"
+                                    class="btn btn-primary btn-sm w-100"
+                                >
+                                    <i class="fa fa-sign-in me-1" /> Open Catalog
+                                </button>
+                            </footer>
                         </div>
                     </t>
                 </templates>

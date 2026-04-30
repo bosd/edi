@@ -23,7 +23,13 @@
                     <field name="oci_param_username" />
                     <field name="oci_param_password" />
                     <field name="oci_param_customer" />
-                    <field name="oci_custom_parameters" password="True" />
+                    <!-- No longer password-masked: credentials live
+                         in the dedicated auth_username / auth_password
+                         / auth_customer_number fields. This field is
+                         the technical escape hatch for non-credential
+                         vendor params (e.g. operation_type=create,
+                         storeId, branch). -->
+                    <field name="oci_custom_parameters" />
                 </group>
             </xpath>
         </field>

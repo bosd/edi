@@ -389,23 +389,144 @@ shopping cart data back into Odoo.</p>
 <p><strong>Table of contents</strong></p>
 <div class="contents local topic" id="contents">
 <ul class="simple">
-<li><a class="reference internal" href="#changelog" id="toc-entry-1">Changelog</a><ul>
-<li><a class="reference internal" href="#section-1" id="toc-entry-2">18.0.1.0.0 (2026)</a></li>
+<li><a class="reference internal" href="#configuration" id="toc-entry-1">Configuration</a><ul>
+<li><a class="reference internal" href="#adopting-a-shipped-supplier-preset" id="toc-entry-2">Adopting a shipped supplier preset</a></li>
+<li><a class="reference internal" href="#configuring-a-new-cxml-supplier-no-preset-yet" id="toc-entry-3">Configuring a new cXML supplier (no preset yet)</a></li>
+<li><a class="reference internal" href="#test-connection" id="toc-entry-4">Test Connection</a></li>
+<li><a class="reference internal" href="#known-suppliers" id="toc-entry-5">Known suppliers</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#bug-tracker" id="toc-entry-3">Bug Tracker</a></li>
-<li><a class="reference internal" href="#credits" id="toc-entry-4">Credits</a><ul>
-<li><a class="reference internal" href="#authors" id="toc-entry-5">Authors</a></li>
-<li><a class="reference internal" href="#contributors" id="toc-entry-6">Contributors</a></li>
-<li><a class="reference internal" href="#maintainers" id="toc-entry-7">Maintainers</a></li>
+<li><a class="reference internal" href="#changelog" id="toc-entry-6">Changelog</a><ul>
+<li><a class="reference internal" href="#section-1" id="toc-entry-7">18.0.1.0.0 (2026)</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#bug-tracker" id="toc-entry-8">Bug Tracker</a></li>
+<li><a class="reference internal" href="#credits" id="toc-entry-9">Credits</a><ul>
+<li><a class="reference internal" href="#authors" id="toc-entry-10">Authors</a></li>
+<li><a class="reference internal" href="#contributors" id="toc-entry-11">Contributors</a></li>
+<li><a class="reference internal" href="#maintainers" id="toc-entry-12">Maintainers</a></li>
 </ul>
 </li>
 </ul>
 </div>
+<div class="section" id="configuration">
+<h2><a class="toc-backref" href="#toc-entry-1">Configuration</a></h2>
+<div class="section" id="adopting-a-shipped-supplier-preset">
+<h3><a class="toc-backref" href="#toc-entry-2">Adopting a shipped supplier preset</a></h3>
+<p>This module ships pre-configured backend records for cXML suppliers.
+They install in archived state so the catalog stays uncluttered. To
+adopt one:</p>
+<ol class="arabic simple">
+<li>Open <strong>PunchOut → PunchOut Backends</strong>.</li>
+<li>Toggle the <strong>Archived</strong> filter on (or open the Archived saved
+search).</li>
+<li>Pick the supplier you want, click <strong>Unarchive</strong>.</li>
+<li>On the form (Advanced section, system-only):<ul>
+<li>Replace the <strong>From identity</strong> placeholder with the value the
+supplier assigned to your account.</li>
+<li>Replace the <strong>Shared secret</strong> placeholder with your buyer-specific
+secret.</li>
+<li>Verify the <strong>To</strong> values match what the supplier documents (rare to
+need changes — these identify the supplier, not your account).</li>
+</ul>
+</li>
+<li>On the form (Connection section):<ul>
+<li>Link <strong>Partner</strong> (your existing <tt class="docutils literal">res.partner</tt> for that supplier).</li>
+</ul>
+</li>
+<li>Switch the <strong>State</strong> to <strong>Open</strong>.</li>
+</ol>
+<p>The “Closed” state is a hard kill-switch (controllers refuse traffic,
+<tt class="docutils literal">_create_punchout_session</tt> refuses to start) — useful when retiring a
+supplier without deleting the historical sessions.</p>
+</div>
+<div class="section" id="configuring-a-new-cxml-supplier-no-preset-yet">
+<h3><a class="toc-backref" href="#toc-entry-3">Configuring a new cXML supplier (no preset yet)</a></h3>
+<p>Six fields make a cXML PunchOut connection work:</p>
+<ul class="simple">
+<li><strong>URL.</strong> The supplier’s <tt class="docutils literal">PunchOutSetupRequest</tt> endpoint.</li>
+<li><strong>From domain / identity.</strong> Identifies the buyer. Most suppliers use
+<tt class="docutils literal">NetworkId</tt> as the domain and assign a buyer-specific identity per
+customer.</li>
+<li><strong>To domain / identity.</strong> Identifies the supplier. Typically <tt class="docutils literal">DUNS</tt>
++ the supplier’s DUNS number — same value for every customer
+connecting to them.</li>
+<li><strong>Shared secret.</strong> Authenticates the buyer to the supplier.
+Buyer-specific.</li>
+</ul>
+<p>The Connection section also has the buyer-side defaults: User agent and
+Deployment mode (<tt class="docutils literal">test</tt> / <tt class="docutils literal">production</tt>). These rarely need changes
+per supplier.</p>
+<p>When you’ve got a supplier working, please open a PR adding a preset
+record to <tt class="docutils literal">data/supplier_presets.xml</tt> and a row to the table below.</p>
+</div>
+<div class="section" id="test-connection">
+<h3><a class="toc-backref" href="#toc-entry-4">Test Connection</a></h3>
+<p>cXML backends support a <strong>Test Connection</strong> button on the form that
+round-trips a real <tt class="docutils literal">PunchOutSetupRequest</tt> and verifies the supplier
+responds with a valid <tt class="docutils literal">PunchOutSetupResponse</tt>. Use it after entering
+credentials to catch wrong-URL / wrong-secret errors before exposing the
+backend to purchasers.</p>
+</div>
+<div class="section" id="known-suppliers">
+<h3><a class="toc-backref" href="#toc-entry-5">Known suppliers</a></h3>
+<blockquote>
+Community-curated, not endorsed. Each entry reflects the public
+documentation of the supplier at the time of contribution; APIs
+change. Verify against the supplier’s current docs before going live,
+and PR fixes when they drift.</blockquote>
+<table border="1" class="docutils">
+<colgroup>
+<col width="11%" />
+<col width="11%" />
+<col width="10%" />
+<col width="14%" />
+<col width="31%" />
+<col width="22%" />
+</colgroup>
+<thead valign="bottom">
+<tr><th class="head">Logo</th>
+<th class="head">Supplier</th>
+<th class="head">Country</th>
+<th class="head">Industry</th>
+<th class="head">Notes</th>
+<th class="head">Preset</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr><td><img alt="Fabory" src="https://raw.githubusercontent.com/OCA/edi/19.0/punchout_cxml/static/description/suppliers/fabory.png" /></td>
+<td>Fabory</td>
+<td>NL / EU</td>
+<td>Fasteners,
+fixings,
+industrial
+supply</td>
+<td><tt class="docutils literal">NetworkId</tt> From,
+<tt class="docutils literal">DUNS</tt> To =
+<tt class="docutils literal">404789992</tt>. Demo
+credentials available —
+see
+<tt class="docutils literal">demo/fabory_demo.xml</tt>.</td>
+<td>✅ shipped
+(replace
+<tt class="docutils literal">from_identity</tt>
++
+<tt class="docutils literal">shared_secret</tt>
+after registering
+with Fabory)</td>
+</tr>
+</tbody>
+</table>
+<p>To add an entry: create the preset under <tt class="docutils literal">data/supplier_presets.xml</tt>,
+optionally add a <tt class="docutils literal"><span class="pre">demo/&lt;supplier&gt;_demo.xml</span></tt> record with public demo
+credentials for runboat, then add a row above with the docs link in the
+description.</p>
+</div>
+</div>
 <div class="section" id="changelog">
-<h2><a class="toc-backref" href="#toc-entry-1">Changelog</a></h2>
+<h2><a class="toc-backref" href="#toc-entry-6">Changelog</a></h2>
 <div class="section" id="section-1">
-<h3><a class="toc-backref" href="#toc-entry-2">18.0.1.0.0 (2026)</a></h3>
+<h3><a class="toc-backref" href="#toc-entry-7">18.0.1.0.0 (2026)</a></h3>
 <ul class="simple">
 <li>[MIG] Migration to Odoo 18.0. Original cXML protocol implementation by
 ACSONE SA/NV (Thomas Binsfeld, Benjamin Willig).</li>
@@ -424,7 +545,7 @@ DTD link before the user sees a confusing redirect failure mid-flow.</li>
 </div>
 </div>
 <div class="section" id="bug-tracker">
-<h2><a class="toc-backref" href="#toc-entry-3">Bug Tracker</a></h2>
+<h2><a class="toc-backref" href="#toc-entry-8">Bug Tracker</a></h2>
 <p>Bugs are tracked on <a class="reference external" href="https://github.com/OCA/edi/issues">GitHub Issues</a>.
 In case of trouble, please check there if your issue has already been reported.
 If you spotted it first, help us to smash it by providing a detailed and welcomed
@@ -432,16 +553,16 @@ If you spotted it first, help us to smash it by providing a detailed and welcome
 <p>Do not contact contributors directly about support or help with technical issues.</p>
 </div>
 <div class="section" id="credits">
-<h2><a class="toc-backref" href="#toc-entry-4">Credits</a></h2>
+<h2><a class="toc-backref" href="#toc-entry-9">Credits</a></h2>
 <div class="section" id="authors">
-<h3><a class="toc-backref" href="#toc-entry-5">Authors</a></h3>
+<h3><a class="toc-backref" href="#toc-entry-10">Authors</a></h3>
 <ul class="simple">
 <li>ACSONE SA/NV</li>
 <li>OBS Solutions Netherlands</li>
 </ul>
 </div>
 <div class="section" id="contributors">
-<h3><a class="toc-backref" href="#toc-entry-6">Contributors</a></h3>
+<h3><a class="toc-backref" href="#toc-entry-11">Contributors</a></h3>
 <ul class="simple">
 <li>Thomas Binsfeld &lt;<a class="reference external" href="mailto:thomas.binsfeld&#64;acsone.eu">thomas.binsfeld&#64;acsone.eu</a>&gt;</li>
 <li>Benjamin Willig &lt;<a class="reference external" href="mailto:benjamin.willig&#64;acsone.eu">benjamin.willig&#64;acsone.eu</a>&gt;</li>
@@ -449,7 +570,7 @@ If you spotted it first, help us to smash it by providing a detailed and welcome
 </ul>
 </div>
 <div class="section" id="maintainers">
-<h3><a class="toc-backref" href="#toc-entry-7">Maintainers</a></h3>
+<h3><a class="toc-backref" href="#toc-entry-12">Maintainers</a></h3>
 <p>This module is maintained by the OCA.</p>
 <a class="reference external image-reference" href="https://odoo-community.org">
 <img alt="Odoo Community Association" src="https://odoo-community.org/logo.png" />

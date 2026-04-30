@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Copyright 2026 Bosd
+     License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl). -->
+<!--
+    Pre-configured cXML supplier presets shipped with the module.
+
+    Each preset is created with ``active=False`` and ``state="draft"``
+    so it sits in the catalog without showing up in default views or
+    accepting traffic. To adopt a preset:
+
+        1. Filter the backend list to "Archived" (or browse from the
+           kanban with the archive filter on).
+        2. Open the supplier you want, unarchive.
+        3. Replace the placeholder values for ``from_identity``,
+           ``shared_secret`` (and any other ``REPLACE_ME`` field) with
+           the values the supplier assigned to your account.
+        4. Link your ``partner_id`` (the supplier's existing
+           ``res.partner``).
+        5. Switch state to ``open``.
+
+    Demo / runboat installs additionally get an active+open variant
+    of each supplier under ``demo/`` with the supplier's published
+    demo credentials baked in — see e.g. ``demo/fabory_demo.xml``.
+
+    ``noupdate="1"`` so module upgrades don't reset customer changes.
+
+    Community-curated, not endorsed. Each preset reflects the public
+    documentation of the supplier at the time of contribution; APIs
+    change. Verify against the supplier's current docs before going
+    live, and PR fixes here when they drift.
+-->
+<odoo noupdate="1">
+    <!-- ====================================================
+         Fabory (NL/EU) — fasteners, fixings, industrial supply
+         Public docs: provided directly by Fabory's punchout team
+         on request. Demo credentials below are the "FaboryDemo"
+         buyer they publish for testing — see demo/fabory_demo.xml
+         for an active+open record runboat users can click.
+
+         cXML credential model (Fabory uses NetworkId for From
+         AND Sender, DUNS for To):
+           - from_domain   = NetworkId  (used for both From and Sender)
+           - from_identity = REPLACE_ME (your assigned NetworkId
+                             buyer ID — Fabory provisions per customer)
+           - to_domain     = DUNS       (Fabory's identifier type)
+           - to_identity   = 404789992  (Fabory's DUNS — same for
+                             everyone connecting to them)
+           - shared_secret = REPLACE_ME (your buyer-specific secret)
+
+         Punchout setup endpoint:
+           https://www.fabory.com/punchout/v2/cxml/setup
+    ==================================================== -->
+    <record id="preset_fabory" model="punchout.backend">
+        <field name="name">Fabory</field>
+        <field
+            name="description"
+        >Fasteners, fixings, industrial supply (NL/EU). cXML PunchOut. Replace from_identity and shared_secret with the values Fabory assigned to your account.</field>
+        <field name="protocol">cxml</field>
+        <field name="url">https://www.fabory.com/punchout/v2/cxml/setup</field>
+        <field name="browser_form_post_url">/punchout/cxml/receive/</field>
+        <field name="cxml_version">1.2.008</field>
+        <field name="from_domain">NetworkId</field>
+        <field name="from_identity">REPLACE_ME</field>
+        <field name="to_domain">DUNS</field>
+        <field name="to_identity">404789992</field>
+        <field name="shared_secret">REPLACE_ME</field>
+        <field name="user_agent">Odoo Punchout</field>
+        <field name="deployment_mode">test</field>
+        <field name="active" eval="False" />
+        <field name="state">draft</field>
+    </record>
+</odoo>

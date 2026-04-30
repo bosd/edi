@@ -57,11 +57,12 @@ class PunchoutBackend(models.Model):
     )
     auth_password = fields.Char(
         string="Password",
-        tracking=True,
         help=(
             "Generic supplier-login password. Stored plain-text; "
             "protect via field-level groups and DB-level encryption "
-            "as appropriate."
+            "as appropriate. Intentionally NOT tracked — tracking "
+            "would write the cleartext password to the chatter on "
+            "every change."
         ),
     )
     auth_customer_number = fields.Char(

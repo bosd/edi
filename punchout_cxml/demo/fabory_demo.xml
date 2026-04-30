@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Copyright 2026 Bosd
+     License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl). -->
+<!--
+    Active Fabory cXML demo backend. Loaded only when Odoo is
+    started with demo data enabled (``without_demo=False``,
+    runboat default); never present on production installs that
+    omit demo data.
+
+    Uses the public ``FaboryDemo`` buyer credentials Fabory publishes
+    for test integrations, so runboat / sandbox users can click
+    "Open Catalog" without configuring anything. Production users
+    should adopt the archived preset
+    (``data/supplier_presets.xml#preset_fabory``) and replace the
+    placeholders with their own assigned values.
+
+    Distinct ``id`` from the archived preset so the two records
+    coexist on a demo install.
+-->
+<odoo noupdate="1">
+    <record id="demo_fabory" model="punchout.backend">
+        <field name="name">Fabory (demo)</field>
+        <field
+            name="description"
+        >Live Fabory demo backend (runboat / sandbox). Public FaboryDemo credentials baked in; click Open Catalog to test.</field>
+        <field name="protocol">cxml</field>
+        <field name="url">https://www.fabory.com/punchout/v2/cxml/setup</field>
+        <field name="browser_form_post_url">/punchout/cxml/receive/</field>
+        <field name="cxml_version">1.2.008</field>
+        <field name="from_domain">NetworkId</field>
+        <field name="from_identity">FaboryDemo</field>
+        <field name="to_domain">DUNS</field>
+        <field name="to_identity">404789992</field>
+        <field name="shared_secret">F@bory12</field>
+        <field name="user_agent">Odoo Punchout Demo</field>
+        <field name="deployment_mode">test</field>
+        <field name="state">open</field>
+    </record>
+</odoo>
