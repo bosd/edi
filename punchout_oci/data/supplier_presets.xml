@@ -132,6 +132,11 @@
              new requisition; ship as a default custom param so
              the user just needs to set credentials and activate. -->
         <field name="oci_custom_parameters">operation_type=create</field>
+        <field
+            name="image_128"
+            type="base64"
+            file="punchout_oci/static/description/suppliers/dell.png"
+        />
         <field name="active" eval="False" />
         <field name="state">draft</field>
     </record>

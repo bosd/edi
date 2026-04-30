@@ -155,6 +155,25 @@ class PunchoutBackend(models.Model):
             "context": {"default_backend_id": self.id},
         }
 
+    def action_setup_form(self):
+        """Open this backend's form view in setup mode.
+
+        Wired to the ``Activate`` button on archived / draft kanban
+        tiles. Mirrors how Odoo's payment.provider lets a manager
+        click a Disabled tile and land directly in the form to fill
+        in credentials. Clicking the tile would open the form too
+        (default kanban behaviour), but an explicit button is more
+        discoverable for non-technical users."""
+        self.ensure_one()
+        return {
+            "type": "ir.actions.act_window",
+            "res_model": "punchout.backend",
+            "res_id": self.id,
+            "view_mode": "form",
+            "target": "current",
+            "context": {"active_test": False},
+        }
+
     @api.model
     def _selection_protocol(self):
         """Return available protocols. Extended by protocol modules."""
