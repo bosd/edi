@@ -3,8 +3,9 @@
      Copyright 2026 Bosd
      License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl). -->
 <odoo>
-    <!--FORM view: split into Connection (manager) + Advanced (system).
-        The manager tier is the functional consultant / application
+    <!--FORM view: state-aware ribbons + Connection / Credentials /
+        Advanced split, mirroring Odoo's payment.provider UX. The
+        manager tier is the functional consultant / application
         manager — they should be able to set up a backend (link the
         partner, enter credentials, switch state, archive what they
         don't need) without exposure to URL / timeout / retention
@@ -24,16 +25,28 @@
                     <field name="state" widget="statusbar" options="{'clickable': 1}" />
                 </header>
                 <sheet>
-                    <!-- Standard archived ribbon — visible whenever
-                         the backend is archived. Compose with
-                         ``state="closed"`` for fully decommissioned
-                         backends; ``active=False`` alone is the "park
-                         a shipped preset I haven't adopted" state. -->
+                    <!-- State-aware ribbons. Order matters — first
+                         match wins, more specific states above more
+                         general ones. ``Archived`` (active=False) is
+                         the loudest signal: shipped preset not yet
+                         adopted; it overrides whatever ``state`` says. -->
                     <widget
                         name="web_ribbon"
                         title="Archived"
-                        bg_color="text-bg-danger"
+                        bg_color="text-bg-secondary"
                         invisible="active"
+                    />
+                    <widget
+                        name="web_ribbon"
+                        title="Closed"
+                        bg_color="text-bg-danger"
+                        invisible="not active or state != 'closed'"
+                    />
+                    <widget
+                        name="web_ribbon"
+                        title="Setup needed"
+                        bg_color="text-bg-warning"
+                        invisible="not active or state != 'draft'"
                     />
                     <field name="active" invisible="1" />
                     <div name="button_box" class="oe_button_box">
@@ -162,10 +175,13 @@
             </search>
         </field>
     </record>
-    <!--KANBAN view: tile-per-supplier picker. The default action
-        domain pins this to ``state=open`` (which already implies
-        ``active=True`` since archived records are auto-filtered),
-        so users see only suppliers they can actually punch out to. -->
+    <!--KANBAN (catalog): manager-facing view of every backend
+        including archived presets. State badges + protocol badge
+        (manager-only). The "Open Catalog" button is hidden on non-
+        live tiles — clicking those tiles opens the form for setup
+        instead. Used by ``punchout_backend_act_window`` (Settings
+        menu, manager-gated) with ``active_test: False`` so archived
+        presets are visible. -->
     <record model="ir.ui.view" id="punchout_backend_kanban_view">
         <field name="model">punchout.backend</field>
         <field name="arch" type="xml">
@@ -176,6 +192,7 @@
                 <field name="protocol" />
                 <field name="image_128" />
                 <field name="state" />
+                <field name="active" />
                 <templates>
                     <t t-name="card">
                         <div class="d-flex flex-row align-items-center">
@@ -192,17 +209,93 @@
                                 <div class="text-muted small">
                                     <field name="description" />
                                 </div>
-                                <!-- Protocol badge is setup-tier info;
-                                     gated to managers so end-users see
-                                     a clean catalog (logo + supplier
-                                     name + description + button). -->
-                                <div
-                                    class="mt-1"
-                                    groups="punchout.group_punchout_manager"
-                                >
-                                    <span class="badge text-bg-info">
+                                <div class="mt-1">
+                                    <!-- State badges (always visible;
+                                         the colour cue is what users
+                                         act on first). -->
+                                    <span
+                                        t-if="!record.active.raw_value"
+                                        class="badge text-bg-secondary me-1"
+                                    >Archived</span>
+                                    <span
+                                        t-if="record.active.raw_value and record.state.raw_value === 'open'"
+                                        class="badge text-bg-success me-1"
+                                    >Live</span>
+                                    <span
+                                        t-if="record.active.raw_value and record.state.raw_value === 'draft'"
+                                        class="badge text-bg-warning me-1"
+                                    >Setup needed</span>
+                                    <span
+                                        t-if="record.active.raw_value and record.state.raw_value === 'closed'"
+                                        class="badge text-bg-danger me-1"
+                                    >Closed</span>
+                                    <!-- Protocol badge is setup-tier
+                                         info; gated to managers. -->
+                                    <span
+                                        class="badge text-bg-info"
+                                        groups="punchout.group_punchout_manager"
+                                    >
                                         <field name="protocol" />
                                     </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="o_kanban_record_bottom mt-2">
+                            <!-- Live: explicit "Open Catalog" button
+                                 to start a session. Non-live: no
+                                 button — clicking the tile opens the
+                                 form for the manager to fill in
+                                 credentials / activate. -->
+                            <button
+                                name="redirect_to_backend"
+                                type="object"
+                                class="btn btn-primary btn-sm w-100"
+                                invisible="state != 'open' or not active"
+                            >
+                                <i class="fa fa-sign-in me-1" /> Open Catalog
+                            </button>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+    <!--KANBAN (picker): end-user-facing view. Strict domain on the
+        action limits this to ``active=True AND state=open`` so users
+        only see suppliers they can actually punch out to. Single
+        prominent "Open Catalog" button per tile. No protocol badge
+        (gated, would render empty for end users) and no state badge
+        (only one possible state in this view). Used by
+        ``punchout_supplier_picker_act_window`` from the
+        purchaser-facing menu. -->
+    <record model="ir.ui.view" id="punchout_backend_picker_kanban_view">
+        <field name="model">punchout.backend</field>
+        <field name="arch" type="xml">
+            <kanban
+                class="o_kanban_dashboard"
+                default_order="name"
+                sample="1"
+                create="0"
+            >
+                <field name="id" />
+                <field name="name" />
+                <field name="description" />
+                <field name="image_128" />
+                <templates>
+                    <t t-name="card">
+                        <div class="d-flex flex-row align-items-center">
+                            <field
+                                name="image_128"
+                                widget="image"
+                                class="o_image_64_cover me-3"
+                                options="{'preview_image': 'image_128'}"
+                            />
+                            <div class="flex-grow-1">
+                                <strong>
+                                    <field name="name" />
+                                </strong>
+                                <div class="text-muted small">
+                                    <field name="description" />
                                 </div>
                             </div>
                         </div>
@@ -220,13 +313,38 @@
             </kanban>
         </field>
     </record>
-    <!--ACTION-->
+    <!--ACTION (catalog): manager-facing. ``active_test: False``
+        opens the catalog including archived presets. Gated to
+        the manager group so the action (and its menu) is hidden
+        from base.group_user. In v19 ``ir.ui.menu`` no longer
+        carries ``groups_id``; visibility is enforced via the
+        action's groups instead. -->
     <record model="ir.actions.act_window" id="punchout_backend_act_window">
         <field name="name">Punchout Backends</field>
         <field name="res_model">punchout.backend</field>
         <field name="view_mode">kanban,list,form</field>
         <field name="domain">[]</field>
+        <field name="context">{"active_test": False}</field>
+        <field name="group_ids" eval="[(4, ref('punchout.group_punchout_manager'))]" />
+    </record>
+    <!--ACTION (picker): end-user-facing. Strict domain — only live
+        backends. References the picker kanban view explicitly so
+        the catalog kanban doesn't leak into the user view. -->
+    <record model="ir.actions.act_window" id="punchout_supplier_picker_act_window">
+        <field name="name">Suppliers</field>
+        <field name="res_model">punchout.backend</field>
+        <field name="view_mode">kanban</field>
+        <field name="domain">[("state", "=", "open"), ("active", "=", True)]</field>
         <field name="context">{}</field>
+    </record>
+    <record
+        id="punchout_supplier_picker_act_window_view_kanban"
+        model="ir.actions.act_window.view"
+    >
+        <field name="sequence" eval="1" />
+        <field name="view_mode">kanban</field>
+        <field name="view_id" ref="punchout_backend_picker_kanban_view" />
+        <field name="act_window_id" ref="punchout_supplier_picker_act_window" />
     </record>
     <!--MENUS-->
     <record model="ir.ui.menu" id="punchout_menu">
@@ -234,6 +352,11 @@
         <field name="parent_id" ref="base.menu_custom" />
         <field name="sequence" eval="150" />
     </record>
+    <!--Manager-tier: the catalog (all backends including archived).
+        Lives under the technical PunchOut menu. The action's
+        ``groups_id`` already gates visibility — no need to repeat
+        it on the menu (and ``ir.ui.menu`` no longer accepts it
+        in v19). -->
     <record model="ir.ui.menu" id="punchout_backend_menu">
         <field name="name">PunchOut Backends</field>
         <field name="parent_id" ref="punchout.punchout_menu" />

@@ -51,4 +51,19 @@
             </field>
         </field>
     </record>
+
+    <!-- End-user-facing menu: Purchase > Suppliers (PunchOut). Points
+         at the picker action from the base ``punchout`` module —
+         strict domain (active=True, state=open) so purchasers only
+         see suppliers they can actually click on. Visible to
+         everyone with backend read access (base.group_user, set on
+         the model ACL). Setup / curation lives elsewhere (PunchOut
+         Backends menu, manager-gated). -->
+    <menuitem
+        id="purchase_punchout_supplier_picker_menu"
+        name="PunchOut Suppliers"
+        parent="purchase.menu_procurement_management"
+        action="punchout.punchout_supplier_picker_act_window"
+        sequence="100"
+    />
 </odoo>
