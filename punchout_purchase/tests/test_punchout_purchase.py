@@ -476,18 +476,17 @@ class TestPunchoutPurchase(TestPunchoutPurchaseCommon):
         self.session._post_punchout_line_warnings(po, po.order_line)
         self.assertEqual(len(po.message_ids), before)
 
-    def test_auto_processed_po_created_under_superuser(self):
-        """Auto-process runs the technical PO create under SUPERUSER
-        (sudo) to bypass cross-company ACLs — the session-initiating
-        user often doesn't have the backend's company in their
-        ``company_ids``, so a plain ``with_user(author)`` would trip
-        ``account.tax`` record rules during PO creation.
+    def test_auto_processed_po_attributed_to_session_user(self):
+        """Auto-process runs ``with_user(author).sudo()`` so the
+        session-initiating human (``session.user_id``) shows up as
+        the PO's ``create_uid`` AND on the chatter avatar, while
+        ``sudo`` (``su=True``) bypasses cross-company ACLs that
+        would otherwise trip ``account.tax`` record rules.
 
-        Audit attribution to the human is preserved via
-        ``message_post(author_id=...)`` on the warning chatter (see
-        ``test_chatter_warning_attributed_to_session_user``); the
-        ``create_uid`` on the PO itself reflects the system-driven
-        nature of the auto-process and is OdooBot.
+        Order matters: ``with_user(author).sudo()`` keeps su=True;
+        the reverse order (``sudo().with_user(author)``) would reset
+        su to False because Environment(user=...) drops the
+        superuser flag when the uid changes.
         """
         purchaser = self.env["res.users"].create(
             {
@@ -509,10 +508,12 @@ class TestPunchoutPurchase(TestPunchoutPurchaseCommon):
         session.with_user(self.env.ref("base.public_user")).sudo().state = "to_process"
         # PO exists and is well-formed.
         self.assertTrue(session.purchase_order_id)
-        # ``create_uid`` is OdooBot because the create was sudo'd.
+        # ``create_uid`` is the human purchaser (not OdooBot) — the
+        # ACL bypass came from the layered ``sudo()``, not from
+        # switching the user.
         self.assertEqual(
             session.purchase_order_id.create_uid,
-            self.env.ref("base.user_root"),
+            purchaser,
         )
 
     def test_chatter_warning_attributed_to_session_user(self):

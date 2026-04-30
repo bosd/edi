@@ -198,20 +198,31 @@
                 <field name="active" />
                 <templates>
                     <t t-name="card">
-                        <aside>
-                            <field
-                                name="image_128"
-                                widget="image"
-                                class="o_image_64_max mb-0"
-                            />
+                        <aside class="me-2">
+                            <!-- Wrap the image in a Bootstrap "card-
+                                 within-card": white background, light
+                                 border, rounded corners, padding.
+                                 Same visual as Odoo's payment.provider
+                                 (which gets these classes from CSS
+                                 targeting the kanban context). -->
+                            <div
+                                class="bg-white border rounded p-2 d-flex align-items-center justify-content-center"
+                                style="width: 64px; height: 64px;"
+                            >
+                                <field
+                                    name="image_128"
+                                    widget="image"
+                                    class="o_image_64_max mb-0"
+                                />
+                            </div>
                         </aside>
-                        <div class="ms-2 o_record_main">
-                            <span class="mb-0 fw-bold fs-4">
+                        <div class="o_record_main d-flex flex-column flex-grow-1">
+                            <div class="fw-bold fs-4">
                                 <field name="name" />
-                            </span>
-                            <span class="fs-6 text-muted mb-1">
+                            </div>
+                            <div class="fs-6 text-muted mb-1">
                                 <field name="description" />
-                            </span>
+                            </div>
                             <div class="d-flex flex-wrap">
                                 <!-- State badges (rounded-pill, same
                                      style as payment.provider). Order
@@ -243,7 +254,10 @@
                                     <field name="protocol" />
                                 </span>
                             </div>
-                            <footer class="mt-2 d-flex justify-content-end">
+                            <!-- ``mt-auto`` pushes the footer to the
+                                 bottom regardless of the description's
+                                 length so all tiles align consistently. -->
+                            <footer class="mt-auto d-flex justify-content-end">
                                 <!-- Live: jump to supplier catalog. -->
                                 <button
                                     name="redirect_to_backend"
@@ -254,10 +268,11 @@
                                     <i class="fa fa-sign-in me-1" /> Open Catalog
                                 </button>
                                 <!-- Non-live (archived / draft / closed):
-                                     explicit Activate button opens the
-                                     form so the manager can unarchive,
-                                     fill credentials, and set state to
-                                     Open. Same pattern as Odoo's
+                                     explicit Activate button unarchives
+                                     the record (if archived) and opens
+                                     the form so the manager can fill
+                                     credentials and set state to Open.
+                                     Same pattern as Odoo's
                                      payment.provider Disabled tiles. -->
                                 <button
                                     name="action_setup_form"
@@ -291,18 +306,23 @@
                 <field name="image_128" />
                 <templates>
                     <t t-name="card">
-                        <aside>
-                            <field
-                                name="image_128"
-                                widget="image"
-                                class="o_image_64_max mb-0"
-                            />
+                        <aside class="me-2">
+                            <div
+                                class="bg-white border rounded p-2 d-flex align-items-center justify-content-center"
+                                style="width: 64px; height: 64px;"
+                            >
+                                <field
+                                    name="image_128"
+                                    widget="image"
+                                    class="o_image_64_max mb-0"
+                                />
+                            </div>
                         </aside>
-                        <div class="ms-2 o_record_main">
-                            <span class="mb-0 fw-bold fs-4">
+                        <div class="o_record_main d-flex flex-column flex-grow-1">
+                            <div class="fw-bold fs-4">
                                 <field name="name" />
-                            </span>
-                            <footer class="mt-2 d-flex justify-content-end">
+                            </div>
+                            <footer class="mt-auto d-flex justify-content-end">
                                 <button
                                     name="redirect_to_backend"
                                     type="object"

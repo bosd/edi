@@ -108,20 +108,25 @@ class PunchoutSession(models.Model):
             # signals "system action" in the chatter (no confusion
             # with manual admin edits) and runs in superuser mode.
             author = self.env.ref("base.user_root")
-        # Run the technical PO create / append under SUPERUSER
-        # (sudo) to bypass cross-company ACLs. The session-initiating
-        # user (``session.user_id``) typically doesn't have the
-        # backend's company in their ``company_ids``, so a plain
-        # ``with_user(author)`` trips the record rule on
-        # ``account.tax`` (and similar) the moment Odoo computes
-        # taxes during PO create. We keep ``with_company`` so default
-        # field values (currency, fiscal position, payment terms…)
-        # resolve from the BACKEND's company, not the user's default.
-        # Audit attribution to the human is preserved via
-        # ``message_post(author_id=...)`` on the warning chatter
-        # below — no information is lost.
+        # Run the technical PO create / append under
+        # ``with_user(author).sudo()``: the human who started the
+        # punchout shows up as ``env.user`` (so the PO's
+        # ``create_uid`` and the auto-tracking chatter avatar are
+        # the buyer, not OdooBot), AND ``su=True`` bypasses
+        # cross-company ACLs.
+        #
+        # Order matters: ``with_user(author).sudo()`` preserves
+        # ``su=True``. The reverse order would reset ``su`` to
+        # False because ``Environment(user=...)`` drops the
+        # superuser flag when the uid changes — and ACLs would
+        # then trip the record rule on ``account.tax`` the moment
+        # Odoo computes taxes during PO create.
+        #
+        # We keep ``with_company`` so default field values
+        # (currency, fiscal position, payment terms…) resolve from
+        # the BACKEND's company, not the user's default.
         company = self.backend_id._get_company()
-        scoped = self.sudo().with_company(company)
+        scoped = self.with_user(author).sudo().with_company(company)
         if self.purchase_order_id:
             # Append-to-existing flow (started from a draft PO).
             if self.purchase_order_id.state not in ("draft", "sent"):
@@ -136,9 +141,9 @@ class PunchoutSession(models.Model):
                 self._prepare_purchase_order_lines()
             )
             if new_line_cmds:
-                self.purchase_order_id.sudo().with_company(company).write(
-                    {"order_line": new_line_cmds}
-                )
+                self.purchase_order_id.with_user(author).sudo().with_company(
+                    company
+                ).write({"order_line": new_line_cmds})
             self.write({"state": "done"})
         else:
             order = scoped._create_purchase_order_from_response()
@@ -149,14 +154,12 @@ class PunchoutSession(models.Model):
                 }
             )
         # Post any cart-vs-product mismatch warnings to the PO chatter
-        # so the purchaser sees them before confirming. Author
-        # attribution = the session's initiating user when set; falls
-        # back to OdooBot for system-driven flows.
+        # so the purchaser sees them before confirming.
         new_lines = self.purchase_order_id.order_line.filtered(
             lambda line: line.punchout_session_id == self
         )
         self._post_punchout_line_warnings(
-            self.purchase_order_id.sudo().with_company(company),
+            self.purchase_order_id.with_user(author).sudo().with_company(company),
             new_lines,
             author,
         )
@@ -381,8 +384,28 @@ class PunchoutSession(models.Model):
                 or not self.env.user._is_internal()
             )
         ):
-            odoobot = self.env.ref("base.user_root")
-            return self.with_user(odoobot).write(vals)
+            # Pick the human who initiated the punchout
+            # (``session.user_id``) so their avatar shows on the
+            # state-tracking message in the chatter. Fall back to
+            # OdooBot when the session has no user attached.
+            #
+            # Order matters: ``with_user(author).sudo()`` keeps
+            # ``su=True`` AND sets ``uid=author``. The reverse order
+            # (``sudo().with_user(author)``) would reset ``su`` to
+            # False because ``Environment.__call__(user=...)`` drops
+            # the superuser flag when the uid changes. ``su=True``
+            # bypasses cross-company ACLs (``account.tax`` record
+            # rules etc.); the human attribution is what gives the
+            # chatter message a recognisable avatar.
+            #
+            # State changes typically affect a single session at a
+            # time (one cart → one session); for the rare batch
+            # case we attribute to the first record's ``user_id``.
+            first = self[:1]
+            author = (first.user_id if first else False) or self.env.ref(
+                "base.user_root"
+            )
+            return self.with_user(author).sudo().write(vals)
         res = super().write(vals)
         if vals.get("state") == "to_process":
             for rec in self:

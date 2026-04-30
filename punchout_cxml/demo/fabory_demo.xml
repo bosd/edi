@@ -34,6 +34,11 @@
         <field name="shared_secret">F@bory12</field>
         <field name="user_agent">Odoo Punchout Demo</field>
         <field name="deployment_mode">test</field>
+        <field
+            name="image_128"
+            type="base64"
+            file="punchout_cxml/static/description/suppliers/fabory.png"
+        />
         <field name="state">open</field>
     </record>
 </odoo>

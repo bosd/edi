@@ -156,15 +156,21 @@ class PunchoutBackend(models.Model):
         }
 
     def action_setup_form(self):
-        """Open this backend's form view in setup mode.
+        """Activate the backend and open its form for credentials.
 
         Wired to the ``Activate`` button on archived / draft kanban
-        tiles. Mirrors how Odoo's payment.provider lets a manager
-        click a Disabled tile and land directly in the form to fill
-        in credentials. Clicking the tile would open the form too
-        (default kanban behaviour), but an explicit button is more
-        discoverable for non-technical users."""
+        tiles. Mirrors Odoo's payment.provider Disabled-tile flow:
+        a single click both flips ``active=True`` (if archived) and
+        opens the form so the manager can fill in credentials and
+        switch the state to Open.
+
+        Idempotent: already-active records are left alone. Live
+        records (state=open AND active=True) shouldn't reach this
+        button because the kanban hides it for them, but if they
+        do we still open the form harmlessly."""
         self.ensure_one()
+        if not self.active:
+            self.write({"active": True})
         return {
             "type": "ir.actions.act_window",
             "res_model": "punchout.backend",
