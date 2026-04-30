@@ -21,6 +21,14 @@
     </template>
 
     <template id="cxml_punchout_header">
+        <!-- IMPORTANT: keep ``<t t-esc=...>`` inline with its parent
+             element. Qweb preserves the surrounding whitespace, and
+             cXML servers compare the credential / identity strings
+             against their database BYTE-FOR-BYTE. Indented values
+             like ``\n    FaboryDemo\n    `` get rejected with
+             "Unable to find customer for given credentials" because
+             the supplier looks up the entire whitespace-padded
+             string, not the trimmed identity. -->
         <Header>
             <From>
                 <Credential t-att-domain="backend.from_domain">
@@ -39,12 +47,7 @@
             <!-- Sender is the buyer authenticating itself. Most
                  suppliers expect Sender = From (same domain + identity);
                  the model carries a single ``from_*`` pair and reuses
-                 it here. The domain previously hardcoded as
-                 "Networkid" (lowercase 'i', typo) which sent that
-                 raw value regardless of the form input — suppliers
-                 that case-match strictly (or that record the buyer
-                 under a different domain like ``DUNS``) rejected with
-                 "Unable to find customer for given credentials". -->
+                 it here. -->
             <Sender>
                 <Credential t-att-domain="backend.from_domain">
                     <Identity>

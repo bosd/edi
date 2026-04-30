@@ -199,22 +199,18 @@
                 <templates>
                     <t t-name="card">
                         <aside class="me-2">
-                            <!-- Wrap the image in a Bootstrap "card-
-                                 within-card": white background, light
-                                 border, rounded corners, padding.
-                                 Same visual as Odoo's payment.provider
-                                 (which gets these classes from CSS
-                                 targeting the kanban context). -->
-                            <div
-                                class="bg-white border rounded p-2 d-flex align-items-center justify-content-center"
-                                style="width: 64px; height: 64px;"
-                            >
-                                <field
-                                    name="image_128"
-                                    widget="image"
-                                    class="o_image_64_max mb-0"
-                                />
-                            </div>
+                            <!-- ``o_image_64_max`` constrains both
+                                 max-width AND max-height to 64px while
+                                 preserving aspect ratio (no cover /
+                                 stretch). The earlier wrapping div with
+                                 fixed ``style="width:64px;height:64px"``
+                                 forced the image into a square,
+                                 squashing non-square logos. -->
+                            <field
+                                name="image_128"
+                                widget="image"
+                                class="o_image_64_max mb-0"
+                            />
                         </aside>
                         <div class="o_record_main d-flex flex-column flex-grow-1">
                             <div class="fw-bold fs-4">
@@ -307,16 +303,11 @@
                 <templates>
                     <t t-name="card">
                         <aside class="me-2">
-                            <div
-                                class="bg-white border rounded p-2 d-flex align-items-center justify-content-center"
-                                style="width: 64px; height: 64px;"
-                            >
-                                <field
-                                    name="image_128"
-                                    widget="image"
-                                    class="o_image_64_max mb-0"
-                                />
-                            </div>
+                            <field
+                                name="image_128"
+                                widget="image"
+                                class="o_image_64_max mb-0"
+                            />
                         </aside>
                         <div class="o_record_main d-flex flex-column flex-grow-1">
                             <div class="fw-bold fs-4">

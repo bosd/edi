@@ -10,7 +10,7 @@ import lxml.etree as ET
 import requests
 from lxml.etree import XMLSyntaxError
 
-from odoo import _, api, fields, models
+from odoo import api, fields, models
 from odoo.exceptions import UserError
 
 _logger = logging.getLogger(__name__)
@@ -33,6 +33,19 @@ class PunchoutSession(models.Model):
             ._render_template(template_xml_id, values=template_values)
         )
         cxml_request_element = ET.fromstring(cxml)
+        # Strip leading/trailing whitespace from leaf text nodes.
+        # Qweb's template indentation around ``<t t-esc="..."/>``
+        # bleeds into the parent element's text content as
+        # ``\n    FaboryDemo\n  ``. Strict cXML servers (e.g.
+        # Fabory) compare credential strings byte-for-byte without
+        # trimming, so the padded value gets rejected with "Unable
+        # to find customer for given credentials". ``ET.indent``
+        # and ``pretty_print`` don't rewrite leaf text, so the
+        # cleanup only needs to happen once on the leaves we
+        # actually emit.
+        for el in cxml_request_element.iter():
+            if el.text and len(el) == 0:
+                el.text = el.text.strip()
         ET.indent(cxml_request_element)
         cxml_request_str = ET.tostring(
             cxml_request_element,
@@ -48,7 +61,7 @@ class PunchoutSession(models.Model):
         user_email = self._get_punchout_request_user_email()
         if not user_email:
             raise UserError(
-                _(
+                self.env._(
                     "You must set a personal email in your preferences "
                     "in order to access this feature."
                 )
@@ -84,15 +97,13 @@ class PunchoutSession(models.Model):
             )
             _logger.error(log_msg)
             raise UserError(
-                _(
+                self.env._(
                     "The PunchOut request with URL %(url)s returned "
-                    "%(status_code)s (%(reason)s)."
+                    "%(status_code)s (%(reason)s).",
+                    url=response.url,
+                    status_code=cxml_status_code,
+                    reason=cxml_status_text,
                 )
-                % {
-                    "url": response.url,
-                    "status_code": cxml_status_code,
-                    "reason": cxml_status_text,
-                }
             )
         return res
 

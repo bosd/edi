@@ -6,6 +6,11 @@
     <template id="cxml_punchout_PunchOutSetupRequest">
         <t t-call="punchout_cxml.cxml_punchout_request">
             <PunchOutSetupRequest operation="create">
+                <!-- ``<t t-esc=...>`` kept inline with the parent so
+                     no whitespace bleeds into the value. cXML servers
+                     compare these strings byte-for-byte against their
+                     records; a leading newline or indent breaks the
+                     match. -->
                 <BuyerCookie>
                     <t t-esc="session.buyer_cookie_id" />
                 </BuyerCookie>
