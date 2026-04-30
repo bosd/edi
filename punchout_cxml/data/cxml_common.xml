@@ -11,7 +11,11 @@
         >
             <t t-call="punchout_cxml.cxml_punchout_header" />
             <Request t-att-deploymentMode="backend.deployment_mode">
-                <t t-raw="0" />
+                <!-- ``t-out="0"`` is the v17+ replacement for the
+                     deprecated ``t-raw="0"``: emits the inner
+                     content (the operation-specific body, e.g.
+                     PunchOutSetupRequest) without HTML-escaping. -->
+                <t t-out="0" />
             </Request>
         </cXML>
     </template>

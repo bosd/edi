@@ -2,7 +2,7 @@
 # Copyright 2025 Bosd
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
 
-from odoo import _, fields, models
+from odoo import fields, models
 from odoo.exceptions import UserError
 
 
@@ -97,7 +97,7 @@ class PunchoutBackend(models.Model):
         self.ensure_one()
         if self.protocol != "cxml":
             raise UserError(
-                _(
+                self.env._(
                     "Test Connection is only available for cXML backends. "
                     "OCI and IDS use client-side URL building, so there is "
                     "no setup handshake to test until the user actually "
@@ -105,9 +105,14 @@ class PunchoutBackend(models.Model):
                 )
             )
         # Reuse the regular setup flow on a throw-away session — it
-        # posts the real request, parses the real response, and stores
-        # both for inspection. We then unlink the session so we don't
-        # litter the table with "test" rows.
+        # posts the real request, parses the real response, and
+        # stores both for inspection. On SUCCESS we unlink the
+        # session so we don't litter the table with "test" rows. On
+        # FAILURE we keep it (in state ``error`` with the request +
+        # response text on it) so the manager can open the form,
+        # inspect the actual cXML we sent, and compare it to what
+        # the supplier expects. The garbage-collect cron eventually
+        # sweeps it up via ``session_retention_days``.
         session = (
             self.env["punchout.session"]
             .sudo()
@@ -116,12 +121,24 @@ class PunchoutBackend(models.Model):
         try:
             url = self.env["punchout.session"]._get_post_punchout_setup_url(session)
         except Exception as e:  # noqa: BLE001
-            session.unlink()
-            raise UserError(_("Test connection failed: %(err)s") % {"err": e}) from e
+            # Mark the session as errored so it stands out in the
+            # session list, but keep the row so the user can open it
+            # and read setup_request / setup_request_response.
+            session.sudo().write({"state": "error", "error_message": str(e)})
+            raise UserError(
+                self.env._(
+                    "Test connection failed: %(err)s\n\n"
+                    "Inspect the failed test session for the raw cXML we "
+                    "sent and the supplier's response — Punchout > "
+                    "Punchout Backends, open the backend, click the "
+                    "Sessions smart button.",
+                    err=e,
+                )
+            ) from e
         session.unlink()
         if not url:
             raise UserError(
-                _(
+                self.env._(
                     "Supplier responded but did not return a StartPage URL. "
                     "Check the supplier's logs."
                 )
@@ -130,8 +147,10 @@ class PunchoutBackend(models.Model):
             "type": "ir.actions.client",
             "tag": "display_notification",
             "params": {
-                "title": _("Connection OK"),
-                "message": _("Supplier responded with a valid setup response."),
+                "title": self.env._("Connection OK"),
+                "message": self.env._(
+                    "Supplier responded with a valid setup response."
+                ),
                 "type": "success",
                 "sticky": False,
             },
