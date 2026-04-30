@@ -4,7 +4,7 @@
 
 {
     "name": "Punchout OCI",
-    "version": "19.0.1.1.4",
+    "version": "19.0.1.1.5",
     "license": "AGPL-3",
     "summary": "OCI (Open Catalog Interface) protocol support for Punchout",
     "author": (

@@ -98,6 +98,45 @@
     </record>
 
     <!-- ====================================================
+         Dell PremierConnect (US/global) — IT hardware
+         Public docs:
+             https://www.delltechnologies.com/asset/en-pk/solutions/premier-solutions/selling-competitive/dell-premierconnect-b2b-mappingspecs-oci.pdf
+         Auth pattern: lowercase ``user_id`` (not ``USERNAME``) +
+         ``password``. Dell also requires an ``operation_type``
+         param fixed to ``create`` for new requisitions — set via
+         the ``oci_custom_parameters`` escape hatch.
+
+         The preset URL points at Dell's preview / B2B testing
+         endpoint (``b2bpreview.dell.com``). For production
+         PunchOut connections, Dell will provision your account
+         on their main B2B endpoint — coordinate with your Dell
+         account manager and replace the URL after activation.
+    ==================================================== -->
+    <record id="preset_dell" model="punchout.backend">
+        <field name="name">Dell PremierConnect</field>
+        <field
+            name="description"
+        >IT hardware (US/global). OCI 4.0 PunchOut. Preview URL by default — replace with Dell-provisioned production endpoint after account activation. Note: requires operation_type=create in vendor parameters.</field>
+        <field name="protocol">oci</field>
+        <field
+            name="url"
+        >https://b2bpreview.dell.com/invoke/B2BDirect.Entry/processDocument</field>
+        <field name="browser_form_post_url">/punchout/oci/receive/</field>
+        <field name="oci_version">4.0</field>
+        <!-- Dell uses ``user_id`` (snake-case), not ``USERNAME``. -->
+        <field name="oci_param_username">user_id</field>
+        <field name="oci_param_password">password</field>
+        <!-- No customer number param. -->
+        <field name="oci_param_customer" />
+        <!-- operation_type=create is required by Dell for every
+             new requisition; ship as a default custom param so
+             the user just needs to set credentials and activate. -->
+        <field name="oci_custom_parameters">operation_type=create</field>
+        <field name="active" eval="False" />
+        <field name="state">draft</field>
+    </record>
+
+    <!-- ====================================================
          Kramp (NL/EU) — agricultural / forestry / earthmoving parts
          Public docs: https://developer.kramp.com/oci (developer-portal
          page; the form-spec used here was downloaded from Kramp's site

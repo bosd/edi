@@ -474,11 +474,11 @@ README</a> for the
 conventions and how to add a logo for an existing preset.</p>
 <table border="1" class="docutils">
 <colgroup>
-<col width="8%" />
-<col width="60%" />
-<col width="6%" />
-<col width="8%" />
-<col width="12%" />
+<col width="7%" />
+<col width="63%" />
+<col width="5%" />
+<col width="7%" />
+<col width="11%" />
 <col width="7%" />
 </colgroup>
 <thead valign="bottom">
@@ -513,8 +513,7 @@ return</td>
 <td>✅ shipped</td>
 </tr>
 <tr><td><img alt="Phoenix Contact" src="https://raw.githubusercontent.com/OCA/edi/19.0/punchout_oci/static/description/suppliers/phoenix_contact.png" /></td>
-<td><a class="reference external" href="https://assets.phoenixcontact.com/file/6cdb9294-a10c-4032-ab0a-1c5c9044c324/media/original?Dokumentation_Punchout_V1_EN.pdf">Phoenix
-Contact</a></td>
+<td><a class="reference external" href="https://assets.phoenixcontact.com/file/6cdb9294-a10c-4032-ab0a-1c5c9044c324/media/original?Dokumentation_Punchout_V1_EN.pdf">Phoenix Contact</a></td>
 <td>DE</td>
 <td>Industrial
 automation /
@@ -543,14 +542,13 @@ consultant);
 and
 <tt class="docutils literal"><span class="pre">NEW_ITEM-CUST_FIELD5</span></tt>
 echoed back per line</td>
-<td>✅ shipped
-(URL is
-per-customer;
+<td>✅ shipped (URL
+is per-customer;
 replace the
 example URL
 after Kramp
-registers
-your domain)</td>
+registers your
+domain)</td>
 </tr>
 <tr><td><img alt="TVH" src="https://raw.githubusercontent.com/OCA/edi/19.0/punchout_oci/static/description/suppliers/tvh-parts.png" /></td>
 <td>TVH</td>
@@ -562,13 +560,31 @@ parts</td>
 <tt class="docutils literal">password</tt> (lowercase,
 no customer number)</td>
 <td>✅ shipped
-(Industrial
-URL by
-default;
-switch URL
-for
+(Industrial URL
+by default;
+switch URL for
 Agricultural
 account)</td>
+</tr>
+<tr><td><img alt="Dell" src="https://raw.githubusercontent.com/OCA/edi/19.0/punchout_oci/static/description/suppliers/dell.png" /></td>
+<td><a class="reference external" href="https://www.delltechnologies.com/asset/en-pk/solutions/premier-solutions/selling-competitive/dell-premierconnect-b2b-mappingspecs-oci.pdf">Dell
+PremierConnect</a></td>
+<td>US / global</td>
+<td>IT hardware</td>
+<td><tt class="docutils literal">user_id</tt> +
+<tt class="docutils literal">password</tt> (snake-case
+username, no customer
+number); requires
+<tt class="docutils literal">operation_type=create</tt>
+in vendor params</td>
+<td>✅ shipped
+(preview URL by
+default; replace
+with
+Dell-provisioned
+production
+endpoint after
+activation)</td>
 </tr>
 </tbody>
 </table>
