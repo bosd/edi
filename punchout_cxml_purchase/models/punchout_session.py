@@ -343,13 +343,22 @@ class PunchoutSession(models.Model):
         # mapped through the partner's fiscal position, the same chain
         # ``_compute_tax_id`` would use.
         fpos = (
-            self.env["account.fiscal.position"]._get_fiscal_position(backend.partner_id)
+            self.env["account.fiscal.position"]
+            .with_company(company)
+            ._get_fiscal_position(backend.partner_id)
             if backend.partner_id
             else self.env["account.fiscal.position"]
         )
         for name, amount, _currency in charges:
             product = self._get_or_create_punchout_charge_product(name)
             taxes = product.supplier_taxes_id._filter_taxes_by_company(company)
+            # Fall back to the company default purchase tax when the
+            # product has no ``supplier_taxes_id`` — handles products
+            # that pre-existed from earlier rounds (auto-spawned
+            # tax-free) or where the user manually set ``taxes_id``
+            # instead of ``supplier_taxes_id``.
+            if not taxes and company.account_purchase_tax_id:
+                taxes = company.account_purchase_tax_id
             mapped_taxes = fpos.map_tax(taxes) if fpos else taxes
             lines.append(
                 (
