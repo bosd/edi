@@ -49,3 +49,41 @@ A robust implementation needs to:
 Defer until a real supplier sends a non-1 PriceBasisQuantity. When
 they do, prefer option 1 unless the supplier also pushes minimum-order
 quantities, in which case option 2 starts paying off.
+
+## cXML OrderRequest sender (post-confirmation EDI to supplier)
+
+This module receives the punchout cart and creates a draft PO. Once
+the buyer confirms that PO, the order leaves Odoo via email/print
+today. Several cXML-capable suppliers also accept the confirmed PO
+back as a cXML `OrderRequest` document, closing the loop without
+manual paperwork:
+
+- **DiscountOffice** — `POST https://oci.discountoffice.nl/cxml/order`,
+  `From/Credential[domain="DiscountOffice"]` with debtor number +
+  shared secret obtained from their OCI settings menu.
+- **Manutan** — XML order acceptance, exact format / endpoint
+  pending (test account requested 2026-05-01).
+
+Implementation sketch (new module, `punchout_cxml_order_send` or
+similar, depending on `punchout_cxml_purchase`):
+
+1. New `punchout.backend` field for the OrderRequest endpoint
+   (separate from the punchout setup URL — DiscountOffice serves
+   cart-return on their punchout host but order-submit on a sibling
+   path).
+2. A Qweb template for `cXML/Request/OrderRequest` mirroring the
+   existing setup-request template — same `Header/From/To/Sender`
+   credential block, OrderRequest body built from `purchase.order`
+   and its lines.
+3. Hook on `purchase.order.button_confirm` (or a new server action
+   "Send to supplier as cXML"): render → POST → parse cXML
+   `Response/Status/@statusCode`. On 200, flip PO to a new
+   tracking state ("Sent to supplier"); on error, surface
+   `statusText` in chatter and leave the PO confirmable for retry.
+4. Reuse the existing `from_domain` / `shared_secret` credentials
+   on the backend — same auth model as the punchout setup.
+
+Fabory does **not** accept cXML orders today (e-PDF only per their
+docs). Pick this up once Manutan's test account is live so the
+implementation can be validated against two distinct suppliers
+before generalising.

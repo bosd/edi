@@ -392,17 +392,18 @@ shopping carts.</p>
 <li><a class="reference internal" href="#known-issues-roadmap" id="toc-entry-1">Known issues / Roadmap</a><ul>
 <li><a class="reference internal" href="#first-class-product-classification-field" id="toc-entry-2">First-class product Classification field</a></li>
 <li><a class="reference internal" href="#pricebasisquantity-handling" id="toc-entry-3">PriceBasisQuantity handling</a></li>
+<li><a class="reference internal" href="#cxml-orderrequest-sender-post-confirmation-edi-to-supplier" id="toc-entry-4">cXML OrderRequest sender (post-confirmation EDI to supplier)</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#changelog" id="toc-entry-4">Changelog</a><ul>
-<li><a class="reference internal" href="#section-1" id="toc-entry-5">18.0.1.0.0 (2026)</a></li>
+<li><a class="reference internal" href="#changelog" id="toc-entry-5">Changelog</a><ul>
+<li><a class="reference internal" href="#section-1" id="toc-entry-6">18.0.1.0.0 (2026)</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#bug-tracker" id="toc-entry-6">Bug Tracker</a></li>
-<li><a class="reference internal" href="#credits" id="toc-entry-7">Credits</a><ul>
-<li><a class="reference internal" href="#authors" id="toc-entry-8">Authors</a></li>
-<li><a class="reference internal" href="#contributors" id="toc-entry-9">Contributors</a></li>
-<li><a class="reference internal" href="#maintainers" id="toc-entry-10">Maintainers</a></li>
+<li><a class="reference internal" href="#bug-tracker" id="toc-entry-7">Bug Tracker</a></li>
+<li><a class="reference internal" href="#credits" id="toc-entry-8">Credits</a><ul>
+<li><a class="reference internal" href="#authors" id="toc-entry-9">Authors</a></li>
+<li><a class="reference internal" href="#contributors" id="toc-entry-10">Contributors</a></li>
+<li><a class="reference internal" href="#maintainers" id="toc-entry-11">Maintainers</a></li>
 </ul>
 </li>
 </ul>
@@ -459,11 +460,50 @@ avoid sub-cent drift.</li>
 do, prefer option 1 unless the supplier also pushes minimum-order
 quantities, in which case option 2 starts paying off.</p>
 </div>
+<div class="section" id="cxml-orderrequest-sender-post-confirmation-edi-to-supplier">
+<h3><a class="toc-backref" href="#toc-entry-4">cXML OrderRequest sender (post-confirmation EDI to supplier)</a></h3>
+<p>This module receives the punchout cart and creates a draft PO. Once the
+buyer confirms that PO, the order leaves Odoo via email/print today.
+Several cXML-capable suppliers also accept the confirmed PO back as a
+cXML <tt class="docutils literal">OrderRequest</tt> document, closing the loop without manual
+paperwork:</p>
+<ul class="simple">
+<li><strong>DiscountOffice</strong> —
+<tt class="docutils literal">POST <span class="pre">https://oci.discountoffice.nl/cxml/order</span></tt>,
+<tt class="docutils literal"><span class="pre">From/Credential[domain=&quot;DiscountOffice&quot;]</span></tt> with debtor number +
+shared secret obtained from their OCI settings menu.</li>
+<li><strong>Manutan</strong> — XML order acceptance, exact format / endpoint pending
+(test account requested 2026-05-01).</li>
+</ul>
+<p>Implementation sketch (new module, <tt class="docutils literal">punchout_cxml_order_send</tt> or
+similar, depending on <tt class="docutils literal">punchout_cxml_purchase</tt>):</p>
+<ol class="arabic simple">
+<li>New <tt class="docutils literal">punchout.backend</tt> field for the OrderRequest endpoint
+(separate from the punchout setup URL — DiscountOffice serves
+cart-return on their punchout host but order-submit on a sibling
+path).</li>
+<li>A Qweb template for <tt class="docutils literal">cXML/Request/OrderRequest</tt> mirroring the
+existing setup-request template — same <tt class="docutils literal">Header/From/To/Sender</tt>
+credential block, OrderRequest body built from <tt class="docutils literal">purchase.order</tt> and
+its lines.</li>
+<li>Hook on <tt class="docutils literal">purchase.order.button_confirm</tt> (or a new server action
+“Send to supplier as cXML”): render → POST → parse cXML
+<tt class="docutils literal"><span class="pre">Response/Status/&#64;statusCode</span></tt>. On 200, flip PO to a new tracking
+state (“Sent to supplier”); on error, surface <tt class="docutils literal">statusText</tt> in
+chatter and leave the PO confirmable for retry.</li>
+<li>Reuse the existing <tt class="docutils literal">from_domain</tt> / <tt class="docutils literal">shared_secret</tt> credentials on
+the backend — same auth model as the punchout setup.</li>
+</ol>
+<p>Fabory does <strong>not</strong> accept cXML orders today (e-PDF only per their
+docs). Pick this up once Manutan’s test account is live so the
+implementation can be validated against two distinct suppliers before
+generalising.</p>
+</div>
 </div>
 <div class="section" id="changelog">
-<h2><a class="toc-backref" href="#toc-entry-4">Changelog</a></h2>
+<h2><a class="toc-backref" href="#toc-entry-5">Changelog</a></h2>
 <div class="section" id="section-1">
-<h3><a class="toc-backref" href="#toc-entry-5">18.0.1.0.0 (2026)</a></h3>
+<h3><a class="toc-backref" href="#toc-entry-6">18.0.1.0.0 (2026)</a></h3>
 <ul class="simple">
 <li>[ADD] First version: cXML cart → purchase order glue.</li>
 <li>[IMP] UoM lookup routed through
@@ -488,7 +528,7 @@ item_detail lxml element.</li>
 </div>
 </div>
 <div class="section" id="bug-tracker">
-<h2><a class="toc-backref" href="#toc-entry-6">Bug Tracker</a></h2>
+<h2><a class="toc-backref" href="#toc-entry-7">Bug Tracker</a></h2>
 <p>Bugs are tracked on <a class="reference external" href="https://github.com/OCA/edi/issues">GitHub Issues</a>.
 In case of trouble, please check there if your issue has already been reported.
 If you spotted it first, help us to smash it by providing a detailed and welcomed
@@ -496,23 +536,23 @@ If you spotted it first, help us to smash it by providing a detailed and welcome
 <p>Do not contact contributors directly about support or help with technical issues.</p>
 </div>
 <div class="section" id="credits">
-<h2><a class="toc-backref" href="#toc-entry-7">Credits</a></h2>
+<h2><a class="toc-backref" href="#toc-entry-8">Credits</a></h2>
 <div class="section" id="authors">
-<h3><a class="toc-backref" href="#toc-entry-8">Authors</a></h3>
+<h3><a class="toc-backref" href="#toc-entry-9">Authors</a></h3>
 <ul class="simple">
 <li>ACSONE SA/NV</li>
 <li>OBS Solutions Netherlands</li>
 </ul>
 </div>
 <div class="section" id="contributors">
-<h3><a class="toc-backref" href="#toc-entry-9">Contributors</a></h3>
+<h3><a class="toc-backref" href="#toc-entry-10">Contributors</a></h3>
 <ul class="simple">
 <li>Thomas Binsfeld <a class="reference external" href="mailto:thomas.binsfeld&#64;acsone.eu">thomas.binsfeld&#64;acsone.eu</a></li>
 <li>Benjamin Willig <a class="reference external" href="mailto:benjamin.willig&#64;acsone.eu">benjamin.willig&#64;acsone.eu</a></li>
 </ul>
 </div>
 <div class="section" id="maintainers">
-<h3><a class="toc-backref" href="#toc-entry-10">Maintainers</a></h3>
+<h3><a class="toc-backref" href="#toc-entry-11">Maintainers</a></h3>
 <p>This module is maintained by the OCA.</p>
 <a class="reference external image-reference" href="https://odoo-community.org">
 <img alt="Odoo Community Association" src="https://odoo-community.org/logo.png" />
