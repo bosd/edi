@@ -139,6 +139,7 @@ class PunchoutSession(models.Model):
                 )
             new_line_cmds = self._tag_lines_with_session(
                 self._prepare_purchase_order_lines()
+                + self._prepare_protocol_extra_lines()
             )
             if new_line_cmds:
                 self.purchase_order_id.with_user(author).sudo().with_company(
@@ -341,8 +342,52 @@ class PunchoutSession(models.Model):
             "punchout_session_id": self.id,
             "order_line": self._tag_lines_with_session(
                 self._prepare_purchase_order_lines()
+                + self._prepare_protocol_extra_lines()
             ),
         }
+
+    def _prepare_protocol_extra_lines(self):
+        """Cart-header surcharges materialised as PO lines.
+
+        Default empty. Protocol modules override to extract supplier-
+        quoted shipping / order-cost / insurance / etc. amounts from
+        the cart header and return ``(0, 0, vals)`` commands so the
+        buyer doesn't have to add them by hand. Each charge resolves
+        through ``_get_or_create_punchout_charge_product`` so users
+        who pre-create a curated service product with the expected
+        name keep using their own product.
+        """
+        self.ensure_one()
+        return []
+
+    def _get_or_create_punchout_charge_product(self, charge_name):
+        """Resolve the service product used for a cart-header charge
+        line (Shipping, Order Costs, Insurance, ...). Looked up by
+        exact name first so users who pre-create a curated product
+        with that name keep using it; auto-created on first use
+        otherwise. Service-typed and tax-free so Odoo doesn't add
+        its own VAT on top of the supplier-quoted amount."""
+        self.ensure_one()
+        product_name = f"Punchout: {charge_name}"
+        Product = self.env["product.product"]
+        existing = Product.search([("name", "=", product_name)], limit=1)
+        if existing:
+            return existing
+        return Product.sudo().create(
+            {
+                "name": product_name,
+                "type": "service",
+                "purchase_ok": True,
+                "sale_ok": False,
+                "supplier_taxes_id": [(5, 0, 0)],
+                "taxes_id": [(5, 0, 0)],
+                "description_purchase": self.env._(
+                    "Auto-created by Punchout to capture the supplier's "
+                    "quoted %(charge)s charge as a PO line.",
+                    charge=charge_name,
+                ),
+            }
+        )
 
     def write(self, vals):
         """Auto-process the cart when state moves to ``to_process``.

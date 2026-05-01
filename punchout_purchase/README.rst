@@ -222,35 +222,21 @@ matching supplierinfo's URL. Multi-supplier products would benefit from
 a chooser ("which supplier did you want to look this up at?"). Same
 wizard pattern as the multi-backend case above.
 
-Auto-create freight + order-cost PO lines from supplier-quoted charges
-----------------------------------------------------------------------
+OCI cart-header surcharge extraction
+------------------------------------
 
-Suppliers commonly return shipping and order-cost values in the cart
-header (cXML ``PunchOutOrderMessageHeader/Shipping`` and
-``Extrinsic name="OrderCost"``; OCI sometimes via ``NEW_ITEM-SERVICE``
-or extension fields). Today these are surfaced as chatter warnings only
-— the buyer has to add a freight / order-cost line manually before
-confirming.
+cXML carries shipping / order-cost / insurance / etc. as
+``PunchOutOrderMessageHeader/Shipping`` + ``Extrinsic name="..."``
+elements, and ``punchout_cxml_purchase`` materialises each one as a PO
+line via ``_prepare_protocol_extra_lines`` + the auto-spawned
+``Punchout: <name>`` service product (curated override by name).
 
-The clean fix is two configurable products on ``punchout.backend``:
-
-- ``freight_product_id`` (Many2one to ``product.product``,
-  service-typed): when set, a non-zero supplier shipping value
-  materialises as a PO line for this product at the quoted amount.
-- ``order_costs_product_id`` (same): same treatment for the Extrinsic
-  "OrderCost" / equivalent OCI field.
-
-Both should be optional — when unset, fall back to the current behaviour
-of warning in chatter so existing deployments don't change. Implement
-protocol hooks (e.g. ``_extract_freight_amount``,
-``_extract_order_costs_amount``) that the cXML and OCI glue modules
-override to map their own header semantics, and a base
-``_post_punchout_create_extra_lines`` step that adds the lines once all
-cart lines are in place.
-
-Defer until at least two suppliers in production demand it — TVH's OCI
-feed doesn't quote freight, and Fabory's cXML cart Total already matches
-the line subtotal in the field reports we have so far.
+OCI's equivalent isn't standardised — some catalogues quote freight in
+``NEW_ITEM-SERVICE``, some use vendor-specific extension fields, some
+skip it entirely. Pick this up when an OCI supplier in production starts
+sending a non-trivial header surcharge: implement the OCI override of
+``_prepare_protocol_extra_lines`` mirroring the cXML approach, mapping
+whatever fields that supplier actually emits.
 
 Changelog
 =========

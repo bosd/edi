@@ -408,7 +408,7 @@ from the cart data.</p>
 </li>
 <li><a class="reference internal" href="#browse-from-po-wizard-for-multi-backend-partners" id="toc-entry-15">“Browse from PO” wizard for multi-backend partners</a></li>
 <li><a class="reference internal" href="#open-at-supplier-multi-supplier-wizard" id="toc-entry-16">“Open at supplier” multi-supplier wizard</a></li>
-<li><a class="reference internal" href="#auto-create-freight-order-cost-po-lines-from-supplier-quoted-charges" id="toc-entry-17">Auto-create freight + order-cost PO lines from supplier-quoted charges</a></li>
+<li><a class="reference internal" href="#oci-cart-header-surcharge-extraction" id="toc-entry-17">OCI cart-header surcharge extraction</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#changelog" id="toc-entry-18">Changelog</a><ul>
@@ -578,32 +578,19 @@ matching supplierinfo’s URL. Multi-supplier products would benefit from
 a chooser (“which supplier did you want to look this up at?”). Same
 wizard pattern as the multi-backend case above.</p>
 </div>
-<div class="section" id="auto-create-freight-order-cost-po-lines-from-supplier-quoted-charges">
-<h3><a class="toc-backref" href="#toc-entry-17">Auto-create freight + order-cost PO lines from supplier-quoted charges</a></h3>
-<p>Suppliers commonly return shipping and order-cost values in the cart
-header (cXML <tt class="docutils literal">PunchOutOrderMessageHeader/Shipping</tt> and
-<tt class="docutils literal">Extrinsic <span class="pre">name=&quot;OrderCost&quot;</span></tt>; OCI sometimes via <tt class="docutils literal"><span class="pre">NEW_ITEM-SERVICE</span></tt>
-or extension fields). Today these are surfaced as chatter warnings only
-— the buyer has to add a freight / order-cost line manually before
-confirming.</p>
-<p>The clean fix is two configurable products on <tt class="docutils literal">punchout.backend</tt>:</p>
-<ul class="simple">
-<li><tt class="docutils literal">freight_product_id</tt> (Many2one to <tt class="docutils literal">product.product</tt>,
-service-typed): when set, a non-zero supplier shipping value
-materialises as a PO line for this product at the quoted amount.</li>
-<li><tt class="docutils literal">order_costs_product_id</tt> (same): same treatment for the Extrinsic
-“OrderCost” / equivalent OCI field.</li>
-</ul>
-<p>Both should be optional — when unset, fall back to the current behaviour
-of warning in chatter so existing deployments don’t change. Implement
-protocol hooks (e.g. <tt class="docutils literal">_extract_freight_amount</tt>,
-<tt class="docutils literal">_extract_order_costs_amount</tt>) that the cXML and OCI glue modules
-override to map their own header semantics, and a base
-<tt class="docutils literal">_post_punchout_create_extra_lines</tt> step that adds the lines once all
-cart lines are in place.</p>
-<p>Defer until at least two suppliers in production demand it — TVH’s OCI
-feed doesn’t quote freight, and Fabory’s cXML cart Total already matches
-the line subtotal in the field reports we have so far.</p>
+<div class="section" id="oci-cart-header-surcharge-extraction">
+<h3><a class="toc-backref" href="#toc-entry-17">OCI cart-header surcharge extraction</a></h3>
+<p>cXML carries shipping / order-cost / insurance / etc. as
+<tt class="docutils literal">PunchOutOrderMessageHeader/Shipping</tt> + <tt class="docutils literal">Extrinsic <span class="pre">name=&quot;...&quot;</span></tt>
+elements, and <tt class="docutils literal">punchout_cxml_purchase</tt> materialises each one as a PO
+line via <tt class="docutils literal">_prepare_protocol_extra_lines</tt> + the auto-spawned
+<tt class="docutils literal">Punchout: &lt;name&gt;</tt> service product (curated override by name).</p>
+<p>OCI’s equivalent isn’t standardised — some catalogues quote freight in
+<tt class="docutils literal"><span class="pre">NEW_ITEM-SERVICE</span></tt>, some use vendor-specific extension fields, some
+skip it entirely. Pick this up when an OCI supplier in production starts
+sending a non-trivial header surcharge: implement the OCI override of
+<tt class="docutils literal">_prepare_protocol_extra_lines</tt> mirroring the cXML approach, mapping
+whatever fields that supplier actually emits.</p>
 </div>
 </div>
 <div class="section" id="changelog">
