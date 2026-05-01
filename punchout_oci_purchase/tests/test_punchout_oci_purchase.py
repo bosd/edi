@@ -3,6 +3,7 @@
 
 import json
 
+from odoo.exceptions import UserError
 from odoo.tools import mute_logger
 
 from odoo.addons.punchout_purchase.tests.common import TestPunchoutPurchaseCommon
@@ -154,17 +155,18 @@ class TestPunchoutOciPurchase(TestPunchoutPurchaseCommon):
         _, _, vals = lines[0]
         self.assertEqual(vals["product_id"], existing.id)
 
-    def test_no_auto_create_falls_back_to_existing_purchase_product(self):
-        """auto_create_products=False: cart item has no matching product →
-        fall back to any purchasable product, no creation."""
+    @mute_logger("odoo.addons.punchout_oci_purchase.models.punchout_session")
+    def test_no_auto_create_no_match_raises(self):
+        """auto_create_products=False with no vendor-code match → UserError
+        (no silent random-product fallback)."""
         self.backend.auto_create_products = False
         self.env["product.product"].create(
-            {"name": "Fallback purchasable OCI", "type": "consu", "purchase_ok": True}
+            {"name": "Unrelated purchasable OCI", "type": "consu", "purchase_ok": True}
         )
         product_count_before = self.env["product.product"].search_count([])
         self.session.response = _oci_cart()
-        lines = self.session._prepare_purchase_order_lines()
-        self.assertEqual(len(lines), 1)
+        with self.assertRaises(UserError):
+            self.session._prepare_purchase_order_lines()
         product_count_after = self.env["product.product"].search_count([])
         self.assertEqual(product_count_after, product_count_before)
 
@@ -175,7 +177,9 @@ class TestPunchoutOciPurchase(TestPunchoutPurchaseCommon):
         self.session.response = json.dumps(cart)
         lines = self.session._prepare_purchase_order_lines()
         _, _, vals = lines[0]
-        self.assertEqual(vals["product_uom_id"], self.env.ref("uom.product_uom_unit").id)
+        self.assertEqual(
+            vals["product_uom_id"], self.env.ref("uom.product_uom_unit").id
+        )
 
     def test_longtext_propagates_to_product_description(self):
         """When LONGTEXT differs from DESCRIPTION it lands on

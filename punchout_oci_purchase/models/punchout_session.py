@@ -7,6 +7,7 @@ import logging
 from datetime import date, timedelta
 
 from odoo import models
+from odoo.exceptions import UserError
 
 _logger = logging.getLogger(__name__)
 
@@ -132,16 +133,25 @@ class PunchoutSession(models.Model):
         vendor_mat = product_dict.get("VENDORMAT", "")
         description = product_dict.get("DESCRIPTION", "Unknown Product")
 
-        # Try to find by supplier product code. Don't ``limit=1`` so
-        # we can warn about ambiguous matches (same partner_id +
-        # vendor code attached to multiple products — pathological
-        # data, but it happens when a backend was reconfigured and
-        # old supplierinfo lines were never cleaned up).
+        # Match by supplier product code. The two conditions on
+        # ``seller_ids`` MUST go through ``any`` so they apply to the
+        # SAME supplierinfo row. With two separate ``seller_ids.field``
+        # leaves, Odoo's ORM matches across rows — a product with
+        # vendor A's code "ABC" plus vendor B (the punchout supplier)
+        # on its supplier list would falsely match a vendor B cart
+        # line for "ABC", because one row satisfies the partner check
+        # and a different row satisfies the code check.
         if vendor_mat and backend.partner_id:
             matches = Product.search(
                 [
-                    ("seller_ids.partner_id", "=", backend.partner_id.id),
-                    ("seller_ids.product_code", "=", vendor_mat),
+                    (
+                        "seller_ids",
+                        "any",
+                        [
+                            ("partner_id", "=", backend.partner_id.id),
+                            ("product_code", "=", vendor_mat),
+                        ],
+                    ),
                 ]
             )
             if len(matches) > 1:
@@ -214,8 +224,26 @@ class PunchoutSession(models.Model):
             self._post_create_product_hook(product, product_dict)
             return product
 
-        # Fallback: return a generic product
-        return Product.search([("purchase_ok", "=", True)], limit=1)
+        # Hard fail rather than substituting an arbitrary
+        # purchase-enabled product when nothing matches.
+        raise UserError(
+            self.env._(
+                "Punchout cart line for vendor-code %(code)s "
+                "(%(desc)s) couldn't be matched to any product, and "
+                "Auto Create Products is disabled on the backend "
+                "%(backend)s. Either enable it, or pre-create the "
+                "product and add %(supplier)s to its Vendors tab "
+                "with code %(code)s before re-running the punchout.",
+                code=vendor_mat or "(none)",
+                desc=description,
+                backend=backend.display_name,
+                supplier=(
+                    backend.partner_id.display_name
+                    if backend.partner_id
+                    else "(no supplier configured)"
+                ),
+            )
+        )
 
     def _post_create_product_hook(self, product, raw_data):
         """Hook fired after a product is auto-created from a punchout
