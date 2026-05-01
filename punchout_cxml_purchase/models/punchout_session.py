@@ -345,7 +345,6 @@ class PunchoutSession(models.Model):
                         "price_unit": amount,
                         "product_uom_id": product.uom_id.id,
                         "date_planned": date.today(),
-                        "taxes_id": [(5, 0, 0)],
                     },
                 )
             )

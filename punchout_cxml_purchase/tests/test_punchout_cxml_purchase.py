@@ -242,7 +242,10 @@ class TestPunchoutCxmlPurchase(TestPunchoutPurchaseCommon):
 
     def test_extra_lines_for_shipping_and_extrinsic(self):
         """cXML <Shipping> + <Extrinsic> become PO lines via
-        auto-spawned ``Punchout: <name>`` service products."""
+        auto-spawned ``Punchout: <name>`` service products. Goes
+        through the full ``purchase.order.create`` so we'd catch a
+        bogus field name (e.g. ``tax_ids`` vs ``taxes_id`` between
+        Odoo versions)."""
         cart = CXML_CART.replace(
             '<Total><Money currency="USD">100.00</Money></Total>',
             '<Total><Money currency="USD">100.00</Money></Total>'
@@ -251,11 +254,12 @@ class TestPunchoutCxmlPurchase(TestPunchoutPurchaseCommon):
             "</Extrinsic>",
         )
         self.session.response = cart
-        order_vals = self.session._prepare_purchase_order_vals()
-        prices = sorted(
-            cmd[2]["price_unit"] for cmd in order_vals["order_line"] if cmd[0] == 0
+        order = self.session._create_purchase_order_from_response()
+        self.assertEqual(len(order.order_line), 3)
+        self.assertEqual(
+            sorted(order.order_line.mapped("price_unit")),
+            [5.0, 14.5, 50.0],
         )
-        self.assertEqual(prices, [5.0, 14.5, 50.0])
         ship_product = self.env["product.product"].search(
             [("name", "=", "Punchout: Shipping")]
         )
