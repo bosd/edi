@@ -332,8 +332,25 @@ class PunchoutSession(models.Model):
                     money.get("currency", ""),
                 )
             )
+        backend = self.backend_id
+        company = backend._get_company()
+        # ``purchase.order.line.tax_ids`` is plain m2m, not a compute. The
+        # onchange that would populate it (``_prepare_add_missing_fields``
+        # → ``onchange_product_id``) only fires when ``order_id`` is in
+        # the create vals — which it isn't when we hand a ``(0, 0, vals)``
+        # tuple to ``purchase.order.create``. So resolve tax_ids ourselves
+        # from the product's purchase taxes (filtered by company) and
+        # mapped through the partner's fiscal position, the same chain
+        # ``_compute_tax_id`` would use.
+        fpos = (
+            self.env["account.fiscal.position"]._get_fiscal_position(backend.partner_id)
+            if backend.partner_id
+            else self.env["account.fiscal.position"]
+        )
         for name, amount, _currency in charges:
             product = self._get_or_create_punchout_charge_product(name)
+            taxes = product.supplier_taxes_id._filter_taxes_by_company(company)
+            mapped_taxes = fpos.map_tax(taxes) if fpos else taxes
             lines.append(
                 (
                     0,
@@ -345,6 +362,7 @@ class PunchoutSession(models.Model):
                         "price_unit": amount,
                         "product_uom_id": product.uom_id.id,
                         "date_planned": date.today(),
+                        "tax_ids": [(6, 0, mapped_taxes.ids)],
                     },
                 )
             )
