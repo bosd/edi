@@ -408,17 +408,18 @@ from the cart data.</p>
 </li>
 <li><a class="reference internal" href="#browse-from-po-wizard-for-multi-backend-partners" id="toc-entry-15">“Browse from PO” wizard for multi-backend partners</a></li>
 <li><a class="reference internal" href="#open-at-supplier-multi-supplier-wizard" id="toc-entry-16">“Open at supplier” multi-supplier wizard</a></li>
+<li><a class="reference internal" href="#auto-create-freight-order-cost-po-lines-from-supplier-quoted-charges" id="toc-entry-17">Auto-create freight + order-cost PO lines from supplier-quoted charges</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#changelog" id="toc-entry-17">Changelog</a><ul>
-<li><a class="reference internal" href="#section-1" id="toc-entry-18">18.0.1.0.0 (2026)</a></li>
+<li><a class="reference internal" href="#changelog" id="toc-entry-18">Changelog</a><ul>
+<li><a class="reference internal" href="#section-1" id="toc-entry-19">18.0.1.0.0 (2026)</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#bug-tracker" id="toc-entry-19">Bug Tracker</a></li>
-<li><a class="reference internal" href="#credits" id="toc-entry-20">Credits</a><ul>
-<li><a class="reference internal" href="#authors" id="toc-entry-21">Authors</a></li>
-<li><a class="reference internal" href="#contributors" id="toc-entry-22">Contributors</a></li>
-<li><a class="reference internal" href="#maintainers" id="toc-entry-23">Maintainers</a></li>
+<li><a class="reference internal" href="#bug-tracker" id="toc-entry-20">Bug Tracker</a></li>
+<li><a class="reference internal" href="#credits" id="toc-entry-21">Credits</a><ul>
+<li><a class="reference internal" href="#authors" id="toc-entry-22">Authors</a></li>
+<li><a class="reference internal" href="#contributors" id="toc-entry-23">Contributors</a></li>
+<li><a class="reference internal" href="#maintainers" id="toc-entry-24">Maintainers</a></li>
 </ul>
 </li>
 </ul>
@@ -577,11 +578,38 @@ matching supplierinfo’s URL. Multi-supplier products would benefit from
 a chooser (“which supplier did you want to look this up at?”). Same
 wizard pattern as the multi-backend case above.</p>
 </div>
+<div class="section" id="auto-create-freight-order-cost-po-lines-from-supplier-quoted-charges">
+<h3><a class="toc-backref" href="#toc-entry-17">Auto-create freight + order-cost PO lines from supplier-quoted charges</a></h3>
+<p>Suppliers commonly return shipping and order-cost values in the cart
+header (cXML <tt class="docutils literal">PunchOutOrderMessageHeader/Shipping</tt> and
+<tt class="docutils literal">Extrinsic <span class="pre">name=&quot;OrderCost&quot;</span></tt>; OCI sometimes via <tt class="docutils literal"><span class="pre">NEW_ITEM-SERVICE</span></tt>
+or extension fields). Today these are surfaced as chatter warnings only
+— the buyer has to add a freight / order-cost line manually before
+confirming.</p>
+<p>The clean fix is two configurable products on <tt class="docutils literal">punchout.backend</tt>:</p>
+<ul class="simple">
+<li><tt class="docutils literal">freight_product_id</tt> (Many2one to <tt class="docutils literal">product.product</tt>,
+service-typed): when set, a non-zero supplier shipping value
+materialises as a PO line for this product at the quoted amount.</li>
+<li><tt class="docutils literal">order_costs_product_id</tt> (same): same treatment for the Extrinsic
+“OrderCost” / equivalent OCI field.</li>
+</ul>
+<p>Both should be optional — when unset, fall back to the current behaviour
+of warning in chatter so existing deployments don’t change. Implement
+protocol hooks (e.g. <tt class="docutils literal">_extract_freight_amount</tt>,
+<tt class="docutils literal">_extract_order_costs_amount</tt>) that the cXML and OCI glue modules
+override to map their own header semantics, and a base
+<tt class="docutils literal">_post_punchout_create_extra_lines</tt> step that adds the lines once all
+cart lines are in place.</p>
+<p>Defer until at least two suppliers in production demand it — TVH’s OCI
+feed doesn’t quote freight, and Fabory’s cXML cart Total already matches
+the line subtotal in the field reports we have so far.</p>
+</div>
 </div>
 <div class="section" id="changelog">
-<h2><a class="toc-backref" href="#toc-entry-17">Changelog</a></h2>
+<h2><a class="toc-backref" href="#toc-entry-18">Changelog</a></h2>
 <div class="section" id="section-1">
-<h3><a class="toc-backref" href="#toc-entry-18">18.0.1.0.0 (2026)</a></h3>
+<h3><a class="toc-backref" href="#toc-entry-19">18.0.1.0.0 (2026)</a></h3>
 <ul class="simple">
 <li>[MIG] Migration to Odoo 18.0.</li>
 <li>[FIX] Surface <tt class="docutils literal">partner_id</tt>, <tt class="docutils literal">company_id</tt>, <tt class="docutils literal">product_category_id</tt>
@@ -630,7 +658,7 @@ ignored when the <tt class="docutils literal">stock</tt> module isn’t installe
 </div>
 </div>
 <div class="section" id="bug-tracker">
-<h2><a class="toc-backref" href="#toc-entry-19">Bug Tracker</a></h2>
+<h2><a class="toc-backref" href="#toc-entry-20">Bug Tracker</a></h2>
 <p>Bugs are tracked on <a class="reference external" href="https://github.com/OCA/edi/issues">GitHub Issues</a>.
 In case of trouble, please check there if your issue has already been reported.
 If you spotted it first, help us to smash it by providing a detailed and welcomed
@@ -638,9 +666,9 @@ If you spotted it first, help us to smash it by providing a detailed and welcome
 <p>Do not contact contributors directly about support or help with technical issues.</p>
 </div>
 <div class="section" id="credits">
-<h2><a class="toc-backref" href="#toc-entry-20">Credits</a></h2>
+<h2><a class="toc-backref" href="#toc-entry-21">Credits</a></h2>
 <div class="section" id="authors">
-<h3><a class="toc-backref" href="#toc-entry-21">Authors</a></h3>
+<h3><a class="toc-backref" href="#toc-entry-22">Authors</a></h3>
 <ul class="simple">
 <li>ACSONE SA/NV</li>
 <li>Hunki Enterprises BV</li>
@@ -648,7 +676,7 @@ If you spotted it first, help us to smash it by providing a detailed and welcome
 </ul>
 </div>
 <div class="section" id="contributors">
-<h3><a class="toc-backref" href="#toc-entry-22">Contributors</a></h3>
+<h3><a class="toc-backref" href="#toc-entry-23">Contributors</a></h3>
 <ul class="simple">
 <li>Thomas Binsfeld &lt;<a class="reference external" href="mailto:thomas.binsfeld&#64;acsone.eu">thomas.binsfeld&#64;acsone.eu</a>&gt;</li>
 <li>Benjamin Willig &lt;<a class="reference external" href="mailto:benjamin.willig&#64;acsone.eu">benjamin.willig&#64;acsone.eu</a>&gt;</li>
@@ -657,7 +685,7 @@ If you spotted it first, help us to smash it by providing a detailed and welcome
 </ul>
 </div>
 <div class="section" id="maintainers">
-<h3><a class="toc-backref" href="#toc-entry-23">Maintainers</a></h3>
+<h3><a class="toc-backref" href="#toc-entry-24">Maintainers</a></h3>
 <p>This module is maintained by the OCA.</p>
 <a class="reference external image-reference" href="https://odoo-community.org">
 <img alt="Odoo Community Association" src="https://odoo-community.org/logo.png" />
