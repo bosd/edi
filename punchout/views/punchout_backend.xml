@@ -80,7 +80,12 @@
                             <field name="description" />
                             <field name="protocol" />
                         </group>
-                        <group name="group_credentials" string="Credentials">
+                        <!-- cXML/IDS use their own credential fields. -->
+                        <group
+                            name="group_credentials"
+                            string="Credentials"
+                            invisible="protocol in ('cxml', 'ids')"
+                        >
                             <field name="auth_username" />
                             <field name="auth_password" password="True" />
                             <field name="auth_customer_number" />
