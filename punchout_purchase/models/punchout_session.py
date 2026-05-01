@@ -365,8 +365,12 @@ class PunchoutSession(models.Model):
         line (Shipping, Order Costs, Insurance, ...). Looked up by
         exact name first so users who pre-create a curated product
         with that name keep using it; auto-created on first use
-        otherwise. Service-typed and tax-free so Odoo doesn't add
-        its own VAT on top of the supplier-quoted amount."""
+        otherwise. Inherits the company's default purchase taxes so
+        the resulting PO line picks up the same VAT rate as cart-item
+        lines — cXML's ``<Tax>`` covers items + shipping + extrinsic
+        as one total, and suppliers almost always apply the same rate
+        to all of them, so taxing the auto-spawned line keeps Odoo's
+        and the supplier's totals aligned."""
         self.ensure_one()
         product_name = f"Punchout: {charge_name}"
         Product = self.env["product.product"]
@@ -379,8 +383,6 @@ class PunchoutSession(models.Model):
                 "type": "service",
                 "purchase_ok": True,
                 "sale_ok": False,
-                "supplier_taxes_id": [(5, 0, 0)],
-                "taxes_id": [(5, 0, 0)],
                 "description_purchase": self.env._(
                     "Auto-created by Punchout to capture the supplier's "
                     "quoted %(charge)s charge as a PO line.",
