@@ -389,23 +389,81 @@ shopping carts.</p>
 <p><strong>Table of contents</strong></p>
 <div class="contents local topic" id="contents">
 <ul class="simple">
-<li><a class="reference internal" href="#changelog" id="toc-entry-1">Changelog</a><ul>
-<li><a class="reference internal" href="#section-1" id="toc-entry-2">18.0.1.0.0 (2026)</a></li>
+<li><a class="reference internal" href="#known-issues-roadmap" id="toc-entry-1">Known issues / Roadmap</a><ul>
+<li><a class="reference internal" href="#first-class-product-classification-field" id="toc-entry-2">First-class product Classification field</a></li>
+<li><a class="reference internal" href="#pricebasisquantity-handling" id="toc-entry-3">PriceBasisQuantity handling</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#bug-tracker" id="toc-entry-3">Bug Tracker</a></li>
-<li><a class="reference internal" href="#credits" id="toc-entry-4">Credits</a><ul>
-<li><a class="reference internal" href="#authors" id="toc-entry-5">Authors</a></li>
-<li><a class="reference internal" href="#contributors" id="toc-entry-6">Contributors</a></li>
-<li><a class="reference internal" href="#maintainers" id="toc-entry-7">Maintainers</a></li>
+<li><a class="reference internal" href="#changelog" id="toc-entry-4">Changelog</a><ul>
+<li><a class="reference internal" href="#section-1" id="toc-entry-5">18.0.1.0.0 (2026)</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#bug-tracker" id="toc-entry-6">Bug Tracker</a></li>
+<li><a class="reference internal" href="#credits" id="toc-entry-7">Credits</a><ul>
+<li><a class="reference internal" href="#authors" id="toc-entry-8">Authors</a></li>
+<li><a class="reference internal" href="#contributors" id="toc-entry-9">Contributors</a></li>
+<li><a class="reference internal" href="#maintainers" id="toc-entry-10">Maintainers</a></li>
 </ul>
 </li>
 </ul>
 </div>
+<div class="section" id="known-issues-roadmap">
+<h2><a class="toc-backref" href="#toc-entry-1">Known issues / Roadmap</a></h2>
+<div class="section" id="first-class-product-classification-field">
+<h3><a class="toc-backref" href="#toc-entry-2">First-class product Classification field</a></h3>
+<p>cXML <tt class="docutils literal">ItemDetail/Classification</tt> carries one or more standard product
+codes (UNSPSC, <a class="reference external" href="mailto:eCl&#64;ss">eCl&#64;ss</a>, NAICS, supplier-internal taxonomies) tagged by
+the <tt class="docutils literal">domain</tt> attribute. Today this module appends them as a labelled
+footer to <tt class="docutils literal">product.description_purchase</tt>:</p>
+<pre class="literal-block">
+[Classification]
+UNSPSC: 31162400
+eCl&#64;ss: 23-23-19-01
+</pre>
+<p>That gives the buyer the information at point-of-purchase (visible on
+the PO line description) without inventing a schema, but it isn’t
+queryable, doesn’t survive product re-imports cleanly, and can’t be
+mapped to internal product categories.</p>
+<p>The proper fix is a generic <tt class="docutils literal">product.classification</tt> model (m2m or o2m
+on <tt class="docutils literal">product.template</tt>) with a <tt class="docutils literal">domain</tt> selection (UNSPSC, <a class="reference external" href="mailto:eCl&#64;ss">eCl&#64;ss</a>,
+custom) and a free-text <tt class="docutils literal">code</tt>. This belongs upstream — either in OCA
+<tt class="docutils literal">product</tt> or as a dedicated <tt class="docutils literal">product_classification</tt> module —
+because the same data flows in via EDI imports, supplier feeds, and PIM
+syncs, not just punchout. When that module exists, this glue should
+write to the structured field and stop touching
+<tt class="docutils literal">description_purchase</tt>.</p>
+</div>
+<div class="section" id="pricebasisquantity-handling">
+<h3><a class="toc-backref" href="#toc-entry-3">PriceBasisQuantity handling</a></h3>
+<p>cXML <tt class="docutils literal">ItemDetail/PriceBasisQuantity</tt> lets the supplier quote a price
+per N units instead of per single unit (e.g. “EUR 12.00 per 100
+pieces”). Today this module ignores the element and treats every
+<tt class="docutils literal">UnitPrice/Money</tt> as price-per-1, which is correct for every supplier
+we’ve round-tripped so far (Fabory’s cart sends each line as 1:1).</p>
+<p>A robust implementation needs to:</p>
+<ol class="arabic simple">
+<li>Read <tt class="docutils literal"><span class="pre">PriceBasisQuantity/&#64;quantity</span></tt> (the conversion factor) and
+<tt class="docutils literal">PriceBasisQuantity/UnitOfMeasure</tt> (which may differ from the order
+UoM — e.g. quoted per 100 pieces but ordered as a single carton).</li>
+<li>Either divide <tt class="docutils literal">UnitPrice/Money</tt> by the conversion factor before
+storing on the PO line (simplest, matches Odoo’s per-unit price
+semantics), or set <tt class="docutils literal">product.uom_po_id</tt> and
+<tt class="docutils literal">product.seller_ids.min_qty</tt> so Odoo’s own price-per-package logic
+kicks in (cleaner, but touches more product-side configuration and
+risks collisions when multiple suppliers quote the same product with
+different basis quantities).</li>
+<li>Round to the product currency’s decimal precision after conversion to
+avoid sub-cent drift.</li>
+</ol>
+<p>Defer until a real supplier sends a non-1 PriceBasisQuantity. When they
+do, prefer option 1 unless the supplier also pushes minimum-order
+quantities, in which case option 2 starts paying off.</p>
+</div>
+</div>
 <div class="section" id="changelog">
-<h2><a class="toc-backref" href="#toc-entry-1">Changelog</a></h2>
+<h2><a class="toc-backref" href="#toc-entry-4">Changelog</a></h2>
 <div class="section" id="section-1">
-<h3><a class="toc-backref" href="#toc-entry-2">18.0.1.0.0 (2026)</a></h3>
+<h3><a class="toc-backref" href="#toc-entry-5">18.0.1.0.0 (2026)</a></h3>
 <ul class="simple">
 <li>[ADD] First version: cXML cart → purchase order glue.</li>
 <li>[IMP] UoM lookup routed through
@@ -430,7 +488,7 @@ item_detail lxml element.</li>
 </div>
 </div>
 <div class="section" id="bug-tracker">
-<h2><a class="toc-backref" href="#toc-entry-3">Bug Tracker</a></h2>
+<h2><a class="toc-backref" href="#toc-entry-6">Bug Tracker</a></h2>
 <p>Bugs are tracked on <a class="reference external" href="https://github.com/OCA/edi/issues">GitHub Issues</a>.
 In case of trouble, please check there if your issue has already been reported.
 If you spotted it first, help us to smash it by providing a detailed and welcomed
@@ -438,23 +496,23 @@ If you spotted it first, help us to smash it by providing a detailed and welcome
 <p>Do not contact contributors directly about support or help with technical issues.</p>
 </div>
 <div class="section" id="credits">
-<h2><a class="toc-backref" href="#toc-entry-4">Credits</a></h2>
+<h2><a class="toc-backref" href="#toc-entry-7">Credits</a></h2>
 <div class="section" id="authors">
-<h3><a class="toc-backref" href="#toc-entry-5">Authors</a></h3>
+<h3><a class="toc-backref" href="#toc-entry-8">Authors</a></h3>
 <ul class="simple">
 <li>ACSONE SA/NV</li>
 <li>OBS Solutions Netherlands</li>
 </ul>
 </div>
 <div class="section" id="contributors">
-<h3><a class="toc-backref" href="#toc-entry-6">Contributors</a></h3>
+<h3><a class="toc-backref" href="#toc-entry-9">Contributors</a></h3>
 <ul class="simple">
 <li>Thomas Binsfeld <a class="reference external" href="mailto:thomas.binsfeld&#64;acsone.eu">thomas.binsfeld&#64;acsone.eu</a></li>
 <li>Benjamin Willig <a class="reference external" href="mailto:benjamin.willig&#64;acsone.eu">benjamin.willig&#64;acsone.eu</a></li>
 </ul>
 </div>
 <div class="section" id="maintainers">
-<h3><a class="toc-backref" href="#toc-entry-7">Maintainers</a></h3>
+<h3><a class="toc-backref" href="#toc-entry-10">Maintainers</a></h3>
 <p>This module is maintained by the OCA.</p>
 <a class="reference external image-reference" href="https://odoo-community.org">
 <img alt="Odoo Community Association" src="https://odoo-community.org/logo.png" />

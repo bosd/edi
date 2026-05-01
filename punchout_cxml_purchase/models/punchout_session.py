@@ -8,6 +8,7 @@ from datetime import date, timedelta
 import lxml.etree as ET
 
 from odoo import models
+from odoo.exceptions import UserError
 
 _logger = logging.getLogger(__name__)
 
@@ -133,6 +134,7 @@ class PunchoutSession(models.Model):
                     matches.mapped("display_name"),
                 )
             if matches:
+                self._apply_cxml_classification_to_description(matches[0], item_detail)
                 return matches[0]
 
         # No supplier-code match. Try matching by name (existing
@@ -154,6 +156,7 @@ class PunchoutSession(models.Model):
                     unit_price,
                     item_detail,
                 )
+                self._apply_cxml_classification_to_description(existing, item_detail)
                 return existing
 
         # Create new product if auto_create_products is enabled
@@ -202,6 +205,7 @@ class PunchoutSession(models.Model):
                 ]
 
             product = Product.sudo().create(product_vals)
+            self._apply_cxml_classification_to_description(product, item_detail)
             self._post_create_product_hook(
                 product,
                 {
@@ -213,8 +217,55 @@ class PunchoutSession(models.Model):
             )
             return product
 
-        # Fallback: return a generic product or raise error
-        return Product.search([("purchase_ok", "=", True)], limit=1)
+        # Hard fail rather than substituting an arbitrary
+        # purchase-enabled product when nothing matches.
+        raise UserError(
+            self.env._(
+                "Punchout cart line for supplier-part %(part)s "
+                "(%(desc)s) couldn't be matched to any product, and "
+                "Auto Create Products is disabled on the backend "
+                "%(backend)s. Either enable it, or pre-create the "
+                "product and add %(supplier)s to its Vendors tab "
+                "with code %(part)s before re-running the punchout.",
+                part=supplier_part_id or "(none)",
+                desc=description,
+                backend=backend.display_name,
+                supplier=(
+                    backend.partner_id.display_name
+                    if backend.partner_id
+                    else "(no supplier configured)"
+                ),
+            )
+        )
+
+    def _apply_cxml_classification_to_description(self, product, item_detail):
+        """Append cXML ``Classification`` codes (UNSPSC, eCl@ss, etc.)
+        to the product's ``description_purchase`` as a labelled
+        footer. cXML allows multiple ``Classification`` elements,
+        each with a ``domain`` attribute identifying the standard.
+        Stored verbatim until a generic product-classification
+        module ships (see ROADMAP).
+
+        Idempotent: skipped if the marker is already present.
+        """
+        self.ensure_one()
+        classifications = item_detail.findall("Classification")
+        if not classifications:
+            return
+        marker = "[Classification]"
+        existing = product.description_purchase or ""
+        if marker in existing:
+            return
+        lines = []
+        for cls in classifications:
+            domain = cls.get("domain") or "Unknown"
+            code = (cls.text or "").strip()
+            if code:
+                lines.append(f"{domain}: {code}")
+        if not lines:
+            return
+        footer = "\n\n" + marker + "\n" + "\n".join(lines)
+        product.sudo().description_purchase = (existing + footer).strip()
 
     def _build_protocol_header_messages(self, order, new_lines):
         """Surface cXML PunchOutOrderMessageHeader data — Total,

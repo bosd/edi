@@ -1,6 +1,7 @@
 # Copyright 2025 Bosd
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
 
+from odoo.exceptions import UserError
 from odoo.tools import mute_logger
 
 from odoo.addons.punchout_purchase.tests.common import TestPunchoutPurchaseCommon
@@ -133,18 +134,21 @@ class TestPunchoutCxmlPurchase(TestPunchoutPurchaseCommon):
         _, _, vals = lines[0]
         self.assertEqual(vals["product_id"], existing.id)
 
-    def test_no_auto_create_falls_back_to_existing_purchase_product(self):
-        """auto_create_products=False: missing product → fallback to any
-        purchasable product in the database, no auto-creation."""
+    @mute_logger("odoo.addons.punchout_cxml_purchase.models.punchout_session")
+    def test_no_auto_create_no_match_raises(self):
+        """auto_create_products=False with no supplier-code match and no
+        name match → UserError (no silent random-product fallback)."""
         self.backend.auto_create_products = False
-        # Pre-create a purchasable product so the fallback search has a hit.
+        # A purchasable product exists in the DB but has neither the
+        # supplier-part link nor the matching name — so neither lookup
+        # path hits, and the parser must refuse rather than substitute it.
         self.env["product.product"].create(
-            {"name": "Fallback purchasable", "type": "consu", "purchase_ok": True}
+            {"name": "Unrelated purchasable", "type": "consu", "purchase_ok": True}
         )
         product_count_before = self.env["product.product"].search_count([])
         self.session.response = CXML_CART
-        lines = self.session._prepare_purchase_order_lines()
-        self.assertEqual(len(lines), 1)
+        with self.assertRaises(UserError):
+            self.session._prepare_purchase_order_lines()
         product_count_after = self.env["product.product"].search_count([])
         self.assertEqual(product_count_after, product_count_before)
 
@@ -154,7 +158,9 @@ class TestPunchoutCxmlPurchase(TestPunchoutPurchaseCommon):
         self.session.response = cart_no_uom
         lines = self.session._prepare_purchase_order_lines()
         _, _, vals = lines[0]
-        self.assertEqual(vals["product_uom_id"], self.env.ref("uom.product_uom_unit").id)
+        self.assertEqual(
+            vals["product_uom_id"], self.env.ref("uom.product_uom_unit").id
+        )
 
     def test_invalid_unit_price_handled(self):
         """A non-numeric UnitPrice is treated as 0.0 instead of raising."""
@@ -190,3 +196,25 @@ class TestPunchoutCxmlPurchase(TestPunchoutPurchaseCommon):
         lines = self.session._prepare_purchase_order_lines()
         _, _, vals = lines[0]
         self.assertEqual(vals["product_uom_id"], dozen.id)
+
+    def test_classification_appended_to_description_purchase(self):
+        """cXML <Classification> codes land on product.description_purchase
+        as a labelled footer; idempotent on re-import."""
+        cart = CXML_CART.replace(
+            "<UnitOfMeasure>EA</UnitOfMeasure>",
+            "<UnitOfMeasure>EA</UnitOfMeasure>"
+            '<Classification domain="UNSPSC">31162400</Classification>'
+            '<Classification domain="eCl@ss">23-23-19-01</Classification>',
+        )
+        self.session.response = cart
+        self.session._prepare_purchase_order_lines()
+        product = self.env["product.product"].search(
+            [("seller_ids.partner_id", "=", self.partner.id)], limit=1
+        )
+        self.assertIn("[Classification]", product.description_purchase)
+        self.assertIn("UNSPSC: 31162400", product.description_purchase)
+        self.assertIn("eCl@ss: 23-23-19-01", product.description_purchase)
+        # Re-import should be a no-op (no duplicate footer).
+        self.session.response = cart
+        self.session._prepare_purchase_order_lines()
+        self.assertEqual(product.description_purchase.count("[Classification]"), 1)
