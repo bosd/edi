@@ -365,31 +365,40 @@ class PunchoutSession(models.Model):
         line (Shipping, Order Costs, Insurance, ...). Looked up by
         exact name first so users who pre-create a curated product
         with that name keep using it; auto-created on first use
-        otherwise. Inherits the company's default purchase taxes so
-        the resulting PO line picks up the same VAT rate as cart-item
-        lines — cXML's ``<Tax>`` covers items + shipping + extrinsic
-        as one total, and suppliers almost always apply the same rate
-        to all of them, so taxing the auto-spawned line keeps Odoo's
-        and the supplier's totals aligned."""
+        otherwise. Seeds ``supplier_taxes_id`` from the backend
+        company's default purchase tax so the resulting PO line picks
+        up the same VAT rate as cart-item lines — cXML's ``<Tax>``
+        covers items + shipping + extrinsic as one total, and
+        suppliers almost always apply the same rate to all of them.
+        We seed explicitly rather than relying on the field's
+        ``default=`` lambda because ``env.companies`` under the
+        auth-none cart-return controller can resolve to a different
+        set than the backend's company."""
         self.ensure_one()
         product_name = f"Punchout: {charge_name}"
         Product = self.env["product.product"]
         existing = Product.search([("name", "=", product_name)], limit=1)
         if existing:
             return existing
-        return Product.sudo().create(
-            {
-                "name": product_name,
-                "type": "service",
-                "purchase_ok": True,
-                "sale_ok": False,
-                "description_purchase": self.env._(
-                    "Auto-created by Punchout to capture the supplier's "
-                    "quoted %(charge)s charge as a PO line.",
-                    charge=charge_name,
-                ),
-            }
-        )
+        company = self.backend_id._get_company()
+        vals = {
+            "name": product_name,
+            "type": "service",
+            "purchase_ok": True,
+            "sale_ok": False,
+            "description_purchase": self.env._(
+                "Auto-created by Punchout to capture the supplier's "
+                "quoted %(charge)s charge as a PO line.",
+                charge=charge_name,
+            ),
+        }
+        default_tax = company.account_purchase_tax_id
+        if default_tax:
+            vals["supplier_taxes_id"] = [(6, 0, default_tax.ids)]
+        default_sale_tax = company.account_sale_tax_id
+        if default_sale_tax:
+            vals["taxes_id"] = [(6, 0, default_sale_tax.ids)]
+        return Product.sudo().with_company(company).create(vals)
 
     def write(self, vals):
         """Auto-process the cart when state moves to ``to_process``.
