@@ -3,7 +3,7 @@
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
 
 import logging
-from datetime import date
+from datetime import date, timedelta
 
 import lxml.etree as ET
 
@@ -80,13 +80,27 @@ class PunchoutSession(models.Model):
         # Get UoM
         uom = self._get_uom_for_cxml_item(item_detail)
 
+        # Parse LeadTime (in days). cXML 1.2 spec ``ItemDetail/LeadTime``
+        # is the supplier-promised number of days from order to delivery.
+        # Apply to ``date_planned`` so the PO carries the correct expected
+        # arrival date — was previously hardcoded to today, ignoring
+        # whatever the supplier promised.
+        lead_days = 0
+        lead_elem = item_detail.find("LeadTime")
+        if lead_elem is not None and lead_elem.text:
+            try:
+                lead_days = int(lead_elem.text.strip())
+            except (ValueError, TypeError):
+                _logger.debug("Invalid cXML LeadTime format: %s", lead_elem.text)
+        date_planned = date.today() + timedelta(days=lead_days)
+
         return {
             "product_id": product.id,
             "name": description,
             "product_qty": quantity,
             "price_unit": unit_price,
             "product_uom_id": uom.id,
-            "date_planned": date.today(),
+            "date_planned": date_planned,
         }
 
     def _get_or_create_product_cxml(
@@ -120,6 +134,27 @@ class PunchoutSession(models.Model):
                 )
             if matches:
                 return matches[0]
+
+        # No supplier-code match. Try matching by name (existing
+        # product, but not yet linked to this supplier). If found,
+        # ADD this supplier to the product's seller_ids so future
+        # punchout sessions match by code AND so the user sees this
+        # vendor on the product form. Without this step,
+        # auto-created products are fine but products that already
+        # exist in the catalog (e.g. matched by name through
+        # punchout_purchase glue) end up without a vendor link.
+        if backend.partner_id and description:
+            existing = Product.search([("name", "=", description)], limit=1)
+            if existing:
+                self._ensure_supplier_link(
+                    existing,
+                    backend,
+                    supplier_part_id,
+                    description,
+                    unit_price,
+                    item_detail,
+                )
+                return existing
 
         # Create new product if auto_create_products is enabled
         if backend.auto_create_products:
@@ -180,6 +215,161 @@ class PunchoutSession(models.Model):
 
         # Fallback: return a generic product or raise error
         return Product.search([("purchase_ok", "=", True)], limit=1)
+
+    def _build_protocol_header_messages(self, order, new_lines):
+        """Surface cXML PunchOutOrderMessageHeader data — Total,
+        Shipping, Tax, and Extrinsic costs (e.g. Order Costs) — as
+        chatter warnings so the buyer can reconcile against Odoo's
+        native PO totals before confirming.
+
+        Odoo's PO model has no first-class fields for supplier-
+        reported shipping / order costs, and Odoo computes its own
+        tax (which may differ from what the supplier quoted). The
+        safest behaviour is to expose the supplier's numbers verbatim
+        so the buyer notices when something diverges. A future
+        commit can add backend fields like ``freight_product_id`` to
+        materialise the supplier's shipping/order-cost values as
+        actual PO lines automatically.
+        """
+        self.ensure_one()
+        msgs = super()._build_protocol_header_messages(order, new_lines)
+        if self.backend_id.protocol != "cxml" or not self.response:
+            return msgs
+        try:
+            tree = ET.fromstring(self.response.encode())
+        except ET.XMLSyntaxError:
+            return msgs
+        header = tree.find(".//PunchOutOrderMessageHeader")
+        if header is None:
+            return msgs
+
+        def _money(elem_path):
+            elem = header.find(f"{elem_path}/Money")
+            if elem is None or not elem.text:
+                return None, None
+            try:
+                return float(elem.text.strip()), elem.get("currency", "")
+            except (ValueError, TypeError):
+                return None, None
+
+        bullets = []
+        # Supplier-reported total — compare to Odoo's computed total.
+        cart_total, total_ccy = _money("Total")
+        po_total = order.amount_total
+        if cart_total is not None and abs(cart_total - po_total) > 0.01:
+            bullets.append(
+                self.env._(
+                    "Supplier total <strong>%(cart)s %(ccy)s</strong> differs "
+                    "from Odoo's computed PO total <strong>%(po)s</strong> — "
+                    "verify the lines, taxes, and any shipping / order costs "
+                    "before confirming.",
+                    cart=f"{cart_total:.2f}",
+                    ccy=total_ccy,
+                    po=f"{po_total:.2f}",
+                )
+            )
+        # Supplier-reported tax — compare to Odoo's computed tax.
+        cart_tax, _ccy = _money("Tax")
+        po_tax = order.amount_tax
+        if cart_tax is not None and abs(cart_tax - po_tax) > 0.01:
+            bullets.append(
+                self.env._(
+                    "Supplier tax <strong>%(cart)s</strong> differs from "
+                    "Odoo's computed tax <strong>%(po)s</strong>. Odoo's "
+                    "tax derives from each product's configured tax_id; if "
+                    "the supplier's number is correct, adjust the product "
+                    "taxes or the line tax overrides.",
+                    cart=f"{cart_tax:.2f}",
+                    po=f"{po_tax:.2f}",
+                )
+            )
+        # Supplier-reported shipping — Odoo's PO model has no native
+        # field for this; surface it so the buyer can add it as a
+        # separate line manually.
+        cart_ship, _ccy = _money("Shipping")
+        if cart_ship is not None and cart_ship > 0:
+            bullets.append(
+                self.env._(
+                    "Supplier reported <strong>%(amt)s</strong> in shipping. "
+                    "Odoo doesn't auto-create a freight line — add one "
+                    "manually before confirming, or configure a freight "
+                    "product on the backend (planned).",
+                    amt=f"{cart_ship:.2f}",
+                )
+            )
+        # Extrinsic charges — typically Order Costs, sometimes more.
+        for extrinsic in header.findall("Extrinsic"):
+            money = extrinsic.find("Money")
+            if money is None or not money.text:
+                continue
+            try:
+                value = float(money.text.strip())
+            except (ValueError, TypeError):
+                continue
+            if value <= 0:
+                continue
+            bullets.append(
+                self.env._(
+                    "Supplier reported <strong>%(name)s</strong>: "
+                    "<strong>%(amt)s</strong>. Add as a separate PO line "
+                    "if you need to capture it.",
+                    name=extrinsic.get("name", "Extrinsic charge"),
+                    amt=f"{value:.2f}",
+                )
+            )
+        return bullets
+
+    def _ensure_supplier_link(
+        self,
+        product,
+        backend,
+        supplier_part_id,
+        description,
+        unit_price,
+        item_detail,
+    ):
+        """Make sure ``backend.partner_id`` is on the product's
+        ``seller_ids`` so the vendor link survives the punchout
+        round-trip. Creates a new ``product.supplierinfo`` row when
+        one doesn't exist for (product, partner) yet. No-op when the
+        partner is already a seller — we don't overwrite price or
+        delay on existing rows because the user may have edited
+        them deliberately.
+        """
+        self.ensure_one()
+        if not backend.partner_id:
+            return
+        existing = product.seller_ids.filtered(
+            lambda s, p=backend.partner_id: s.partner_id == p
+        )
+        if existing:
+            return
+        money_elem = item_detail.find("UnitPrice/Money")
+        currency_code = money_elem.get("currency", "") if money_elem is not None else ""
+        currency = (
+            self.env["res.currency"].search([("name", "=", currency_code)], limit=1)
+            if currency_code
+            else self.env["res.currency"]
+        )
+        if not currency:
+            currency = backend._get_company().currency_id
+        product.sudo().write(
+            {
+                "seller_ids": [
+                    (
+                        0,
+                        0,
+                        {
+                            "partner_id": backend.partner_id.id,
+                            "product_code": supplier_part_id,
+                            "product_name": description,
+                            "price": unit_price,
+                            "currency_id": currency.id,
+                        },
+                    )
+                ]
+            }
+        )
 
     def _post_create_product_hook(self, product, raw_data):
         """Hook fired after a product is auto-created from a punchout

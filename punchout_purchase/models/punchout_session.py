@@ -236,6 +236,22 @@ class PunchoutSession(models.Model):
             cart=", ".join(c.display_name for c in mismatched),
         )
 
+    def _build_protocol_header_messages(self, order, new_lines):
+        """Return a list of HTML warning strings about cart-header
+        data the supplier sent that Odoo can't represent natively
+        (Shipping, Order Costs, Tax/Total mismatches).
+
+        Default empty. Protocol modules (``punchout_cxml_purchase``,
+        etc.) override to extract their cart's header fields from
+        ``self.response`` and return human-readable summaries that
+        the existing chatter helper appends to the warning bullet
+        list. Until the system has dedicated handling for shipping
+        / order-cost lines, surfacing the values via chatter lets
+        the buyer reconcile manually before confirming the PO.
+        """
+        self.ensure_one()
+        return []
+
     def _post_punchout_line_warnings(self, order, new_lines, author=None):
         """Post one chatter message on the PO bundling all warnings
         from the cart vs the resolved PO/product data — keeps the
@@ -262,6 +278,12 @@ class PunchoutSession(models.Model):
         currency_msg = self._build_currency_mismatch_message(order, new_lines)
         if currency_msg:
             all_warnings.append(currency_msg)
+        # Protocol-specific extras — cart-header summary (cXML
+        # PunchOutOrderMessageHeader: Total, Shipping, Tax,
+        # Extrinsic costs), supplier-side metadata that doesn't
+        # fit per-line. Empty hook in base; protocol modules
+        # override.
+        all_warnings.extend(self._build_protocol_header_messages(order, new_lines))
         if not all_warnings:
             return
         # ``Markup`` so the <strong>/<ul>/<code> tags render as HTML
