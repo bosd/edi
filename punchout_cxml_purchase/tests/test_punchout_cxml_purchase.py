@@ -136,12 +136,12 @@ class TestPunchoutCxmlPurchase(TestPunchoutPurchaseCommon):
 
     @mute_logger("odoo.addons.punchout_cxml_purchase.models.punchout_session")
     def test_no_auto_create_no_match_raises(self):
-        """auto_create_products=False with no supplier-code match and no
-        name match → UserError (no silent random-product fallback)."""
+        """auto_create_products=False with no supplier-code match
+        → UserError (no silent random-product fallback)."""
         self.backend.auto_create_products = False
-        # A purchasable product exists in the DB but has neither the
-        # supplier-part link nor the matching name — so neither lookup
-        # path hits, and the parser must refuse rather than substitute it.
+        # A purchasable product exists in the DB but isn't linked to
+        # the supplier with this code, so the parser must refuse
+        # rather than substitute it.
         self.env["product.product"].create(
             {"name": "Unrelated purchasable", "type": "consu", "purchase_ok": True}
         )
@@ -196,6 +196,103 @@ class TestPunchoutCxmlPurchase(TestPunchoutPurchaseCommon):
         lines = self.session._prepare_purchase_order_lines()
         _, _, vals = lines[0]
         self.assertEqual(vals["product_uom_id"], dozen.id)
+
+    @mute_logger("odoo.addons.punchout_cxml_purchase.models.punchout_session")
+    def test_no_cross_row_match_on_seller_ids(self):
+        """A product with vendor A's code + vendor B (the punchout
+        partner) on its supplier list MUST NOT match a vendor B cart
+        line for vendor A's code. The two ``seller_ids`` conditions
+        have to apply to the SAME supplierinfo row."""
+        other_vendor = self.env["res.partner"].create({"name": "Other Vendor"})
+        # Product where:
+        #   * other vendor has product_code SKU-CXML-1
+        #   * the punchout supplier has a different product_code
+        # A cart from the punchout supplier with code SKU-CXML-1 must
+        # not pull in this product just because both rows happen to
+        # exist on the same product.
+        self.env["product.product"].create(
+            {
+                "name": "Cross-vendor decoy",
+                "type": "consu",
+                "seller_ids": [
+                    (
+                        0,
+                        0,
+                        {
+                            "partner_id": other_vendor.id,
+                            "product_code": "SKU-CXML-1",
+                        },
+                    ),
+                    (
+                        0,
+                        0,
+                        {
+                            "partner_id": self.partner.id,
+                            "product_code": "OTHER-CODE",
+                        },
+                    ),
+                ],
+            }
+        )
+        # auto_create_products off so no fallthrough to creation.
+        self.backend.auto_create_products = False
+        self.session.response = CXML_CART
+        with self.assertRaises(UserError):
+            self.session._prepare_purchase_order_lines()
+
+    def test_extra_lines_for_shipping_and_extrinsic(self):
+        """cXML <Shipping> + <Extrinsic> become PO lines via
+        auto-spawned ``Punchout: <name>`` service products."""
+        cart = CXML_CART.replace(
+            '<Total><Money currency="USD">100.00</Money></Total>',
+            '<Total><Money currency="USD">100.00</Money></Total>'
+            '<Shipping><Money currency="USD">14.50</Money></Shipping>'
+            '<Extrinsic name="OrderCost"><Money currency="USD">5.00</Money>'
+            "</Extrinsic>",
+        )
+        self.session.response = cart
+        order_vals = self.session._prepare_purchase_order_vals()
+        prices = sorted(
+            cmd[2]["price_unit"] for cmd in order_vals["order_line"] if cmd[0] == 0
+        )
+        self.assertEqual(prices, [5.0, 14.5, 50.0])
+        ship_product = self.env["product.product"].search(
+            [("name", "=", "Punchout: Shipping")]
+        )
+        self.assertEqual(len(ship_product), 1)
+        self.assertEqual(ship_product.type, "service")
+        order_cost_product = self.env["product.product"].search(
+            [("name", "=", "Punchout: OrderCost")]
+        )
+        self.assertEqual(len(order_cost_product), 1)
+
+    def test_extra_lines_reuse_curated_product(self):
+        """A pre-created ``Punchout: Shipping`` service product is
+        reused instead of spawning a duplicate."""
+        curated = self.env["product.product"].create(
+            {"name": "Punchout: Shipping", "type": "service", "purchase_ok": True}
+        )
+        cart = CXML_CART.replace(
+            '<Total><Money currency="USD">100.00</Money></Total>',
+            '<Total><Money currency="USD">100.00</Money></Total>'
+            '<Shipping><Money currency="USD">9.99</Money></Shipping>',
+        )
+        self.session.response = cart
+        order_vals = self.session._prepare_purchase_order_vals()
+        ship_lines = [
+            cmd[2]
+            for cmd in order_vals["order_line"]
+            if cmd[0] == 0 and cmd[2]["product_id"] == curated.id
+        ]
+        self.assertEqual(len(ship_lines), 1)
+        self.assertEqual(ship_lines[0]["price_unit"], 9.99)
+        # No duplicate spawned.
+        self.assertEqual(
+            self.env["product.product"].search_count(
+                [("name", "=", "Punchout: Shipping")]
+            ),
+            1,
+        )
 
     def test_classification_appended_to_description_purchase(self):
         """cXML <Classification> codes land on product.description_purchase
