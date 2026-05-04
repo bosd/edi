@@ -1,3 +1,13 @@
+## 19.0.1.2.0 (2026)
+
+- [FIX] Pin auto-created `product.supplierinfo.company_id` to the
+  backend's company. Without this, the row defaulted to
+  `self.env.company` at create time — in a multi-company setup the
+  active company at cart-process time would win, even when the
+  backend was configured to only buy from this supplier under a
+  specific company. Surfaces as ghost seller rows visible only in
+  some company contexts.
+
 ## 18.0.1.0.0 (2026)
 
 - [ADD] First version: OCI cart → purchase order glue.

@@ -216,6 +216,18 @@ class PunchoutSession(models.Model):
                             "price": price,
                             "delay": leadtime,
                             "currency_id": currency.id,
+                            # Pin the row to the backend's company.
+                            # Without this Odoo defaults to env.company
+                            # at create time — in a multi-company setup
+                            # whichever company happened to be active
+                            # when the cart was processed wins, even
+                            # when the backend is configured to only
+                            # buy from this supplier under a specific
+                            # company. ``backend._get_company()``
+                            # returns ``backend.company_id`` when set,
+                            # falling back to env.company so single-
+                            # company installs still work.
+                            "company_id": backend._get_company().id,
                         },
                     )
                 ]
