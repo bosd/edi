@@ -256,6 +256,10 @@ class PunchoutSession(models.Model):
                         "price": unit_price,
                         "min_qty": 0,
                         "currency_id": currency.id,
+                        # Pin to backend's company — see
+                        # punchout_oci_purchase.punchout_session for
+                        # the full rationale.
+                        "company_id": backend._get_company().id,
                     },
                 )
             ]
@@ -309,6 +313,9 @@ class PunchoutSession(models.Model):
                                 "price": unit_price,
                                 "min_qty": 0,
                                 "currency_id": currency.id,
+                                # Pin to backend's company — see
+                                # punchout_oci_purchase for rationale.
+                                "company_id": backend._get_company().id,
                             },
                         )
                     ]

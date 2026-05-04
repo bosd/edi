@@ -1,3 +1,10 @@
+## 19.0.1.1.0 (2026)
+
+- [FIX] Pin auto-created `product.supplierinfo.company_id` to the
+  backend's company (both initial create and the supplier-update
+  path) — see `punchout_oci_purchase` HISTORY for the full
+  rationale.
+
 ## 18.0.1.0.0 (2026)
 
 - [ADD] First version: IDS cart → purchase order glue.

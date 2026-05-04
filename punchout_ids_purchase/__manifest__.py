@@ -4,7 +4,7 @@
 
 {
     "name": "Punchout IDS Purchase",
-    "version": "19.0.1.0.0",
+    "version": "19.0.1.1.0",
     "license": "AGPL-3",
     "summary": "Create purchase orders from IDS shopping carts",
     "author": (
