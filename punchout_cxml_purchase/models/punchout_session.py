@@ -187,6 +187,10 @@ class PunchoutSession(models.Model):
                             "product_name": description,
                             "price": unit_price,
                             "currency_id": currency.id,
+                            # Pin to backend's company — see
+                            # punchout_oci_purchase.punchout_session
+                            # for the full rationale.
+                            "company_id": backend._get_company().id,
                         },
                     )
                 ]

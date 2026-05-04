@@ -152,6 +152,13 @@ generalising.
 Changelog
 =========
 
+19.0.1.4.0 (2026)
+-----------------
+
+- [FIX] Pin auto-created ``product.supplierinfo.company_id`` to the
+  backend's company — see ``punchout_oci_purchase`` HISTORY for the full
+  rationale.
+
 18.0.1.0.0 (2026)
 -----------------
 
