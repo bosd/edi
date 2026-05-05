@@ -1,3 +1,14 @@
+## 19.0.1.2.0 (2026)
+
+- [ADD] Pass the buyer's session language to the supplier's catalog
+  on punchout-setup. New `oci_param_language` field on the backend
+  (default `~Language` per OCI 4.0; TVH preset overrides to
+  lowercase `language`); the URL builder splices the user's
+  2-letter ISO 639-1 code (`nl_NL` → `nl`). Saves a manual language
+  switch on the supplier side and lets language-sensitive suppliers
+  (TVH) pick the right UoM / description set up front. Clear the
+  field on the backend to skip the param entirely.
+
 ## 18.0.1.0.0 (2026)
 
 - [MIG] Migration to Odoo 18.0. Original OCI protocol implementation by

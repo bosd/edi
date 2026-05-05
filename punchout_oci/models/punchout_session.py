@@ -60,6 +60,22 @@ class PunchoutSession(models.Model):
             if value and key:
                 params[key] = value
 
+        # Splice the buyer's session language so the supplier's
+        # catalog opens already localised — saves the buyer a manual
+        # language switch, and TVH (the most language-sensitive
+        # supplier we ship a preset for) actually uses this to pick
+        # which UoM / description set to display. The 2-letter ISO
+        # 639-1 code (``nl_NL`` → ``nl``) is what every OCI 4.0
+        # supplier we've tested expects. Skipped when
+        # oci_param_language is cleared on the backend (suppliers
+        # that don't honor it). Done BEFORE custom params so the
+        # admin's escape hatch can still override.
+        if backend.oci_param_language:
+            user_lang = self.env.user.lang or self.env.lang or "en_US"
+            short_lang = user_lang.split("_", 1)[0].lower() if user_lang else "en"
+            if short_lang:
+                params[backend.oci_param_language] = short_lang
+
         # Add custom parameters from backend (escape hatch).
         if backend.oci_custom_parameters:
             custom_params = parse_qs(backend.oci_custom_parameters)

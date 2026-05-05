@@ -264,6 +264,9 @@
         <!-- TVH doesn't take a customer number parameter; clearing the
              default keeps the generic field unused on the form. -->
         <field name="oci_param_customer" />
+        <!-- TVH expects lowercase ``language`` (deviates from the
+             OCI 4.0 ``~Language`` convention). -->
+        <field name="oci_param_language">language</field>
         <field
             name="image_128"
             type="base64"

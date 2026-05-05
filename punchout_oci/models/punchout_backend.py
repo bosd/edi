@@ -55,6 +55,18 @@ class PunchoutBackend(models.Model):
         "``auth_customer_number`` field empty for suppliers that "
         "don't require a customer number (e.g. INDI).",
     )
+    oci_param_language = fields.Char(
+        string="Language param name",
+        default="~Language",
+        groups="base.group_system",
+        help="Form-POST parameter name for the buyer's session "
+        "language. Defaults to the OCI 4.0 convention ``~Language``; "
+        "TVH and a few other suppliers expect lowercase ``language``. "
+        "Value sent is the 2-letter ISO 639-1 code derived from the "
+        "current user's ``res.lang`` (``nl_NL`` → ``nl``). Clear this "
+        "field to skip the language param entirely for suppliers that "
+        "don't honor it.",
+    )
 
     @api.model
     def _selection_protocol(self):
