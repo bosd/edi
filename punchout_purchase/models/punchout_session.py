@@ -159,12 +159,31 @@ class PunchoutSession(models.Model):
         new_lines = self.purchase_order_id.order_line.filtered(
             lambda line: line.punchout_session_id == self
         )
-        self._post_punchout_line_warnings(
-            self.purchase_order_id.with_user(author).sudo().with_company(company),
-            new_lines,
-            author,
+        order_scoped = (
+            self.purchase_order_id.with_user(author).sudo().with_company(company)
         )
+        self._post_punchout_line_warnings(order_scoped, new_lines, author)
+        # Generic post-process extension point. Empty in base —
+        # supplier-specific glue modules (e.g. ``flc_punchout_tvh``)
+        # override this to fire follow-up actions like a batch
+        # inquiry that enriches the newly-created products in one
+        # quota slot. Failures inside the override MUST be caught
+        # there — the cart-import flow should never break because an
+        # enrichment call timed out.
+        self._post_punchout_session_processed(order_scoped, new_lines)
         return self.action_view_purchase_order()
+
+    def _post_punchout_session_processed(self, order, new_lines):
+        """Hook fired after the punchout session is fully processed
+        (PO created or appended, chatter warnings posted). ``order``
+        is already scoped to the right user / company. Empty in base
+        — protocol- and supplier-specific modules override to attach
+        follow-up enrichment, ASN polling, etc.
+
+        Pass the FULL order so the override can inspect every line
+        (including pre-existing ones); the freshly-added subset is
+        in ``new_lines`` for cases where the override only wants to
+        operate on the just-arrived items."""
 
     def _build_line_mismatch_messages(self, line):
         """Return a list of human-readable mismatch warnings for one new line.

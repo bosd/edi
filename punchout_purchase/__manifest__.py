@@ -5,7 +5,7 @@
 
 {
     "name": "Punchout Purchase",
-    "version": "19.0.1.3.2",
+    "version": "19.0.1.4.0",
     "license": "AGPL-3",
     "summary": "Create purchase orders from Punchout shopping carts",
     "author": (

@@ -1,3 +1,11 @@
+## 19.0.1.4.0 (2026)
+
+- [ADD] New `_post_punchout_session_processed(order, new_lines)`
+  hook fired at the very end of `process()` (after PO create/append
+  and chatter warnings). Empty in base — supplier-specific glue
+  modules override it to fire follow-up enrichment, batch inquiries,
+  ASN polling, etc., without monkey-patching `process()` itself.
+
 ## 18.0.1.0.0 (2026)
 
 - [MIG] Migration to Odoo 18.0.
