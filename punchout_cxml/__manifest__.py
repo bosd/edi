@@ -4,7 +4,7 @@
 
 {
     "name": "Punchout cXML",
-    "version": "19.0.1.1.7",
+    "version": "19.0.1.1.8",
     "license": "AGPL-3",
     "summary": "cXML protocol support for Punchout",
     "author": (

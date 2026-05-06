@@ -54,6 +54,56 @@
          "F@bory12" public demo credentials so the tile is
          clickable out of the box.
     ==================================================== -->
+    <!-- ====================================================
+         Conrad Electronic (DE/EU) — electronics, components,
+         technical supply.
+         Public docs: provided by Conrad's procurement-integration
+         team on request. Conrad routes cXML PunchOut traffic
+         through an Ariba-style endpoint host (the
+         ``oci.conrad.com`` host serves the cXML
+         ``PunchOutSetupRequest``; the ``oci`` segment is
+         historical, the protocol is cXML). The customer-side
+         credentials packet from Conrad lists:
+           - your NetworkId buyer ID,
+           - Conrad's own DUNS (the same value for every customer
+             — copy from the packet),
+           - your shared secret.
+
+         cXML credential model:
+           - from_domain   = NetworkId  (buyer)
+           - from_identity = REPLACE_ME (your assigned NetworkId)
+           - to_domain     = DUNS       (Conrad's identifier type)
+           - to_identity   = REPLACE_ME (Conrad's DUNS, from the
+                             credentials packet)
+           - shared_secret = REPLACE_ME
+
+         Punchout setup endpoint:
+           https://oci.conrad.com/AribaRequest.html
+
+         No matching ``demo/conrad_demo.xml`` ships here yet —
+         Conrad doesn't publish a public demo profile, so the
+         preset stays archived until a real customer adopts it.
+    ==================================================== -->
+    <record id="preset_conrad" model="punchout.backend">
+        <field name="name">Conrad Electronic</field>
+        <field
+            name="description"
+        >Electronics, components, technical supply (DE/EU). cXML PunchOut. Replace from_identity, to_identity (Conrad's DUNS), and shared_secret with the values Conrad assigned to your account.</field>
+        <field name="protocol">cxml</field>
+        <field name="url">https://oci.conrad.com/AribaRequest.html</field>
+        <field name="browser_form_post_url">/punchout/cxml/receive/</field>
+        <field name="cxml_version">1.2.008</field>
+        <field name="from_domain">NetworkId</field>
+        <field name="from_identity">REPLACE_ME</field>
+        <field name="to_domain">DUNS</field>
+        <field name="to_identity">REPLACE_ME</field>
+        <field name="shared_secret">REPLACE_ME</field>
+        <field name="user_agent">Odoo Punchout</field>
+        <field name="deployment_mode">test</field>
+        <field name="active" eval="False" />
+        <field name="state">draft</field>
+    </record>
+
     <record id="preset_fabory" model="punchout.backend">
         <field name="name">Fabory</field>
         <field

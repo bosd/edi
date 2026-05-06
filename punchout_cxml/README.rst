@@ -150,6 +150,18 @@ description.
 Changelog
 =========
 
+19.0.1.1.8 (2026-05)
+--------------------
+
+- [ADD] **Conrad Electronic** supplier preset (DE/EU electronics
+
+  - components). Ships archived (``active=False`` / ``state=draft``) —
+    adopt by unarchiving and filling in the ``REPLACE_ME`` placeholders
+    for ``from_identity`` (your NetworkId), ``to_identity`` (Conrad's
+    DUNS, from the credentials packet) and ``shared_secret``. Endpoint:
+    ``https://oci.conrad.com/AribaRequest.html``. No demo override
+    shipped — Conrad doesn't publish a public sandbox profile.
+
 18.0.1.0.0 (2026)
 -----------------
 
