@@ -23,6 +23,7 @@
                     <field name="oci_param_username" />
                     <field name="oci_param_password" />
                     <field name="oci_param_customer" />
+                    <field name="oci_param_language" />
                     <!-- No longer password-masked: credentials live
                          in the dedicated auth_username / auth_password
                          / auth_customer_number fields. This field is

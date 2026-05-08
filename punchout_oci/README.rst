@@ -94,6 +94,15 @@ Three things determine whether your supplier works out of the box:
 - **Whether a customer number is required.** Set
   ``auth_customer_number`` and the matching param name (e.g. ``CUSTNR``,
   ``KUNDEN_NR``) — or leave both empty for suppliers that don't use one.
+- **Language param name.** The buyer's session language is sent to the
+  supplier so the catalog opens in the right language (saves a manual
+  switch, and language-sensitive suppliers like TVH use it to pick the
+  right UoM / description set). Default param name is the OCI 4.0
+  convention ``~Language``; TVH and a few others expect lowercase
+  ``language``. Clear the field on the backend to skip the param
+  entirely for suppliers that don't honour it. The 2-letter ISO 639-1
+  code is derived from the current user's ``res.lang`` (``nl_NL`` →
+  ``nl``).
 
 If your supplier needs auth params beyond the username/password/customer
 trio (e.g. a session token, an extra branch ID), use the
@@ -212,6 +221,17 @@ work to land — every supplier diverges from the spec in subtle ways:
 
 Changelog
 =========
+
+19.0.1.2.1 (2026)
+-----------------
+
+- [FIX] Expose the ``oci_param_language`` field on the backend form so
+  managers can adjust the language-param name (or clear it to skip the
+  splice) without dropping into a server-action — was added in
+  19.0.1.2.0 but never wired into the OCI Settings group.
+- [ADD] Test coverage for the session-language splice: default
+  ``~Language`` mapping, per-supplier override (lowercase ``language``),
+  skip-when-cleared, and ``oci_custom_parameters`` override-wins.
 
 19.0.1.2.0 (2026)
 -----------------

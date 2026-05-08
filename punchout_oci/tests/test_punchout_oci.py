@@ -83,6 +83,63 @@ class TestPunchoutOci(TestPunchoutOciCommon):
         self.assertNotIn("PASSWORD=", url)
         self.assertNotIn("CUSTOMER=", url)
 
+    def _get_url_with_user_lang(self, user_lang):
+        """Run the URL builder under a user whose ``res.users.lang`` is
+        forced to ``user_lang``. Activates the corresponding ``res.lang``
+        first (pre-shipped but inactive by default) so the Selection
+        write on ``res.users.lang`` doesn't bounce."""
+        self.env["res.lang"]._activate_lang(user_lang)
+        self.session.user_id.lang = user_lang
+        return self.session_model.with_user(
+            self.session.user_id
+        )._get_post_punchout_setup_url(self.session)
+
+    def test_oci_setup_url_includes_session_language(self):
+        """The buyer's session language is spliced into the URL using
+        the per-supplier ``oci_param_language`` mapping (default
+        ``~Language``, the OCI 4.0 convention). The 2-letter ISO 639-1
+        code is sent (``nl_NL`` → ``nl``)."""
+        self.backend.oci_custom_parameters = False
+        url = self._get_url_with_user_lang("nl_NL")
+        # ``~`` is in urllib's always-safe set, so ``~Language`` is
+        # passed through; ``Language=nl`` matches both that and the
+        # lowercase override.
+        self.assertIn("Language=nl", url)
+        self.assertNotIn("Language=nl_NL", url)
+
+    def test_oci_setup_url_language_param_override(self):
+        """Suppliers that deviate from the OCI 4.0 ``~Language``
+        convention (TVH uses lowercase ``language``) can override the
+        param name via the preset."""
+        self.backend.oci_custom_parameters = False
+        self.backend.oci_param_language = "language"
+        url = self._get_url_with_user_lang("de_DE")
+        self.assertIn("language=de", url)
+        self.assertNotIn("~Language", url)
+
+    def test_oci_setup_url_language_skipped_when_param_cleared(self):
+        """Suppliers that don't honour a language param (cleared on
+        the backend) get no language splice — no stray empty value
+        and no default ``~Language``."""
+        self.backend.oci_custom_parameters = False
+        self.backend.oci_param_language = False
+        url = self._get_url_with_user_lang("nl_NL")
+        self.assertNotIn("Language", url)
+        self.assertNotIn("language=", url)
+
+    def test_oci_setup_url_language_custom_params_override(self):
+        """``oci_custom_parameters`` is the technical escape hatch —
+        when it sets the language key the session-language splice
+        would also set, the explicit admin override wins."""
+        self.backend.oci_param_language = "language"
+        self.backend.oci_custom_parameters = "language=fr"
+        url = self._get_url_with_user_lang("nl_NL")
+        self.assertIn("language=fr", url)
+        # The user's nl splice would have set ``language=nl``; the
+        # custom-params splice runs after and overrides on key
+        # collision.
+        self.assertNotIn("language=nl&", url + "&")
+
     def test_oci_setup_url_includes_session_token(self):
         """HOOK_URL should carry the session's buyer_cookie as
         ``punchout_session_token`` so the receive controller can

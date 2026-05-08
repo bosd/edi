@@ -1,3 +1,13 @@
+## 19.0.1.2.1 (2026)
+
+- [FIX] Expose the `oci_param_language` field on the backend form so
+  managers can adjust the language-param name (or clear it to skip
+  the splice) without dropping into a server-action — was added in
+  19.0.1.2.0 but never wired into the OCI Settings group.
+- [ADD] Test coverage for the session-language splice: default
+  `~Language` mapping, per-supplier override (lowercase `language`),
+  skip-when-cleared, and `oci_custom_parameters` override-wins.
+
 ## 19.0.1.2.0 (2026)
 
 - [ADD] Pass the buyer's session language to the supplier's catalog

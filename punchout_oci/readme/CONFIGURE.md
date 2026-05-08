@@ -37,6 +37,15 @@ Three things determine whether your supplier works out of the box:
   `auth_customer_number` and the matching param name (e.g.
   `CUSTNR`, `KUNDEN_NR`) — or leave both empty for suppliers
   that don't use one.
+- **Language param name.** The buyer's session language is sent
+  to the supplier so the catalog opens in the right language
+  (saves a manual switch, and language-sensitive suppliers like
+  TVH use it to pick the right UoM / description set). Default
+  param name is the OCI 4.0 convention `~Language`; TVH and a
+  few others expect lowercase `language`. Clear the field on
+  the backend to skip the param entirely for suppliers that
+  don't honour it. The 2-letter ISO 639-1 code is derived from
+  the current user's `res.lang` (`nl_NL` → `nl`).
 
 If your supplier needs auth params beyond the
 username/password/customer trio (e.g. a session token, an
