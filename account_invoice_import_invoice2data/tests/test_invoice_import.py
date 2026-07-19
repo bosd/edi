@@ -4,6 +4,8 @@
 
 import base64
 import logging
+import shutil
+import unittest
 from unittest import mock
 
 from odoo import Command, fields
@@ -12,6 +14,16 @@ from odoo.tests.common import TransactionCase
 from odoo.tools import file_open, float_compare
 
 from odoo.addons.base.tests.common import DISABLED_MAIL_CONTEXT
+
+# invoice2data's pdftotext backend needs the poppler `pdftotext` binary. When
+# it's absent (e.g. a fresh dev container that hasn't installed poppler-utils)
+# the extraction returns "", every template fails to match, and this test
+# fails with a stale/empty-import error. Skip it in that case so local runs
+# stay green -- the CI runbots have poppler installed, so it still gates PRs.
+needs_pdftotext = unittest.skipUnless(
+    shutil.which("pdftotext"),
+    reason="pdftotext (poppler-utils) is required for the invoice2data template",
+)
 
 
 class TestInvoiceImport(TransactionCase):
@@ -46,6 +58,7 @@ class TestInvoiceImport(TransactionCase):
                 logging.getLogger("").debug("Cannot import tesseract")
             self.assertEqual(cm.output, ["DEBUG:root:Cannot import tesseract"])
 
+    @needs_pdftotext
     def test_import_free_invoice(self):
         filename = "invoice_free_fiber_201507.pdf"
         f = file_open("account_invoice_import_invoice2data/tests/pdf/" + filename, "rb")
