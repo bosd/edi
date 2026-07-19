@@ -45,8 +45,13 @@ class AccountInvoiceImport(models.TransientModel):
         taxes = []
         type_code = "VAT"
         price_include = False
-        # CategoryCode assume standard rate s for standard or low rate AA
-        categ_code = ""  # AA
+        # Honor the canonical `line_tax_code` field (invoice2data schema) when
+        # the template captures it, so the UNECE category code round-trips
+        # into `account_move_line.tax_categ_id` via
+        # `account_move_line._match_taxes`. Falls back to "" for backwards
+        # compatibility -- typical UNECE codes are `S` (standard), `AA`
+        # (lower rate), `E` (exempt), `Z` (zero-rated).
+        categ_code = line.get("line_tax_code") or ""
         percentage = line.get("line_tax_percent")
         fixed_amount = line.get("line_tax_amount")
         if percentage:
