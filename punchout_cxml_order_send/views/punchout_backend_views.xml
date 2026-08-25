@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Copyright 2026 Bosd
+     License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl). -->
+<odoo>
+    <record model="ir.ui.view" id="punchout_backend_form_view_order_send">
+        <field name="name">punchout.backend.form.order.send</field>
+        <field name="model">punchout.backend</field>
+        <field name="inherit_id" ref="punchout.punchout_backend_form_view" />
+        <field name="arch" type="xml">
+            <xpath expr="//group[@name='group_main']" position="after">
+                <group
+                    name="group_cxml_order_send"
+                    string="cXML Order Transmission"
+                    invisible="protocol != 'cxml'"
+                >
+                    <field name="cxml_order_send" />
+                    <field
+                        name="order_request_url"
+                        invisible="not cxml_order_send"
+                        required="cxml_order_send"
+                        placeholder="https://supplier.example/cxml/order"
+                    />
+                    <field name="order_email" invisible="not cxml_order_send" />
+                </group>
+            </xpath>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE cXML SYSTEM "http://xml.cxml.org/schemas/cXML/1.2.008/cXML.dtd">
+<!--
+  SAMPLE cXML OrderRequest — Forkliftcenter (Odoo) → Manutan
+  For format validation only. At runtime each field is generated from the
+  confirmed purchase.order. Notes:
+   - payloadID + timestamp are generated per message.
+   - <SharedSecret> below is a PLACEHOLDER; the real Manutan shared secret is
+     injected at send time and is never stored in the document at rest.
+   - deploymentMode="test" while validating; flips to "production" on go-live.
+-->
+<cXML payloadID="1735142400.0001@forkliftcenter.nl"
+      timestamp="2026-08-25T12:00:00+02:00"
+      xml:lang="en-US">
+  <Header>
+    <From>
+      <Credential domain="DUNS">
+        <Identity>ODOONLMANU</Identity>
+      </Credential>
+    </From>
+    <To>
+      <Credential domain="DUNS">
+        <Identity>417526183</Identity>
+      </Credential>
+    </To>
+    <Sender>
+      <Credential domain="DUNS">
+        <Identity>ODOONLMANU</Identity>
+        <SharedSecret>__SHARED_SECRET__</SharedSecret>
+      </Credential>
+      <UserAgent>Odoo Punchout</UserAgent>
+    </Sender>
+  </Header>
+  <Request deploymentMode="test">
+    <OrderRequest>
+      <OrderRequestHeader orderID="TEST-PO-0001"
+                          orderDate="2026-08-25T12:00:00+02:00"
+                          type="new">
+        <Total>
+          <Money currency="EUR">151.25</Money>
+        </Total>
+        <ShipTo>
+          <Address addressID="FLC-WH">
+            <Name xml:lang="en">Forkliftcenter B.V.</Name>
+            <PostalAddress name="warehouse">
+              <DeliverTo>Warehouse Receiving</DeliverTo>
+              <Street>Voorbeeldstraat 1</Street>
+              <City>Rotterdam</City>
+              <PostalCode>3000 AA</PostalCode>
+              <Country isoCountryCode="NL">Netherlands</Country>
+            </PostalAddress>
+            <Email>inkoop@forkliftcenter.nl</Email>
+          </Address>
+        </ShipTo>
+        <BillTo>
+          <Address addressID="FLC-INV">
+            <Name xml:lang="en">Forkliftcenter B.V.</Name>
+            <PostalAddress name="billing">
+              <Street>Voorbeeldstraat 1</Street>
+              <City>Rotterdam</City>
+              <PostalCode>3000 AA</PostalCode>
+              <Country isoCountryCode="NL">Netherlands</Country>
+            </PostalAddress>
+          </Address>
+        </BillTo>
+        <Shipping>
+          <Money currency="EUR">0.00</Money>
+          <Description xml:lang="en">Standard delivery</Description>
+        </Shipping>
+        <Tax>
+          <Money currency="EUR">26.25</Money>
+          <Description xml:lang="en">VAT 21%</Description>
+        </Tax>
+        <Contact role="buyer">
+          <Name xml:lang="en">Forkliftcenter Purchasing</Name>
+          <Email>inkoop@forkliftcenter.nl</Email>
+        </Contact>
+      </OrderRequestHeader>
+      <ItemOut quantity="5" lineNumber="1">
+        <ItemID>
+          <SupplierPartID>MAN-EXAMPLE-12345</SupplierPartID>
+        </ItemID>
+        <ItemDetail>
+          <UnitPrice>
+            <Money currency="EUR">25.00</Money>
+          </UnitPrice>
+          <Description xml:lang="en">Sample industrial part (from punchout cart)</Description>
+          <UnitOfMeasure>EA</UnitOfMeasure>
+          <Classification domain="UNSPSC">31161500</Classification>
+        </ItemDetail>
+      </ItemOut>
+    </OrderRequest>
+  </Request>
+</cXML>

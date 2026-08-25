@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Copyright 2026 Bosd
+     License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl). -->
+<odoo>
+    <!--
+        cXML OrderRequest built from a confirmed purchase.order. Reuses the
+        shared credential header (punchout_cxml.cxml_punchout_header). Keep
+        ``<t t-esc=...>`` inline with the parent element so no whitespace bleeds
+        into cXML values (the render step also strips leaf whitespace).
+    -->
+    <template id="cxml_order_request">
+        <cXML
+            t-att-version="backend._get_cxml_version()"
+            t-att-payloadID="order._cxml_order_payload_id()"
+            t-att-timestamp="order._cxml_order_timestamp()"
+        >
+            <t t-call="punchout_cxml.cxml_punchout_header" />
+            <Request t-att-deploymentMode="backend.deployment_mode">
+                <OrderRequest>
+                    <OrderRequestHeader
+                        t-att-orderID="order.name"
+                        t-att-orderDate="order._cxml_order_timestamp()"
+                        type="new"
+                    >
+                        <Total>
+                            <Money
+                                t-att-currency="order.currency_id.name"
+                            ><t t-esc="'%.2f' % order.amount_total" /></Money>
+                        </Total>
+                        <t t-set="ship" t-value="order._cxml_order_ship_to_partner()" />
+                        <ShipTo>
+                            <Address t-att-addressID="ship.id">
+                                <Name
+                                ><t t-esc="ship.name" /></Name>
+                                <PostalAddress>
+                                    <Street
+                                    ><t t-esc="ship.street or ''" /></Street>
+                                    <City><t t-esc="ship.city or ''" /></City>
+                                    <PostalCode
+                                    ><t t-esc="ship.zip or ''" /></PostalCode>
+                                    <Country
+                                        t-att-isoCountryCode="ship.country_id.code or 'NL'"
+                                    ><t
+                                            t-esc="ship.country_id.name or ''"
+                                        /></Country>
+                                </PostalAddress>
+                            </Address>
+                        </ShipTo>
+                        <t t-set="bill" t-value="order.company_id.partner_id" />
+                        <BillTo>
+                            <Address t-att-addressID="bill.id">
+                                <Name
+                                ><t t-esc="bill.name" /></Name>
+                                <PostalAddress>
+                                    <Street
+                                    ><t t-esc="bill.street or ''" /></Street>
+                                    <City><t t-esc="bill.city or ''" /></City>
+                                    <PostalCode
+                                    ><t t-esc="bill.zip or ''" /></PostalCode>
+                                    <Country
+                                        t-att-isoCountryCode="bill.country_id.code or 'NL'"
+                                    ><t
+                                            t-esc="bill.country_id.name or ''"
+                                        /></Country>
+                                </PostalAddress>
+                            </Address>
+                        </BillTo>
+                        <t t-if="order.amount_tax">
+                            <Tax>
+                                <Money
+                                    t-att-currency="order.currency_id.name"
+                                ><t t-esc="'%.2f' % order.amount_tax" /></Money>
+                                <Description>Tax</Description>
+                            </Tax>
+                        </t>
+                    </OrderRequestHeader>
+                    <t t-set="line_no" t-value="0" />
+                    <t
+                        t-foreach="order.order_line.filtered(lambda l: not l.display_type)"
+                        t-as="line"
+                    >
+                        <t t-set="line_no" t-value="line_no + 1" />
+                        <ItemOut
+                            t-att-quantity="line.product_qty"
+                            t-att-lineNumber="line_no"
+                        >
+                            <ItemID>
+                                <SupplierPartID
+                                ><t
+                                        t-esc="line._cxml_supplier_part(backend)"
+                                    /></SupplierPartID>
+                            </ItemID>
+                            <ItemDetail>
+                                <UnitPrice>
+                                    <Money
+                                        t-att-currency="order.currency_id.name"
+                                    ><t
+                                            t-esc="'%.2f' % line.price_unit"
+                                        /></Money>
+                                </UnitPrice>
+                                <Description
+                                ><t t-esc="line.name" /></Description>
+                                <UnitOfMeasure
+                                ><t t-esc="line._cxml_uom_code()" /></UnitOfMeasure>
+                            </ItemDetail>
+                        </ItemOut>
+                    </t>
+                </OrderRequest>
+            </Request>
+        </cXML>
+    </template>
+</odoo>

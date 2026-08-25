@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Copyright 2026 Bosd
+     License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl). -->
+<odoo>
+    <record model="ir.ui.view" id="purchase_order_form_cxml_order_send">
+        <field name="name">purchase.order.form.cxml.order.send</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_form" />
+        <field name="arch" type="xml">
+            <xpath expr="//button[@name='button_confirm']" position="after">
+                <button
+                    name="action_send_cxml_order"
+                    type="object"
+                    string="Send to supplier (cXML)"
+                    invisible="not cxml_order_capable or state not in ('purchase', 'done') or cxml_order_sent"
+                />
+                <button
+                    name="action_send_cxml_order"
+                    type="object"
+                    string="Re-send to supplier (cXML)"
+                    invisible="not cxml_order_capable or state not in ('purchase', 'done') or not cxml_order_sent"
+                />
+            </xpath>
+            <field name="partner_ref" position="after">
+                <field name="cxml_order_capable" invisible="1" />
+                <field
+                    name="cxml_order_sent"
+                    invisible="not cxml_order_capable"
+                    readonly="1"
+                />
+                <field
+                    name="cxml_order_sent_date"
+                    invisible="not cxml_order_sent"
+                    readonly="1"
+                />
+            </field>
+        </field>
+    </record>
+</odoo>
