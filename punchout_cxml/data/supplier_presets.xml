@@ -128,4 +128,50 @@
         <field name="active" eval="False" />
         <field name="state">draft</field>
     </record>
+
+    <!-- ====================================================
+         Manutan (NL/EU) — MRO, industrial & office supplies.
+         Public docs: provided by Manutan's e-procurement team on
+         request (eproc-support@manutan.nl).
+
+         cXML credential model (Manutan uses DUNS for both sides):
+           - from_domain   = DUNS
+           - from_identity = REPLACE_ME (your assigned buyer identity —
+                             Manutan provisions per customer)
+           - to_domain     = DUNS
+           - to_identity   = 417526183 (Manutan's DUNS — same for
+                             everyone connecting to them)
+           - shared_secret = REPLACE_ME (your buyer-specific secret)
+
+         Punchout setup endpoint:
+           https://punchout.manutan.nl/PunchOutSetup
+
+         Note: Manutan's cXML PunchOutOrderMessage carries no product
+         image, so catalog products created from the cart have no image
+         (that needs a separate feed / product API).
+    ==================================================== -->
+    <record id="preset_manutan" model="punchout.backend">
+        <field name="name">Manutan</field>
+        <field
+            name="description"
+        >MRO, industrial &amp; office supplies (NL/EU). cXML PunchOut. Replace from_identity and shared_secret with the values Manutan assigned to your account.</field>
+        <field name="protocol">cxml</field>
+        <field name="url">https://punchout.manutan.nl/PunchOutSetup</field>
+        <field name="browser_form_post_url">/punchout/cxml/receive/</field>
+        <field name="cxml_version">1.2.008</field>
+        <field name="from_domain">DUNS</field>
+        <field name="from_identity">REPLACE_ME</field>
+        <field name="to_domain">DUNS</field>
+        <field name="to_identity">417526183</field>
+        <field name="shared_secret">REPLACE_ME</field>
+        <field name="user_agent">Odoo Punchout</field>
+        <field name="deployment_mode">test</field>
+        <field
+            name="image_128"
+            type="base64"
+            file="punchout_cxml/static/description/suppliers/manutan.jpg"
+        />
+        <field name="active" eval="False" />
+        <field name="state">draft</field>
+    </record>
 </odoo>
