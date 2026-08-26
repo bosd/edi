@@ -1,0 +1,26 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* punchout_purchase
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 19.0\n"
+"Report-Msgid-Bugs-To: \n"
+"PO-Revision-Date: 2026-08-26 00:00+0000\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: nl\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#. module: punchout_purchase
+#: model_terms:ir.ui.view,arch_db:punchout_purchase.view_partner_form_punchout
+msgid "Punchout"
+msgstr "Punchout"
+
+#. module: punchout_purchase
+#: model_terms:ir.ui.view,arch_db:punchout_purchase.view_res_partner_filter_punchout
+msgid "Punchout Supplier"
+msgstr "Punchout-leverancier"

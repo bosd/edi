@@ -1,3 +1,14 @@
+## 19.0.1.5.0 (2026)
+
+- [ADD] "Punchout Supplier" filter on the contacts search view — lists
+  the vendors we have a punchout connection with (usually the preferred
+  suppliers). Backed by making `has_punchout_backend` searchable.
+- [FIX] The Browse-Catalog button on the contact form no longer requires
+  `supplier_rank > 0`. A punchout vendor may book its POs on a sibling
+  contact and so carry `supplier_rank 0` (e.g. a group parent) while its
+  backend — and catalog — is perfectly usable; the button (and the flag)
+  now depend on the open backend alone.
+
 ## 19.0.1.4.0 (2026)
 
 - [ADD] New `_post_punchout_session_processed(order, new_lines)`

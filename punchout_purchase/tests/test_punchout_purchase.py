@@ -236,16 +236,55 @@ class TestPunchoutPurchase(TestPunchoutPurchaseCommon):
         odoobot = self.env.ref("base.user_root")
         self.assertEqual(session.write_uid, odoobot)
 
-    def test_partner_has_punchout_backend_false_when_not_supplier(self):
-        """A non-supplier partner (supplier_rank=0) shouldn't show
-        the Browse button regardless of backend state — covered by
-        the ``supplier_rank == 0`` half of the view's invisible
-        expression. Verify the computed flag too for defensive
-        consistency."""
+    def test_partner_has_punchout_backend_false_when_no_backend(self):
+        """A partner with no punchout backend → flag False (button and
+        filter both exclude it), independent of supplier_rank."""
         customer_only = self.env["res.partner"].create(
             {"name": "Customer only", "supplier_rank": 0}
         )
         self.assertFalse(customer_only.has_punchout_backend)
+
+    def test_partner_has_punchout_backend_ignores_supplier_rank(self):
+        """A backend partner with supplier_rank 0 (e.g. a group parent
+        whose POs book on a sibling) still gets the flag — the button
+        must show wherever a backend is wired, regardless of rank."""
+        rank0 = self.env["res.partner"].create(
+            {"name": "Punchout parent, rank 0", "supplier_rank": 0}
+        )
+        self.env["punchout.backend"].create(
+            {
+                "name": "Backend for rank0",
+                "description": "Backend for rank0",
+                "url": "https://example.com/punchout",
+                "browser_form_post_url": "/punchout/receive/",
+                "partner_id": rank0.id,
+                "state": "open",
+            }
+        )
+        rank0.invalidate_recordset(["has_punchout_backend"])
+        self.assertTrue(rank0.has_punchout_backend)
+
+    def test_search_has_punchout_backend(self):
+        """The searchable field drives the 'Punchout Supplier' filter:
+        =True matches partners with an open backend, =False excludes
+        them (and !=True is the inverse of =True)."""
+        Partner = self.env["res.partner"]
+        with_backend = self.partner  # has self.backend, flipped open in setUp
+        without = Partner.create({"name": "No punchout vendor", "supplier_rank": 1})
+
+        hits = Partner.search([("has_punchout_backend", "=", True)])
+        self.assertIn(with_backend, hits)
+        self.assertNotIn(without, hits)
+
+        misses = Partner.search([("has_punchout_backend", "=", False)])
+        self.assertNotIn(with_backend, misses)
+        self.assertIn(without, misses)
+
+        # A non-open backend must not surface in the filter.
+        self.backend.state = "draft"
+        self.assertNotIn(
+            with_backend, Partner.search([("has_punchout_backend", "=", True)])
+        )
 
     # ---- session pre-link via context (Browse-from-PO flow) ---------------
 

@@ -1,7 +1,9 @@
 # Copyright 2026 Bosd
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
 
-from odoo import _, api, fields, models
+from collections.abc import Iterable
+
+from odoo import fields, models
 from odoo.exceptions import UserError
 
 
@@ -21,25 +23,60 @@ class ResPartner(models.Model):
     )
     has_punchout_backend = fields.Boolean(
         compute="_compute_has_punchout_backend",
+        search="_search_has_punchout_backend",
         help=(
             "True when this partner has at least one open punchout "
-            "backend. Used to hide the Browse Supplier Catalog button "
-            "on partners without a punchout configured (clicking would "
-            "just raise a UserError — better not to show the affordance)."
+            "backend. Drives the Browse Supplier Catalog button and the "
+            "'Punchout Supplier' filter on the contacts search view. "
+            "Deliberately NOT gated on supplier_rank: a punchout vendor "
+            "may book its POs on a sibling contact and so carry "
+            "supplier_rank 0 (e.g. a group parent), yet its backend — "
+            "and therefore the catalog — is perfectly usable."
         ),
     )
 
-    @api.depends("supplier_rank")
     def _compute_has_punchout_backend(self):
-        # supplier_rank acts as the recompute trigger; the actual
-        # answer comes from the punchout.backend table. We re-resolve
-        # via _find_punchout_backend so any future override (multi-
-        # backend wizard, region scoping, …) flows through one place.
+        # Non-stored: resolved live from the punchout.backend table on
+        # each read. A backend is not a field on res.partner, so there is
+        # nothing on the partner to @api.depends on; the value is simply
+        # recomputed whenever it is read. Purely backend-existence based
+        # (see the field help for why supplier_rank is not part of it).
         for rec in self:
-            if rec.supplier_rank and rec.id:
-                rec.has_punchout_backend = bool(rec._find_punchout_backend())
+            rec.has_punchout_backend = bool(rec.id and rec._find_punchout_backend())
+
+    def _search_has_punchout_backend(self, operator, value):
+        # Odoo 19's domain optimizer normalises boolean-field leaves to
+        # the ``in`` / ``not in`` forms before the field's search method
+        # is called, and the value arrives as an ``OrderedSet`` (Odoo's
+        # own type, not a builtin set) — so test membership by iterating,
+        # not with ``isinstance(value, set)``. We still accept the plain
+        # ``=`` / ``!=`` a hand-written domain might use.
+        if operator in ("in", "not in"):
+            if isinstance(value, Iterable) and not isinstance(value, str):
+                wants_true = any(bool(v) for v in value)
             else:
-                rec.has_punchout_backend = False
+                wants_true = bool(value)
+            positive_op = operator == "in"
+        elif operator in ("=", "!="):
+            wants_true = bool(value)
+            positive_op = operator == "="
+        else:
+            # Internal programming error (a bad domain), not user-facing —
+            # no translation needed.
+            raise ValueError(
+                f"Unsupported operator {operator!r} for has_punchout_backend"
+            )
+        partner_ids = (
+            self.env["punchout.backend"]
+            .search([("state", "=", "open"), ("partner_id", "!=", False)])
+            .partner_id.ids
+        )
+        # "partners with a backend" is wanted when the truthiness we're
+        # matching lines up with the operator's polarity: (= True),
+        # (in [True]), (!= False), (not in [False]) all select them; the
+        # four inverses select "partners without one".
+        wants_backend = wants_true == positive_op
+        return [("id", "in" if wants_backend else "not in", partner_ids)]
 
     def _find_punchout_backend(self):
         """Return the (single) open punchout backend for this partner.
@@ -64,12 +101,12 @@ class ResPartner(models.Model):
         backend = self._find_punchout_backend()
         if not backend:
             raise UserError(
-                _(
+                self.env._(
                     "No open punchout backend is configured for "
                     "supplier %(name)s. Configure one under PunchOut → "
-                    "Backends and set its state to Open."
+                    "Backends and set its state to Open.",
+                    name=self.display_name,
                 )
-                % {"name": self.display_name}
             )
         return (
             self.env["punchout.session"]
