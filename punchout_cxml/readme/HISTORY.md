@@ -1,3 +1,9 @@
+## 19.0.1.2.1 (2026-08)
+
+- [ADD] Conrad Electronic preset now ships the supplier logo
+  (``image_128``), matching Fabory and Manutan — the backend and
+  its supplier picker show the Conrad mark out of the box.
+
 ## 19.0.1.1.8 (2026-05)
 
 - [ADD] **Conrad Electronic** supplier preset (DE/EU electronics

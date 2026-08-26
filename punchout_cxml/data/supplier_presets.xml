@@ -100,6 +100,11 @@
         <field name="shared_secret">REPLACE_ME</field>
         <field name="user_agent">Odoo Punchout</field>
         <field name="deployment_mode">test</field>
+        <field
+            name="image_128"
+            type="base64"
+            file="punchout_cxml/static/description/suppliers/conrad.png"
+        />
         <field name="active" eval="False" />
         <field name="state">draft</field>
     </record>
