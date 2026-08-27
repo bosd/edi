@@ -179,4 +179,52 @@
         <field name="active" eval="False" />
         <field name="state">draft</field>
     </record>
+
+    <!-- ====================================================
+         Topgeschenken.nl (NL) — business gifts.
+         Topgeschenken support both SecureOCI and cXML PunchOut for
+         the catalog; their purchase-order intake is cXML OrderRequest
+         only. We connect over cXML end-to-end (mature + one protocol).
+
+         Their published catalog doc is OCI-only, so the cXML setup
+         endpoint + credentials are NOT in it: request them alongside a
+         SANDBOX account (sandbox.topgeschenken.nl). Fill:
+           - url            = the cXML PunchOutSetupRequest endpoint
+           - from_identity  = your buyer id (assigned by Topgeschenken)
+           - to_identity    = Topgeschenken's supplier id
+           - shared_secret  = as assigned
+         and set the OrderRequest endpoint (order_request_url, from
+         punchout_cxml_order_send) once known.
+
+         IMPORTANT: Topgeschenken require the cart-item identifier echoed
+         back per order line as ``SupplierPartAuxiliaryID`` (it carries
+         personalisations such as gift-card text). That round-trip is
+         handled by punchout_cxml_purchase (captures it onto the PO line)
+         + punchout_cxml_order_send (emits it) — no per-supplier code
+         needed here.
+    ==================================================== -->
+    <record id="preset_topgeschenken" model="punchout.backend">
+        <field name="name">Topgeschenken.nl</field>
+        <field
+            name="description"
+        >Business gifts (NL). cXML PunchOut. Request a sandbox account and the cXML endpoint + credentials from Topgeschenken, then replace url, from_identity, to_identity and shared_secret. Their PO intake needs SupplierPartAuxiliaryID echoed per line (handled automatically by the cXML purchase + order-send modules).</field>
+        <field name="protocol">cxml</field>
+        <field name="url">REPLACE_ME</field>
+        <field name="browser_form_post_url">/punchout/cxml/receive/</field>
+        <field name="cxml_version">1.2.008</field>
+        <field name="from_domain">NetworkId</field>
+        <field name="from_identity">REPLACE_ME</field>
+        <field name="to_domain">NetworkId</field>
+        <field name="to_identity">REPLACE_ME</field>
+        <field name="shared_secret">REPLACE_ME</field>
+        <field name="user_agent">Odoo Punchout</field>
+        <field name="deployment_mode">test</field>
+        <field
+            name="image_128"
+            type="base64"
+            file="punchout_cxml/static/description/suppliers/topgeschenken.png"
+        />
+        <field name="active" eval="False" />
+        <field name="state">draft</field>
+    </record>
 </odoo>

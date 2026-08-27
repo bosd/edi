@@ -1,3 +1,10 @@
+## 19.0.1.3.0 (2026-08)
+
+- [ADD] **Topgeschenken.nl** cXML supplier preset (business gifts, NL)
+  with logo. Ships archived with ``REPLACE_ME`` placeholders — adopt by
+  requesting a sandbox account + cXML endpoint/credentials from
+  Topgeschenken.
+
 ## 19.0.1.2.1 (2026-08)
 
 - [ADD] Conrad Electronic preset now ships the supplier logo
