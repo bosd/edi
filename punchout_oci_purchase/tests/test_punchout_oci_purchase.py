@@ -210,3 +210,70 @@ class TestPunchoutOciPurchase(TestPunchoutPurchaseCommon):
         lines = self.session._prepare_purchase_order_lines()
         _, _, vals = lines[0]
         self.assertEqual(vals["product_uom_id"], dozen.id)
+
+    def test_priceunit_divides_price(self):
+        """OCI PRICE is for PRICEUNIT units; the line's price_unit is
+        PRICE / PRICEUNIT."""
+        self.session.response = _oci_cart(
+            **{"NEW_ITEM-PRICE[1]": "100", "NEW_ITEM-PRICEUNIT[1]": "100"}
+        )
+        _, _, vals = self.session._prepare_purchase_order_lines()[0]
+        self.assertEqual(vals["price_unit"], 1.0)
+
+    def test_priceunit_defaults_to_one(self):
+        self.session.response = _oci_cart(**{"NEW_ITEM-PRICE[1]": "42.50"})
+        _, _, vals = self.session._prepare_purchase_order_lines()[0]
+        self.assertEqual(vals["price_unit"], 42.5)
+
+    def _purchase_tax(self, amount):
+        return self.env["account.tax"].create(
+            {
+                "name": f"P{amount}",
+                "amount": amount,
+                "amount_type": "percent",
+                "type_tax_use": "purchase",
+                "price_include": False,
+                "company_id": self.backend._get_company().id,
+            }
+        )
+
+    def test_vat_override_on_mismatch(self):
+        """A cart VATPERCENTAGE that differs from the product's default
+        purchase-tax rate forces a matching-rate purchase tax."""
+        tax21 = self._purchase_tax(21)
+        tax9 = self._purchase_tax(9)
+        product = self.env["product.product"].create(
+            {"name": "Reduced-rate widget", "supplier_taxes_id": [(6, 0, tax21.ids)]}
+        )
+        override = self.session._oci_line_tax_override(
+            product, {"VATPERCENTAGE": "9"}
+        )
+        self.assertEqual(override, tax9)
+
+    def test_vat_no_override_when_matching(self):
+        tax21 = self._purchase_tax(21)
+        product = self.env["product.product"].create(
+            {"name": "Standard widget", "supplier_taxes_id": [(6, 0, tax21.ids)]}
+        )
+        self.assertIsNone(
+            self.session._oci_line_tax_override(product, {"VATPERCENTAGE": "21"})
+        )
+
+    def test_vat_no_override_when_absent(self):
+        product = self.env["product.product"].create({"name": "No VAT sent"})
+        self.assertIsNone(self.session._oci_line_tax_override(product, {}))
+
+    def test_ean_vendormat_sets_barcode(self):
+        """A GTIN/EAN VENDORMAT becomes the auto-created product's barcode."""
+        self.session.response = _oci_cart(
+            **{"NEW_ITEM-VENDORMAT[1]": "5000366510330"}
+        )
+        _, _, vals = self.session._prepare_purchase_order_lines()[0]
+        product = self.env["product.product"].browse(vals["product_id"])
+        self.assertEqual(product.barcode, "5000366510330")
+
+    def test_non_ean_vendormat_leaves_barcode_empty(self):
+        self.session.response = _oci_cart()  # VENDORMAT = OCI-SKU-1
+        _, _, vals = self.session._prepare_purchase_order_lines()[0]
+        product = self.env["product.product"].browse(vals["product_id"])
+        self.assertFalse(product.barcode)

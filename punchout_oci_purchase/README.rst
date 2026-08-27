@@ -53,6 +53,20 @@ Features:
 Changelog
 =========
 
+19.0.1.3.0 (2026)
+-----------------
+
+- [IMP] Honour the OCI ``PRICEUNIT`` price basis: the line's unit price
+  is ``PRICE / PRICEUNIT`` (was ``PRICE`` verbatim), so a supplier
+  quoting a price per pack no longer books that price per unit.
+- [IMP] VAT guard: when a cart line's ``VATPERCENTAGE`` differs from the
+  rate Odoo's product / fiscal-position chain would apply, force a
+  matching-rate purchase tax (e.g. a reduced-rate item that auto-creates
+  a product defaulting to the standard rate). Standard-rate lines keep
+  the smarter default chain.
+- [IMP] Set the auto-created product's barcode from a GTIN/EAN
+  ``VENDORMAT`` (guarded on uniqueness).
+
 19.0.1.2.0 (2026)
 -----------------
 

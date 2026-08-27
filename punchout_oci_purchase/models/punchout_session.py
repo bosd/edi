@@ -102,8 +102,16 @@ class PunchoutSession(models.Model):
         # Get quantity
         quantity = float(product_dict.get("QUANTITY", 1))
 
-        # Get unit price
+        # OCI ``PRICE`` is the price for ``PRICEUNIT`` units (the price
+        # basis, default 1). Divide so we book the true per-unit price:
+        # a supplier sending PRICE=100 / PRICEUNIT=100 means 1.00 per
+        # unit, not 100.00.
         price = float(product_dict.get("PRICE", 0))
+        try:
+            price_basis = float(product_dict.get("PRICEUNIT", 1) or 1)
+        except (ValueError, TypeError):
+            price_basis = 1.0
+        unit_price = price / price_basis if price_basis else price
 
         # Get description
         description = product_dict.get("DESCRIPTION", product.name)
@@ -115,14 +123,92 @@ class PunchoutSession(models.Model):
         # Get UoM
         uom = self._get_uom_for_oci_item(product_dict)
 
-        return {
+        vals = {
             "product_id": product.id,
             "name": description,
             "product_qty": quantity,
-            "price_unit": price,
+            "price_unit": unit_price,
             "product_uom_id": uom.id,
             "date_planned": date_planned,
         }
+        override_taxes = self._oci_line_tax_override(product, product_dict)
+        if override_taxes is not None:
+            vals["tax_ids"] = [(6, 0, override_taxes.ids)]
+        return vals
+
+    def _oci_line_tax_override(self, product, product_dict):
+        """Return purchase taxes to force on the line when the cart's
+        ``VATPERCENTAGE`` disagrees with the rate Odoo's product /
+        fiscal-position chain would otherwise apply.
+
+        Returns ``None`` to leave the standard chain in charge -- which
+        is the smarter default for standard-rate lines because it already
+        accounts for goods vs services, EU and reverse-charge variants
+        that a bare percentage cannot express. We only step in for the
+        genuine mismatch case: a reduced- or zero-rate cart item that
+        auto-creates a product defaulting to the standard rate.
+        """
+        raw = product_dict.get("VATPERCENTAGE")
+        if raw in (None, ""):
+            return None
+        try:
+            cart_vat = float(raw)
+        except (ValueError, TypeError):
+            return None
+
+        backend = self.backend_id
+        company = backend._get_company()
+        fpos = (
+            self.env["account.fiscal.position"]
+            .with_company(company)
+            ._get_fiscal_position(backend.partner_id)
+            if backend.partner_id
+            else self.env["account.fiscal.position"]
+        )
+        default_taxes = product.supplier_taxes_id._filter_taxes_by_company(company)
+        if fpos:
+            default_taxes = fpos.map_tax(default_taxes)
+        default_rate = sum(
+            default_taxes.filtered(lambda t: t.amount_type == "percent").mapped(
+                "amount"
+            )
+        )
+        if abs(cart_vat - default_rate) < 0.01:
+            return None  # the chain already matches the cart
+
+        override = self.env["account.tax"].search(
+            [
+                ("company_id", "=", company.id),
+                ("type_tax_use", "=", "purchase"),
+                ("amount_type", "=", "percent"),
+                ("amount", "=", cart_vat),
+                ("price_include", "=", False),
+            ],
+            order="name",
+            limit=1,
+        )
+        if not override:
+            _logger.warning(
+                "punchout_oci: cart VATPERCENTAGE=%s%% for %r has no matching "
+                "purchase tax on company %s; keeping the product default "
+                "(%s%%).",
+                cart_vat,
+                product_dict.get("DESCRIPTION", product.display_name),
+                company.name,
+                default_rate,
+            )
+            return None
+        if fpos:
+            override = fpos.map_tax(override)
+        _logger.info(
+            "punchout_oci: cart VATPERCENTAGE=%s%% overrides product default "
+            "%s%% -> %s on line %r.",
+            cart_vat,
+            default_rate,
+            override.mapped("name"),
+            product_dict.get("DESCRIPTION", product.display_name),
+        )
+        return override
 
     def _get_or_create_product_oci(self, product_dict):
         """Find existing product by supplier info or create a new one."""
@@ -180,6 +266,18 @@ class PunchoutSession(models.Model):
                 "uom_id": uom.id,
                 **backend._get_auto_create_product_defaults(),
             }
+            # OCI suppliers (e.g. DESTIL) put the product's EAN/GTIN in
+            # VENDORMAT. When it looks like a GTIN and no product already
+            # claims it, also set it as the barcode so the item is
+            # scannable. Guarded on uniqueness — the barcode unique
+            # constraint would otherwise abort the whole cart import.
+            if (
+                vendor_mat
+                and vendor_mat.isdigit()
+                and len(vendor_mat) in (8, 12, 13, 14)
+                and not Product.search_count([("barcode", "=", vendor_mat)])
+            ):
+                product_vals["barcode"] = vendor_mat
 
             # Add long description if different from main description
             longtext = product_dict.get("LONGTEXT", "")
