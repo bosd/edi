@@ -1,3 +1,12 @@
+## 19.0.1.2.6 (2026-08)
+
+- [FIX] Backend kanban logos kept their aspect ratio: the image widget
+  renders at the field's 128x128 pixel size, so `o_image_64_max` (max
+  dimensions only, no `object-fit`) let wide logos (Dell, Conrad, Fabory,
+  Phoenix, Kramp) stretch vertically to fill the square. Switched both the
+  main and supplier-picker kanbans to `o_image_64_contain` (fixed 64x64 box
+  with `object-fit: contain`), which letterboxes instead of stretching.
+
 ## 18.0.1.0.0 (2026)
 
 - [MIG] Migration to Odoo 18.0.
