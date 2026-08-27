@@ -241,6 +241,14 @@ whatever fields that supplier actually emits.
 Changelog
 =========
 
+19.0.1.6.0 (2026)
+-----------------
+
+- [ADD] Post a chatter note on the punchout-created PO stating the
+  backend's ``order_transmission`` method (manual / email / cXML / REST
+  / portal), so the purchaser knows whether confirming the PO actually
+  sends it to the supplier or whether they must place it themselves.
+
 19.0.1.5.0 (2026)
 -----------------
 

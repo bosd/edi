@@ -163,6 +163,9 @@ class PunchoutSession(models.Model):
             self.purchase_order_id.with_user(author).sudo().with_company(company)
         )
         self._post_punchout_line_warnings(order_scoped, new_lines, author)
+        # Make it clear to the purchaser HOW (or whether) confirming this
+        # PO reaches the supplier — punchout only builds the draft PO.
+        self._post_punchout_order_transmission_note(order_scoped, author)
         # Generic post-process extension point. Empty in base —
         # supplier-specific glue modules (e.g. ``flc_punchout_tvh``)
         # override this to fire follow-up actions like a batch
@@ -184,6 +187,51 @@ class PunchoutSession(models.Model):
         (including pre-existing ones); the freshly-added subset is
         in ``new_lines`` for cases where the override only wants to
         operate on the just-arrived items."""
+
+    def _post_punchout_order_transmission_note(self, order, author):
+        """Post a chatter note stating how the confirmed order reaches the
+        supplier. Punchout only builds the draft PO in Odoo; whether
+        confirming it transmits the order (and by which channel) depends
+        on the backend's ``order_transmission``. Makes that explicit so a
+        purchaser doesn't assume 'confirmed in Odoo' means 'sent'.
+        """
+        self.ensure_one()
+        backend = self.backend_id
+        method = backend.order_transmission or "manual"
+        label = dict(
+            backend._fields["order_transmission"]._description_selection(self.env)
+        ).get(method, method)
+        supplier = backend.partner_id.display_name or self.env._("the supplier")
+        if method == "manual":
+            body = Markup(
+                self.env._(
+                    "<strong>Order transmission: %(label)s.</strong> Built "
+                    "from a %(backend)s punchout. Confirming this PO in Odoo "
+                    "does <strong>not</strong> send it to %(supplier)s — place "
+                    "the order through your usual channel."
+                )
+            ) % {
+                "label": label,
+                "backend": backend.display_name,
+                "supplier": supplier,
+            }
+        else:
+            body = Markup(
+                self.env._(
+                    "<strong>Order transmission: %(label)s.</strong> Built "
+                    "from a %(backend)s punchout. The order is sent to "
+                    "%(supplier)s via %(label)s (see this PO's send "
+                    "action/automation)."
+                )
+            ) % {
+                "label": label,
+                "backend": backend.display_name,
+                "supplier": supplier,
+            }
+        post_kwargs = {"body": body}
+        if author and author.partner_id:
+            post_kwargs["author_id"] = author.partner_id.id
+        order.message_post(**post_kwargs)
 
     def _build_line_mismatch_messages(self, line):
         """Return a list of human-readable mismatch warnings for one new line.

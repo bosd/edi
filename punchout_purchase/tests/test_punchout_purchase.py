@@ -702,3 +702,22 @@ class TestPunchoutPurchase(TestPunchoutPurchaseCommon):
         session.state = "to_process"
         self.assertEqual(session.state, "to_process")
         self.assertFalse(session.purchase_order_id)
+
+    # ---- order-transmission chatter note --------------------------------
+
+    def test_order_transmission_note_manual_warns(self):
+        """A 'manual' backend posts a note making clear the PO is NOT
+        auto-sent to the supplier."""
+        self.backend.order_transmission = "manual"
+        po = self.env["purchase.order"].create({"partner_id": self.partner.id})
+        before = len(po.message_ids)
+        self.session._post_punchout_order_transmission_note(po, self.env.user)
+        self.assertEqual(len(po.message_ids), before + 1)
+        self.assertIn("does <strong>not</strong> send", po.message_ids[0].body)
+
+    def test_order_transmission_note_names_channel(self):
+        """A non-manual backend names the channel in the note."""
+        self.backend.order_transmission = "cxml"
+        po = self.env["purchase.order"].create({"partner_id": self.partner.id})
+        self.session._post_punchout_order_transmission_note(po, self.env.user)
+        self.assertIn("cXML OrderRequest", po.message_ids[0].body)
