@@ -222,6 +222,16 @@ work to land — every supplier diverges from the spec in subtle ways:
 Changelog
 =========
 
+19.0.1.4.0 (2026)
+-----------------
+
+- [ADD] Per-backend inbound cart-field mapping: ``oci_barcode_field``
+  (default ``VENDORMAT``) and ``oci_vat_field`` (default
+  ``VATPERCENTAGE``) declare which OCI ``NEW_ITEM-<name>`` field feeds
+  the product barcode and the line VAT. Vendor-specific, so set in the
+  preset; clear either to disable that mapping (e.g. customers keeping
+  their own barcodes). Consumed by ``punchout_oci_purchase``.
+
 19.0.1.3.0 (2026)
 -----------------
 

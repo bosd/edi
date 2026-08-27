@@ -308,6 +308,17 @@
         <field
             name="oci_custom_parameters"
         >OkCode=ADDI&amp;~TARGET=_top&amp;~CALLER=CTLG&amp;SERVICE=demo</field>
+        <!-- Inbound cart-field mapping. DESTIL put the GTIN/EAN in
+             VENDORMAT (the default) and the VAT % in VATPERCENTAGE (the
+             default); set explicitly here to document the vendor's
+             choice. A customer can clear either on their own backend to
+             disable that mapping. -->
+        <field name="oci_barcode_field">VENDORMAT</field>
+        <field name="oci_vat_field">VATPERCENTAGE</field>
+        <!-- DESTIL gave no order-intake spec, so a confirmed PO is placed
+             manually until they confirm their channel (email / REST /
+             cXML). Change once known. -->
+        <field name="order_transmission">manual</field>
         <field
             name="image_128"
             type="base64"

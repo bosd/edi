@@ -82,8 +82,10 @@ class TestPunchoutOci(TestPunchoutOciCommon):
         url = self.session_model._get_post_punchout_setup_url(self.session)
         self.assertIn("OkCode=ADDI", url)
         self.assertIn("SERVICE=demo", url)
-        self.assertIn("%7ETARGET=_top", url)
-        self.assertIn("%7ECALLER=CTLG", url)
+        # ``~`` is an unreserved URL character, so the builder keeps it
+        # literal (equivalent to ``%7E``; DESTIL accepts both).
+        self.assertIn("~TARGET=_top", url)
+        self.assertIn("~CALLER=CTLG", url)
 
     def test_oci_setup_url_empty_auth_skipped(self):
         """Empty auth fields don't pollute the URL with bare keys."""
