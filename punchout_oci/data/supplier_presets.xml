@@ -275,4 +275,45 @@
         <field name="active" eval="False" />
         <field name="state">draft</field>
     </record>
+
+    <!-- ====================================================
+         DESTIL (NL) — technical supplies / MRO. OCI 4.0 only
+         (no cXML). DESTIL require a fixed set of catalog
+         parameters on the setup call, shipped here through the
+         ``oci_custom_parameters`` escape hatch:
+           OkCode=ADDI  ~TARGET=_top  ~CALLER=CTLG  SERVICE=demo
+         (``SERVICE`` selects the catalog environment — ``demo``
+         for the test/demo account; DESTIL assign the production
+         value.) DESTIL use the standard USERNAME / PASSWORD param
+         names, no customer number, and no language parameter, so
+         ``oci_param_language`` is cleared to keep the setup URL to
+         exactly the params DESTIL expect. Login endpoint:
+         https://www.destil.nl/services/login.aspx
+    ==================================================== -->
+    <record id="preset_destil" model="punchout.backend">
+        <field name="name">DESTIL</field>
+        <field
+            name="description"
+        >Technical supplies / MRO (NL). OCI 4.0 PunchOut only (no cXML). Ships the fixed catalog parameters OkCode=ADDI, ~TARGET=_top, ~CALLER=CTLG, SERVICE=demo (set SERVICE to the value DESTIL assign for production). Fill in the USERNAME / PASSWORD credentials DESTIL assign to your account.</field>
+        <field name="protocol">oci</field>
+        <field name="url">https://www.destil.nl/services/login.aspx</field>
+        <field name="browser_form_post_url">/punchout/oci/receive/</field>
+        <field name="oci_version">4.0</field>
+        <!-- DESTIL use the standard USERNAME / PASSWORD names. -->
+        <!-- No customer number, and no language parameter in DESTIL's
+             spec — clear the default so it isn't sent. -->
+        <field name="oci_param_customer" />
+        <field name="oci_param_language" />
+        <!-- Fixed catalog parameters DESTIL require on the setup call. -->
+        <field
+            name="oci_custom_parameters"
+        >OkCode=ADDI&amp;~TARGET=_top&amp;~CALLER=CTLG&amp;SERVICE=demo</field>
+        <field
+            name="image_128"
+            type="base64"
+            file="punchout_oci/static/description/suppliers/destil.png"
+        />
+        <field name="active" eval="False" />
+        <field name="state">draft</field>
+    </record>
 </odoo>

@@ -1,3 +1,10 @@
+## 19.0.1.3.0 (2026)
+
+- [ADD] **DESTIL** OCI 4.0 supplier preset (technical supplies / MRO, NL)
+  with logo. Ships the fixed catalog parameters DESTIL require
+  (``OkCode``, ``~TARGET``, ``~CALLER``, ``SERVICE``) via
+  ``oci_custom_parameters``; archived until credentials are filled in.
+
 ## 19.0.1.2.1 (2026)
 
 - [FIX] Expose the `oci_param_language` field on the backend form so

@@ -72,6 +72,19 @@ class TestPunchoutOci(TestPunchoutOciCommon):
         self.assertIn("USERNAME=overridden", url)
         self.assertNotIn("USERNAME=alice", url)
 
+    def test_oci_setup_url_tilde_prefixed_custom_params(self):
+        """OCI system parameters such as ``~TARGET`` / ``~CALLER`` (as
+        DESTIL require) survive the query-string round-trip and appear
+        URL-encoded (``~`` -> ``%7E``) in the setup URL."""
+        self.backend.oci_custom_parameters = (
+            "OkCode=ADDI&~TARGET=_top&~CALLER=CTLG&SERVICE=demo"
+        )
+        url = self.session_model._get_post_punchout_setup_url(self.session)
+        self.assertIn("OkCode=ADDI", url)
+        self.assertIn("SERVICE=demo", url)
+        self.assertIn("%7ETARGET=_top", url)
+        self.assertIn("%7ECALLER=CTLG", url)
+
     def test_oci_setup_url_empty_auth_skipped(self):
         """Empty auth fields don't pollute the URL with bare keys."""
         self.backend.oci_custom_parameters = False
