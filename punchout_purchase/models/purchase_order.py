@@ -47,6 +47,15 @@ class PurchaseOrder(models.Model):
         ),
     )
 
+    has_dormant_punchout_backend = fields.Boolean(
+        compute="_compute_has_dormant_punchout_backend",
+        help=(
+            "True when the vendor has a punchout backend that is linked "
+            "but not yet live. Drives the 'punchout available — ask your "
+            "ERP manager to activate it' hint on the PO."
+        ),
+    )
+
     @api.depends("partner_id")
     def _compute_has_punchout_backend(self):
         # Group POs by partner so we run one search per distinct
@@ -62,6 +71,23 @@ class PurchaseOrder(models.Model):
         partner_has = {p.id: bool(p._find_punchout_backend()) for p in partners}
         for rec in self:
             rec.has_punchout_backend = partner_has.get(rec.partner_id.id, False)
+
+    @api.depends("partner_id")
+    def _compute_has_dormant_punchout_backend(self):
+        partners = self.mapped("partner_id")
+        partner_has = {
+            p.id: bool(p._find_dormant_punchout_backend()) for p in partners
+        }
+        for rec in self:
+            rec.has_dormant_punchout_backend = partner_has.get(
+                rec.partner_id.id, False
+            )
+
+    def action_request_punchout_setup(self):
+        """Buyer asks the Punchout Manager to activate this vendor's
+        dormant backend — delegates to the partner."""
+        self.ensure_one()
+        return self.partner_id.action_request_punchout_setup()
 
     @api.depends("order_line.punchout_session_id", "punchout_session_id")
     def _compute_punchout_session_ids(self):

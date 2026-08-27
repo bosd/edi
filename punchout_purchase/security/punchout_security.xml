@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Copyright 2026 Bosd
+     License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl). -->
+<odoo>
+    <record id="group_punchout_manager" model="res.groups">
+        <field name="name">Punchout Manager</field>
+        <field
+            name="comment"
+        >Users who set up and activate punchout backends. They receive the To-Do activities raised when a buyer clicks 'Request punchout setup' on a supplier with a dormant (not-yet-activated) punchout backend. The setup hint is hidden from members of this group.</field>
+    </record>
+</odoo>

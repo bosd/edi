@@ -5,7 +5,7 @@
 
 {
     "name": "Punchout Purchase",
-    "version": "19.0.1.6.0",
+    "version": "19.0.1.7.0",
     "license": "AGPL-3",
     "summary": "Create purchase orders from Punchout shopping carts",
     "author": (
@@ -19,6 +19,7 @@
         "purchase",
     ],
     "data": [
+        "security/punchout_security.xml",
         "security/ir.model.access.csv",
         "views/punchout_backend.xml",
         "views/punchout_session.xml",

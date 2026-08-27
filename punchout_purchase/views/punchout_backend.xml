@@ -19,6 +19,10 @@
                             name="product_category_id"
                             invisible="not auto_create_products"
                         />
+                        <field
+                            name="punchout_hide_setup_hint"
+                            invisible="state == 'open'"
+                        />
                     </group>
                 </group>
                 <group

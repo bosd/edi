@@ -7,6 +7,29 @@
         <field name="model">res.partner</field>
         <field name="inherit_id" ref="base.view_partner_form" />
         <field name="arch" type="xml">
+            <!-- Adoption nudge: this supplier has a punchout backend that
+                 isn't activated yet. Show buyers a hint + a one-click
+                 "Request punchout setup" that pings the Punchout Manager.
+                 Hidden from managers (they can just activate it). -->
+            <xpath expr="//sheet/*[1]" position="before">
+                <field name="has_dormant_punchout_backend" invisible="1" />
+                <div
+                    class="alert alert-info mb-0"
+                    role="alert"
+                    invisible="not has_dormant_punchout_backend"
+                    groups="!punchout_purchase.group_punchout_manager"
+                >
+                    Punchout ordering is available for this supplier but not
+                    yet activated. Ask your ERP manager to switch it on so you
+                    can order directly from their catalog.
+                    <button
+                        name="action_request_punchout_setup"
+                        type="object"
+                        class="btn btn-link p-0 align-baseline"
+                        string="Request punchout setup"
+                    />
+                </div>
+            </xpath>
             <!-- "Browse catalog" button on the contact form, visible
                  once the partner has any open punchout backend.
                  Useful for ad-hoc lookup ("I want to find a part from

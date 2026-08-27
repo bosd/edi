@@ -69,10 +69,74 @@ class PunchoutBackend(models.Model):
         ),
     )
 
+    punchout_hide_setup_hint = fields.Boolean(
+        string="Hide setup hint",
+        help=(
+            "Suppress the 'punchout available — ask your ERP manager to "
+            "activate it' hint shown to buyers on this supplier's contact "
+            "and POs while the backend isn't live. Tick it for backends "
+            "you deliberately keep parked (evaluated but not adopted) so "
+            "the hint doesn't nag."
+        ),
+    )
+
     def _get_company(self):
         """Return the company for this backend."""
         self.ensure_one()
         return self.company_id or self.env.company
+
+    def _punchout_notify(self, message, warning=False):
+        return {
+            "type": "ir.actions.client",
+            "tag": "display_notification",
+            "params": {
+                "type": "warning" if warning else "success",
+                "message": message,
+                "sticky": False,
+            },
+        }
+
+    def _request_punchout_setup(self, requester=None):
+        """Raise a request for the Punchout Manager to activate this
+        (dormant) backend. Schedules a To-Do activity for each manager and
+        posts a chatter note; de-duplicates so repeated buyer clicks don't
+        stack activities. Returns a user notification."""
+        self.ensure_one()
+        requester = requester or self.env.user
+        managers = (
+            self.env.ref("punchout_purchase.group_punchout_manager")
+            .sudo()
+            .user_ids.filtered("active")
+        )
+        if not managers:
+            return self._punchout_notify(
+                self.env._(
+                    "No Punchout Manager is configured — please ask your "
+                    "administrator to set one up."
+                ),
+                warning=True,
+            )
+        summary = self.env._("Punchout setup requested")
+        note = self.env._(
+            "%(user)s asked to activate punchout ordering for %(supplier)s.",
+            user=requester.display_name,
+            supplier=(self.partner_id.display_name or self.display_name),
+        )
+        already = self.activity_ids.filtered(lambda a: a.summary == summary)
+        if not already:
+            for manager in managers:
+                self.sudo().activity_schedule(
+                    "mail.mail_activity_data_todo",
+                    user_id=manager.id,
+                    summary=summary,
+                    note=note,
+                )
+            self.sudo().message_post(body=note)
+        return self._punchout_notify(
+            self.env._(
+                "Your request has been sent to the Punchout Manager."
+            )
+        )
 
     def _get_auto_create_product_defaults(self):
         """Return a dict of default field values to apply to products

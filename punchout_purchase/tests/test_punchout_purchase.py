@@ -721,3 +721,72 @@ class TestPunchoutPurchase(TestPunchoutPurchaseCommon):
         po = self.env["purchase.order"].create({"partner_id": self.partner.id})
         self.session._post_punchout_order_transmission_note(po, self.env.user)
         self.assertIn("cXML OrderRequest", po.message_ids[0].body)
+
+    # ---- dormant-backend adoption nudge ---------------------------------
+
+    def test_dormant_backend_detected_when_not_open(self):
+        self.backend.state = "draft"
+        self.partner.invalidate_recordset(["has_dormant_punchout_backend"])
+        self.assertTrue(self.partner.has_dormant_punchout_backend)
+
+    def test_no_dormant_when_backend_open(self):
+        self.backend.state = "open"
+        self.partner.invalidate_recordset(["has_dormant_punchout_backend"])
+        self.assertFalse(self.partner.has_dormant_punchout_backend)
+
+    def test_dormant_suppressed_by_hide_hint(self):
+        self.backend.state = "draft"
+        self.backend.punchout_hide_setup_hint = True
+        self.partner.invalidate_recordset(["has_dormant_punchout_backend"])
+        self.assertFalse(self.partner.has_dormant_punchout_backend)
+
+    def test_request_setup_warns_without_manager(self):
+        self.backend.state = "draft"
+        self.env.ref("punchout_purchase.group_punchout_manager").user_ids = [
+            (5, 0, 0)
+        ]
+        res = self.partner.action_request_punchout_setup()
+        self.assertEqual(res["params"]["type"], "warning")
+
+    def test_request_setup_creates_activity_for_manager(self):
+        self.backend.state = "draft"
+        manager = self.env["res.users"].create(
+            {
+                "name": "Punchout Mgr",
+                "login": "punchout_mgr_test",
+                "group_ids": [
+                    (
+                        4,
+                        self.env.ref(
+                            "punchout_purchase.group_punchout_manager"
+                        ).id,
+                    )
+                ],
+            }
+        )
+        res = self.partner.action_request_punchout_setup()
+        self.assertEqual(res["params"]["type"], "success")
+        self.assertTrue(
+            self.backend.activity_ids.filtered(lambda a: a.user_id == manager)
+        )
+
+    def test_request_setup_deduplicates(self):
+        self.backend.state = "draft"
+        self.env["res.users"].create(
+            {
+                "name": "Mgr2",
+                "login": "punchout_mgr2_test",
+                "group_ids": [
+                    (
+                        4,
+                        self.env.ref(
+                            "punchout_purchase.group_punchout_manager"
+                        ).id,
+                    )
+                ],
+            }
+        )
+        self.partner.action_request_punchout_setup()
+        first = len(self.backend.activity_ids)
+        self.partner.action_request_punchout_setup()
+        self.assertEqual(len(self.backend.activity_ids), first)

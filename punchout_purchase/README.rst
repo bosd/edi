@@ -241,6 +241,16 @@ whatever fields that supplier actually emits.
 Changelog
 =========
 
+19.0.1.7.0 (2026)
+-----------------
+
+- [ADD] Punchout adoption nudge: on a supplier's contact form and its
+  POs, when a punchout backend is linked but not yet activated, buyers
+  see an info banner and a one-click **Request punchout setup** button
+  that raises a To-Do activity for the new **Punchout Manager** group.
+  The hint is hidden from managers and can be suppressed per backend
+  (``punchout_hide_setup_hint``) for deliberately-parked backends.
+
 19.0.1.6.0 (2026)
 -----------------
 

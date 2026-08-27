@@ -35,6 +35,28 @@
             <xpath expr="//header" position="inside">
                 <field name="has_punchout_backend" invisible="1" />
             </xpath>
+            <!-- Adoption nudge on the PO: this vendor has a punchout
+                 backend that isn't activated yet — highest-intent moment
+                 to prompt setup. Hidden from Punchout Managers. -->
+            <xpath expr="//sheet/*[1]" position="before">
+                <field name="has_dormant_punchout_backend" invisible="1" />
+                <div
+                    class="alert alert-info mb-0"
+                    role="alert"
+                    invisible="not has_dormant_punchout_backend"
+                    groups="!punchout_purchase.group_punchout_manager"
+                >
+                    Punchout ordering is available for this supplier but not
+                    yet activated — you could order these items directly from
+                    their catalog.
+                    <button
+                        name="action_request_punchout_setup"
+                        type="object"
+                        class="btn btn-link p-0 align-baseline"
+                        string="Request punchout setup"
+                    />
+                </div>
+            </xpath>
             <!-- "Browse supplier catalog" button visible only on draft
                  POs whose vendor has at least one open punchout backend.
                  Surfaces the punchout entry-point right where purchasers

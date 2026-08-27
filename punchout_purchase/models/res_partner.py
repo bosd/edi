@@ -78,6 +78,55 @@ class ResPartner(models.Model):
         wants_backend = wants_true == positive_op
         return [("id", "in" if wants_backend else "not in", partner_ids)]
 
+    has_dormant_punchout_backend = fields.Boolean(
+        compute="_compute_has_dormant_punchout_backend",
+        help=(
+            "True when this partner has a punchout backend that is linked "
+            "but not yet live (draft/archived) and not hidden. Drives the "
+            "'punchout available — ask your ERP manager to activate it' "
+            "hint on the contact and PO, so buyers can request activation."
+        ),
+    )
+
+    def _compute_has_dormant_punchout_backend(self):
+        for rec in self:
+            rec.has_dormant_punchout_backend = bool(
+                rec.id and rec._find_dormant_punchout_backend()
+            )
+
+    def _find_dormant_punchout_backend(self):
+        """A backend earmarked for this partner (``partner_id`` set) that
+        is NOT live yet (draft or archived) and whose setup hint has not
+        been hidden — the trigger for the 'request punchout setup' nudge.
+        Live (open) backends are handled by the Browse-Catalog button
+        instead, so they never surface here.
+        """
+        self.ensure_one()
+        return (
+            self.env["punchout.backend"]
+            .with_context(active_test=False)
+            .search(
+                [
+                    ("partner_id", "=", self.id),
+                    ("punchout_hide_setup_hint", "=", False),
+                    "|",
+                    ("active", "=", False),
+                    ("state", "!=", "open"),
+                ],
+                limit=1,
+            )
+        )
+
+    def action_request_punchout_setup(self):
+        """Ask the Punchout Manager to activate the dormant backend
+        earmarked for this supplier. Delegates to the backend so the
+        contact form and the PO share one implementation."""
+        self.ensure_one()
+        backend = self._find_dormant_punchout_backend()
+        if not backend:
+            return False
+        return backend._request_punchout_setup(requester=self.env.user)
+
     def _find_punchout_backend(self):
         """Return the (single) open punchout backend for this partner.
 
