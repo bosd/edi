@@ -65,13 +65,22 @@ class PunchoutSession(models.Model):
             except (ValueError, TypeError):
                 _logger.debug("Invalid cXML UnitPrice format: %s", unit_price_elem.text)
 
-        # Get supplier part ID
+        # Get supplier part ID + the optional auxiliary ID. The latter
+        # (cXML ``SupplierPartAuxiliaryID``) identifies the specific cart
+        # item at the supplier and can carry per-line personalisation
+        # (e.g. a gift-card text). Some suppliers -- e.g. Topgeschenken --
+        # require it echoed back unchanged in the OrderRequest to match
+        # the order to the cart, so capture it onto the PO line.
         item_id = item_element.find("ItemID")
         supplier_part_id = ""
+        supplier_part_aux_id = ""
         if item_id is not None:
             supplier_part_elem = item_id.find("SupplierPartID")
             if supplier_part_elem is not None:
                 supplier_part_id = supplier_part_elem.text or ""
+            aux_elem = item_id.find("SupplierPartAuxiliaryID")
+            if aux_elem is not None:
+                supplier_part_aux_id = aux_elem.text or ""
 
         # Get or create product
         product = self._get_or_create_product_cxml(
@@ -102,6 +111,7 @@ class PunchoutSession(models.Model):
             "price_unit": unit_price,
             "product_uom_id": uom.id,
             "date_planned": date_planned,
+            "punchout_supplier_aux_id": supplier_part_aux_id,
         }
 
     def _get_or_create_product_cxml(

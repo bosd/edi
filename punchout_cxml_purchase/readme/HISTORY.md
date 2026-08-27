@@ -1,3 +1,12 @@
+## 19.0.1.5.0 (2026)
+
+- [ADD] Capture the cXML ``SupplierPartAuxiliaryID`` from each punchout
+  cart line into a new ``purchase.order.line.punchout_supplier_aux_id``
+  field. It identifies the specific cart item at the supplier (and can
+  carry per-line personalisation such as a gift-card text); suppliers
+  such as Topgeschenken require it echoed back in the OrderRequest to
+  match the order to the cart. ``punchout_cxml_order_send`` emits it.
+
 ## 19.0.1.4.0 (2026)
 
 - [FIX] Pin auto-created `product.supplierinfo.company_id` to the

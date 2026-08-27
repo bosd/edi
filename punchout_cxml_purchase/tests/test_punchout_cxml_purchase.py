@@ -38,6 +38,24 @@ class TestPunchoutCxmlPurchase(TestPunchoutPurchaseCommon):
         self.assertEqual(vals["price_unit"], 50.0)
         self.assertEqual(vals["name"], "Test cXML Widget")
 
+    def test_parse_cxml_cart_captures_supplier_aux_id(self):
+        """The cart-item's SupplierPartAuxiliaryID (e.g. Topgeschenken's
+        UUID carrying gift-card text) is captured onto the PO line so it
+        can be echoed back in the OrderRequest."""
+        cart = CXML_CART.replace(
+            "<SupplierPartID>SKU-CXML-1</SupplierPartID>",
+            "<SupplierPartID>SKU-CXML-1</SupplierPartID>"
+            "<SupplierPartAuxiliaryID>AUX-UUID-42</SupplierPartAuxiliaryID>",
+        )
+        self.session.response = cart
+        _, _, vals = self.session._prepare_purchase_order_lines()[0]
+        self.assertEqual(vals["punchout_supplier_aux_id"], "AUX-UUID-42")
+
+    def test_parse_cxml_cart_without_aux_id_is_empty(self):
+        self.session.response = CXML_CART
+        _, _, vals = self.session._prepare_purchase_order_lines()[0]
+        self.assertEqual(vals["punchout_supplier_aux_id"], "")
+
     def test_empty_response_returns_no_lines(self):
         self.session.response = False
         self.assertEqual(self.session._prepare_purchase_order_lines(), [])
