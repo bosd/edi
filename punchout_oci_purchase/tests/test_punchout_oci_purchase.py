@@ -277,3 +277,40 @@ class TestPunchoutOciPurchase(TestPunchoutPurchaseCommon):
         _, _, vals = self.session._prepare_purchase_order_lines()[0]
         product = self.env["product.product"].browse(vals["product_id"])
         self.assertFalse(product.barcode)
+
+    def test_barcode_disabled_when_field_cleared(self):
+        """Clearing oci_barcode_field disables barcode mapping (customers
+        who keep their own barcodes)."""
+        self.backend.oci_barcode_field = False
+        self.session.response = _oci_cart(
+            **{"NEW_ITEM-VENDORMAT[1]": "5000366510330"}
+        )
+        _, _, vals = self.session._prepare_purchase_order_lines()[0]
+        product = self.env["product.product"].browse(vals["product_id"])
+        self.assertFalse(product.barcode)
+
+    def test_barcode_from_configured_alternate_field(self):
+        """The barcode is read from whatever cart field the backend is
+        configured with — not hardcoded to VENDORMAT."""
+        self.backend.oci_barcode_field = "EXT_PRODUCT_ID"
+        self.session.response = _oci_cart(
+            **{
+                "NEW_ITEM-VENDORMAT[1]": "NOT-AN-EAN",
+                "NEW_ITEM-EXT_PRODUCT_ID[1]": "5000366510330",
+            }
+        )
+        _, _, vals = self.session._prepare_purchase_order_lines()[0]
+        product = self.env["product.product"].browse(vals["product_id"])
+        self.assertEqual(product.barcode, "5000366510330")
+
+    def test_vat_disabled_when_field_cleared(self):
+        """Clearing oci_vat_field always trusts the product/fiscal chain."""
+        self.backend.oci_vat_field = False
+        tax21 = self._purchase_tax(21)
+        self._purchase_tax(9)
+        product = self.env["product.product"].create(
+            {"name": "Widget", "supplier_taxes_id": [(6, 0, tax21.ids)]}
+        )
+        self.assertIsNone(
+            self.session._oci_line_tax_override(product, {"VATPERCENTAGE": "9"})
+        )

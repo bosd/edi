@@ -1,3 +1,12 @@
+## 19.0.1.4.0 (2026)
+
+- [IMP] Barcode and VAT mapping are now config-driven per backend
+  (``oci_barcode_field`` / ``oci_vat_field`` on the backend, set in the
+  preset). The barcode source cart field is configurable and clearable
+  (disable per customer), via the reusable ``_oci_barcode_from_cart``
+  helper; the VAT guard reads its source field from the backend too.
+  No hardcoded ``VENDORMAT`` / ``VATPERCENTAGE``.
+
 ## 19.0.1.3.0 (2026)
 
 - [IMP] Honour the OCI ``PRICEUNIT`` price basis: the line's unit price

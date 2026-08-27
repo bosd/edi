@@ -148,7 +148,9 @@ class PunchoutSession(models.Model):
         genuine mismatch case: a reduced- or zero-rate cart item that
         auto-creates a product defaulting to the standard rate.
         """
-        raw = product_dict.get("VATPERCENTAGE")
+        backend = self.backend_id
+        vat_field = (backend.oci_vat_field or "").strip()
+        raw = product_dict.get(vat_field) if vat_field else None
         if raw in (None, ""):
             return None
         try:
@@ -156,7 +158,6 @@ class PunchoutSession(models.Model):
         except (ValueError, TypeError):
             return None
 
-        backend = self.backend_id
         company = backend._get_company()
         fpos = (
             self.env["account.fiscal.position"]
@@ -209,6 +210,27 @@ class PunchoutSession(models.Model):
             product_dict.get("DESCRIPTION", product.display_name),
         )
         return override
+
+    def _oci_barcode_from_cart(self, product_dict):
+        """Return a GTIN/EAN barcode for an auto-created product, or None.
+
+        The source cart field is configured per backend via
+        ``oci_barcode_field`` (default ``VENDORMAT``); clear it to disable
+        barcode mapping (customers who keep their own barcodes). Only a
+        GTIN-shaped value (8/12/13/14 digits) not already claimed by
+        another product is accepted -- the barcode unique constraint would
+        otherwise abort the whole cart import.
+        """
+        self.ensure_one()
+        src = (self.backend_id.oci_barcode_field or "").strip()
+        if not src:
+            return None
+        value = (product_dict.get(src) or "").strip()
+        if not (value.isdigit() and len(value) in (8, 12, 13, 14)):
+            return None
+        if self.env["product.product"].search_count([("barcode", "=", value)]):
+            return None
+        return value
 
     def _get_or_create_product_oci(self, product_dict):
         """Find existing product by supplier info or create a new one."""
@@ -266,18 +288,13 @@ class PunchoutSession(models.Model):
                 "uom_id": uom.id,
                 **backend._get_auto_create_product_defaults(),
             }
-            # OCI suppliers (e.g. DESTIL) put the product's EAN/GTIN in
-            # VENDORMAT. When it looks like a GTIN and no product already
-            # claims it, also set it as the barcode so the item is
-            # scannable. Guarded on uniqueness — the barcode unique
-            # constraint would otherwise abort the whole cart import.
-            if (
-                vendor_mat
-                and vendor_mat.isdigit()
-                and len(vendor_mat) in (8, 12, 13, 14)
-                and not Product.search_count([("barcode", "=", vendor_mat)])
-            ):
-                product_vals["barcode"] = vendor_mat
+            # Barcode: copy the GTIN from the OCI cart field the backend
+            # is configured to read (``oci_barcode_field``, default
+            # VENDORMAT; clearable per backend to disable). Kept as a
+            # reusable, config-driven mapping — see _oci_barcode_from_cart.
+            barcode = self._oci_barcode_from_cart(product_dict)
+            if barcode:
+                product_vals["barcode"] = barcode
 
             # Add long description if different from main description
             longtext = product_dict.get("LONGTEXT", "")
