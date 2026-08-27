@@ -95,6 +95,21 @@ class PunchoutBackend(models.Model):
     state = fields.Selection(
         selection="_selection_state", default="draft", tracking=True
     )
+    order_transmission = fields.Selection(
+        selection="_selection_order_transmission",
+        default="manual",
+        string="Order transmission",
+        tracking=True,
+        help=(
+            "How a confirmed purchase order actually reaches this "
+            "supplier. Punchout only builds the draft PO in Odoo — it "
+            "does NOT place the order. 'Manual' means you send it via "
+            "your usual channel; the other options name an integrated "
+            "channel (which may be automatic or a button, depending on "
+            "the installed modules). Surfaced to the purchaser on the "
+            "PO chatter so it's clear whether/how the order is sent."
+        ),
+    )
     session_duration = fields.Integer(
         string="Maximum session duration",
         default=7200,
@@ -204,6 +219,19 @@ class PunchoutBackend(models.Model):
             ("draft", "Draft"),
             ("open", "Open"),
             ("closed", "Closed"),
+        ]
+
+    @api.model
+    def _selection_order_transmission(self):
+        """How the confirmed PO reaches the supplier. Extensible — a
+        module that implements a channel (e.g. ``punchout_cxml_order_send``)
+        can append its own option."""
+        return [
+            ("manual", "Manual / your own channel"),
+            ("email", "Email"),
+            ("cxml", "cXML OrderRequest"),
+            ("rest", "REST API"),
+            ("portal", "Supplier portal"),
         ]
 
     def _get_browser_form_post_url(self):

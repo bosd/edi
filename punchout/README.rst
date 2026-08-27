@@ -147,6 +147,17 @@ contributors discovering new features to implement. ]
 Changelog
 =========
 
+19.0.1.3.0 (2026-08)
+--------------------
+
+- [ADD] ``order_transmission`` on the backend (manual / email / cXML /
+  REST / portal) — declares how a confirmed PO actually reaches the
+  supplier, since punchout itself only builds the draft PO. Set per
+  supplier in the preset; ``punchout_purchase`` surfaces it to the
+  purchaser on the PO chatter so it's clear whether/how the order is
+  sent. The selection is extensible via
+  ``_selection_order_transmission``.
+
 19.0.1.2.6 (2026-08)
 --------------------
 

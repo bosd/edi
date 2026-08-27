@@ -79,6 +79,7 @@
                         <group name="group_connection" string="Connection">
                             <field name="description" />
                             <field name="protocol" />
+                            <field name="order_transmission" />
                         </group>
                         <!-- cXML/IDS use their own credential fields. -->
                         <group
