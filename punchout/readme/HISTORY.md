@@ -1,3 +1,9 @@
+## 19.0.1.4.0 (2026-08)
+
+- [ADD] ``punchout.backend`` now inherits ``mail.activity.mixin`` so
+  activities can be scheduled on backends (used by the
+  ``punchout_purchase`` 'request setup' adoption nudge).
+
 ## 19.0.1.3.0 (2026-08)
 
 - [ADD] ``order_transmission`` on the backend (manual / email / cXML /

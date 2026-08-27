@@ -3,7 +3,7 @@
 
 {
     "name": "Punchout",
-    "version": "19.0.1.3.0",
+    "version": "19.0.1.4.0",
     "license": "AGPL-3",
     "author": (
         "ACSONE SA/NV, OBS Solutions Netherlands, Odoo Community Association (OCA)"

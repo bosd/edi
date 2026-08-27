@@ -9,7 +9,7 @@ from odoo.exceptions import UserError, ValidationError
 
 class PunchoutBackend(models.Model):
     _name = "punchout.backend"
-    _inherit = ["mail.thread"]
+    _inherit = ["mail.thread", "mail.activity.mixin"]
     _description = "PunchOut Backend"
     _name_unique = models.Constraint(
         "unique(name)",
