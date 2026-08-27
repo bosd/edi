@@ -89,6 +89,11 @@
                                 ><t
                                         t-esc="line._cxml_supplier_part(backend)"
                                     /></SupplierPartID>
+                                <SupplierPartAuxiliaryID
+                                    t-if="line.punchout_supplier_aux_id"
+                                ><t
+                                        t-esc="line.punchout_supplier_aux_id"
+                                    /></SupplierPartAuxiliaryID>
                             </ItemID>
                             <ItemDetail>
                                 <UnitPrice>

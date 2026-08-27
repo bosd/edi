@@ -17,8 +17,14 @@ class _Resp:
         self.url = "https://supplier.example/cxml/order"
 
 
-_OK = b'<?xml version="1.0"?><cXML><Response><Status code="200" text="OK"/></Response></cXML>'
-_REJECT = b'<?xml version="1.0"?><cXML><Response><Status code="500" text="Order rejected"/></Response></cXML>'
+_OK = (
+    b'<?xml version="1.0"?><cXML><Response>'
+    b'<Status code="200" text="OK"/></Response></cXML>'
+)
+_REJECT = (
+    b'<?xml version="1.0"?><cXML><Response>'
+    b'<Status code="500" text="Order rejected"/></Response></cXML>'
+)
 
 
 @tagged("post_install", "-at_install")
@@ -82,6 +88,17 @@ class TestOrderSend(TransactionCase):
         self.assertIn("ODOONLMANU", cxml)  # buyer identity
         self.assertIn("417526183", cxml)  # supplier identity
         self.assertIn("<ItemOut", cxml)
+
+    def test_supplier_aux_id_emitted_when_present(self):
+        """Suppliers like Topgeschenken need the cart-item UUID echoed
+        back as SupplierPartAuxiliaryID; emit it only when the line
+        carries one."""
+        cxml = self.po._render_cxml_order_request(self.backend)
+        self.assertNotIn("SupplierPartAuxiliaryID", cxml)
+
+        self.po.order_line.punchout_supplier_aux_id = "AUX-UUID-42"
+        cxml = self.po._render_cxml_order_request(self.backend)
+        self.assertIn("<SupplierPartAuxiliaryID>AUX-UUID-42", cxml)
 
     def test_send_success_sets_state(self):
         with patch("requests.post", return_value=_Resp(_OK)):
