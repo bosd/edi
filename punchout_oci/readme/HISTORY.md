@@ -1,3 +1,12 @@
+## 19.0.1.8.0 (2026-08)
+
+- [REM] Retire ``oci_barcode_field`` — the barcode is now a generic
+  ``punchout.field.mapping`` target (punchout_purchase). Preset backends
+  get a shipped ``VENDORMAT -> barcode`` rule (see punchout_oci_purchase);
+  a pre-migration converts any non-preset backend that had a barcode
+  source configured and drops the column. ``oci_vat_field`` stays (VAT is
+  a line-level override the framework doesn't cover yet).
+
 ## 19.0.1.7.0 (2026-08)
 
 - [FIX] Remove ``auto_create_products`` from the supplier presets. That

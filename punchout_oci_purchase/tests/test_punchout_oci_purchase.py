@@ -245,9 +245,7 @@ class TestPunchoutOciPurchase(TestPunchoutPurchaseCommon):
         product = self.env["product.product"].create(
             {"name": "Reduced-rate widget", "supplier_taxes_id": [(6, 0, tax21.ids)]}
         )
-        override = self.session._oci_line_tax_override(
-            product, {"VATPERCENTAGE": "9"}
-        )
+        override = self.session._oci_line_tax_override(product, {"VATPERCENTAGE": "9"})
         self.assertEqual(override, tax9)
 
     def test_vat_no_override_when_matching(self):
@@ -263,45 +261,41 @@ class TestPunchoutOciPurchase(TestPunchoutPurchaseCommon):
         product = self.env["product.product"].create({"name": "No VAT sent"})
         self.assertIsNone(self.session._oci_line_tax_override(product, {}))
 
-    def test_ean_vendormat_sets_barcode(self):
-        """A GTIN/EAN VENDORMAT becomes the auto-created product's barcode."""
-        self.session.response = _oci_cart(
-            **{"NEW_ITEM-VENDORMAT[1]": "5000366510330"}
+    def _add_barcode_rule(self, source_field="VENDORMAT"):
+        return self.env["punchout.field.mapping"].create(
+            {
+                "backend_id": self.backend.id,
+                "source_field": source_field,
+                "target": "barcode",
+            }
         )
+
+    def test_barcode_via_mapping_rule(self):
+        """The cart field-mapping engine is wired into the OCI create
+        flow: a ``VENDORMAT -> barcode`` rule sets a GTIN VENDORMAT as the
+        auto-created product's barcode. (Barcode used to be a dedicated
+        ``oci_barcode_field``; it is now a generic mapping target.)"""
+        self._add_barcode_rule()
+        self.session.response = _oci_cart(**{"NEW_ITEM-VENDORMAT[1]": "5000366510330"})
         _, _, vals = self.session._prepare_purchase_order_lines()[0]
         product = self.env["product.product"].browse(vals["product_id"])
         self.assertEqual(product.barcode, "5000366510330")
 
-    def test_non_ean_vendormat_leaves_barcode_empty(self):
+    def test_non_gtin_vendormat_no_barcode(self):
+        """A non-GTIN VENDORMAT with a barcode rule leaves barcode empty."""
+        self._add_barcode_rule()
         self.session.response = _oci_cart()  # VENDORMAT = OCI-SKU-1
         _, _, vals = self.session._prepare_purchase_order_lines()[0]
         product = self.env["product.product"].browse(vals["product_id"])
         self.assertFalse(product.barcode)
 
-    def test_barcode_disabled_when_field_cleared(self):
-        """Clearing oci_barcode_field disables barcode mapping (customers
-        who keep their own barcodes)."""
-        self.backend.oci_barcode_field = False
-        self.session.response = _oci_cart(
-            **{"NEW_ITEM-VENDORMAT[1]": "5000366510330"}
-        )
+    def test_no_barcode_without_rule(self):
+        """Without a barcode mapping rule, even a GTIN VENDORMAT sets no
+        barcode — mapping is now opt-in per backend."""
+        self.session.response = _oci_cart(**{"NEW_ITEM-VENDORMAT[1]": "5000366510330"})
         _, _, vals = self.session._prepare_purchase_order_lines()[0]
         product = self.env["product.product"].browse(vals["product_id"])
         self.assertFalse(product.barcode)
-
-    def test_barcode_from_configured_alternate_field(self):
-        """The barcode is read from whatever cart field the backend is
-        configured with — not hardcoded to VENDORMAT."""
-        self.backend.oci_barcode_field = "EXT_PRODUCT_ID"
-        self.session.response = _oci_cart(
-            **{
-                "NEW_ITEM-VENDORMAT[1]": "NOT-AN-EAN",
-                "NEW_ITEM-EXT_PRODUCT_ID[1]": "5000366510330",
-            }
-        )
-        _, _, vals = self.session._prepare_purchase_order_lines()[0]
-        product = self.env["product.product"].browse(vals["product_id"])
-        self.assertEqual(product.barcode, "5000366510330")
 
     def test_vat_disabled_when_field_cleared(self):
         """Clearing oci_vat_field always trusts the product/fiscal chain."""

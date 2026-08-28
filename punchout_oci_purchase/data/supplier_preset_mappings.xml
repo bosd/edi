@@ -25,4 +25,45 @@
         <field name="target">image</field>
     </record>
 
+    <!-- VENDORMAT -> barcode for the presets that used the old default
+         ``oci_barcode_field = VENDORMAT`` (now retired). The barcode
+         target validates GTIN shape (8/12/13/14 digits) + uniqueness, so
+         a non-GTIN VENDORMAT (e.g. TVH's ``TVH/<num>``) is simply a
+         no-op — same as before. -->
+    <record id="mapping_indi_barcode" model="punchout.field.mapping">
+        <field name="backend_id" ref="punchout_oci.preset_indi" />
+        <field name="source_field">VENDORMAT</field>
+        <field name="target">barcode</field>
+    </record>
+    <record id="mapping_phoenix_barcode" model="punchout.field.mapping">
+        <field name="backend_id" ref="punchout_oci.preset_phoenix_contact" />
+        <field name="source_field">VENDORMAT</field>
+        <field name="target">barcode</field>
+    </record>
+    <record id="mapping_dell_barcode" model="punchout.field.mapping">
+        <field name="backend_id" ref="punchout_oci.preset_dell" />
+        <field name="source_field">VENDORMAT</field>
+        <field name="target">barcode</field>
+    </record>
+    <record id="mapping_kramp_barcode" model="punchout.field.mapping">
+        <field name="backend_id" ref="punchout_oci.preset_kramp" />
+        <field name="source_field">VENDORMAT</field>
+        <field name="target">barcode</field>
+    </record>
+    <record id="mapping_discountoffice_barcode" model="punchout.field.mapping">
+        <field name="backend_id" ref="punchout_oci.preset_discountoffice" />
+        <field name="source_field">VENDORMAT</field>
+        <field name="target">barcode</field>
+    </record>
+    <record id="mapping_tvh_barcode" model="punchout.field.mapping">
+        <field name="backend_id" ref="punchout_oci.preset_tvh_industrial" />
+        <field name="source_field">VENDORMAT</field>
+        <field name="target">barcode</field>
+    </record>
+    <record id="mapping_destil_barcode" model="punchout.field.mapping">
+        <field name="backend_id" ref="punchout_oci.preset_destil" />
+        <field name="source_field">VENDORMAT</field>
+        <field name="target">barcode</field>
+    </record>
+
 </odoo>

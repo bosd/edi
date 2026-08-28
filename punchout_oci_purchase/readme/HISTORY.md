@@ -1,3 +1,9 @@
+## 19.0.1.6.0 (2026-08)
+
+- [REM] Drop ``_oci_barcode_from_cart`` (barcode now flows through the
+  cart field-mapping engine). Ship ``VENDORMAT -> barcode`` mapping rows
+  for the OCI presets that used the old ``oci_barcode_field`` default.
+
 ## 19.0.1.5.0 (2026-08)
 
 - [ADD] Van Egmond cart field-mapping preset rows (via the new

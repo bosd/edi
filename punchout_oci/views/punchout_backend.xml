@@ -31,10 +31,9 @@
                          vendor params (e.g. operation_type=create,
                          storeId, branch). -->
                     <field name="oci_custom_parameters" />
-                    <!-- Inbound cart-field mapping: which NEW_ITEM-<name>
-                         feeds each Odoo concept. Clear a field to disable
-                         that mapping for this backend. -->
-                    <field name="oci_barcode_field" />
+                    <!-- Line-level VAT source (fiscal-position aware).
+                         Product-level cart fields (barcode, image, brand,
+                         …) are configured on the Cart Field Mappings tab. -->
                     <field name="oci_vat_field" />
                     <field name="oci_hook_param" />
                 </group>

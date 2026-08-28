@@ -211,27 +211,6 @@ class PunchoutSession(models.Model):
         )
         return override
 
-    def _oci_barcode_from_cart(self, product_dict):
-        """Return a GTIN/EAN barcode for an auto-created product, or None.
-
-        The source cart field is configured per backend via
-        ``oci_barcode_field`` (default ``VENDORMAT``); clear it to disable
-        barcode mapping (customers who keep their own barcodes). Only a
-        GTIN-shaped value (8/12/13/14 digits) not already claimed by
-        another product is accepted -- the barcode unique constraint would
-        otherwise abort the whole cart import.
-        """
-        self.ensure_one()
-        src = (self.backend_id.oci_barcode_field or "").strip()
-        if not src:
-            return None
-        value = (product_dict.get(src) or "").strip()
-        if not (value.isdigit() and len(value) in (8, 12, 13, 14)):
-            return None
-        if self.env["product.product"].search_count([("barcode", "=", value)]):
-            return None
-        return value
-
     def _get_or_create_product_oci(self, product_dict):
         """Find existing product by supplier info or create a new one."""
         self.ensure_one()
@@ -289,13 +268,10 @@ class PunchoutSession(models.Model):
                 "uom_id": uom.id,
                 **backend._get_auto_create_product_defaults(),
             }
-            # Barcode: copy the GTIN from the OCI cart field the backend
-            # is configured to read (``oci_barcode_field``, default
-            # VENDORMAT; clearable per backend to disable). Kept as a
-            # reusable, config-driven mapping — see _oci_barcode_from_cart.
-            barcode = self._oci_barcode_from_cart(product_dict)
-            if barcode:
-                product_vals["barcode"] = barcode
+            # Barcode is set post-create by the cart field-mapping engine
+            # (``_apply_punchout_field_mappings`` below) via a ``barcode``
+            # mapping rule — e.g. the shipped VENDORMAT -> barcode preset
+            # rows, or CUST_FIELD1 -> barcode for Van Egmond.
 
             # Add long description if different from main description
             longtext = product_dict.get("LONGTEXT", "")

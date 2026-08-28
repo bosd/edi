@@ -67,22 +67,12 @@ class PunchoutBackend(models.Model):
         "field to skip the language param entirely for suppliers that "
         "don't honor it.",
     )
-    # -- Inbound cart-field mapping (NEW_ITEM-<name> -> Odoo) -------------
-    # Which OCI cart field feeds each Odoo concept. Vendor-specific, so
-    # set per supplier in the preset; a customer can clear any of these
-    # to disable that particular mapping (e.g. they maintain their own
-    # barcodes / nomenclature). The purchase side (``punchout_oci_purchase``)
-    # reads these names -- keeping the vendor config as data, not code.
-    oci_barcode_field = fields.Char(
-        string="Barcode source field",
-        default="VENDORMAT",
-        groups="base.group_system",
-        help="OCI cart field (NEW_ITEM-<name>) holding the product's "
-        "GTIN/EAN, copied to the barcode of auto-created products. "
-        "Defaults to ``VENDORMAT``; some suppliers carry the GTIN in a "
-        "different field. Clear it to disable barcode mapping entirely "
-        "(e.g. customers who maintain their own barcodes).",
-    )
+    # -- Inbound cart-field mapping (NEW_ITEM-<name> -> Odoo line) --------
+    # Product-level cart fields (barcode, image, brand, description, …) are
+    # mapped by the generic ``punchout.field.mapping`` framework
+    # (punchout_purchase). ``oci_vat_field`` stays here because VAT is a
+    # *line*-level, fiscal-position-aware override the framework's
+    # product-targets don't cover yet.
     oci_vat_field = fields.Char(
         string="VAT-percentage source field",
         default="VATPERCENTAGE",
