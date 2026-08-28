@@ -1,3 +1,9 @@
+## 19.0.1.9.0 (2026-08)
+
+- [IMP] Move the Cart Field Mappings editor into the backend notebook as
+  its own tab (next to UoM Mappings), instead of an inline group — the
+  two "supplier-data mapping" tables now live together. Manager-gated.
+
 ## 19.0.1.8.0 (2026-08)
 
 - [ADD] **Cart field-mapping framework**. New ``punchout.field.mapping``

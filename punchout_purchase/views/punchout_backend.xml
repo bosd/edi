@@ -41,17 +41,23 @@
                         />
                     </group>
                 </group>
-                <group
+            </xpath>
+            <!-- Cart field mappings live in the notebook next to the
+                 UoM Mappings tab (same "supplier data mapping" family),
+                 manager-gated like the rest of backend curation. -->
+            <xpath expr="//notebook" position="inside">
+                <page
                     string="Cart Field Mappings"
-                    name="group_field_mappings"
+                    name="field_mappings"
                     invisible="not auto_create_products"
+                    groups="punchout.group_punchout_manager"
                 >
-                    <div class="text-muted" colspan="2">
+                    <div class="text-muted">
                         Map supplier cart fields onto the auto-created
                         product (barcode, image, brand, …). The source field
                         name is supplier-specific — see the module docs.
                     </div>
-                    <field name="field_mapping_ids" nolabel="1" colspan="2">
+                    <field name="field_mapping_ids">
                         <list editable="bottom">
                             <field name="sequence" widget="handle" />
                             <field name="source_field" />
@@ -83,7 +89,7 @@
                             </field>
                         </form>
                     </field>
-                </group>
+                </page>
             </xpath>
         </field>
     </record>
