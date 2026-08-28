@@ -147,6 +147,17 @@ contributors discovering new features to implement. ]
 Changelog
 =========
 
+19.0.1.5.0 (2026-08)
+--------------------
+
+- [FIX] Backend kanban logos are no longer stretched. The ``image``
+  widget always adds Bootstrap ``img-fluid`` (``height:auto``), which
+  fought the fixed-box class and left wide logos stretched in the kanban
+  (the form view was fine because it passes explicit size options). The
+  kanban now uses a plain ``<img>`` with inline ``max-width``/
+  ``max-height`` and no forced dimensions, so the browser preserves the
+  aspect ratio.
+
 19.0.1.4.0 (2026-08)
 --------------------
 

@@ -205,18 +205,19 @@
                 <templates>
                     <t t-name="card">
                         <aside class="me-2">
-                            <!-- ``o_image_64_contain`` = a fixed 64x64 box
-                                 with ``object-fit: contain``. The image
-                                 widget renders the img at the field's pixel
-                                 size (128x128), so ``o_image_64_max`` (which
-                                 only caps max-width/height, no object-fit)
-                                 let wide logos stretch to fill the square.
-                                 ``_contain`` letterboxes them instead,
-                                 preserving aspect ratio. -->
-                            <field
-                                name="image_128"
-                                widget="image"
-                                class="o_image_64_contain mb-0"
+                            <!-- Plain <img> with an inline max-width/max-height
+                                 and NO forced width/height, so the browser
+                                 scales the logo preserving its aspect ratio.
+                                 The ``image`` widget can't be used here: it
+                                 always adds Bootstrap ``img-fluid`` (height:auto)
+                                 which fights a fixed-box class, leaving wide
+                                 logos stretched in the kanban (the form view is
+                                 fine because it passes explicit size options). -->
+                            <img
+                                t-att-src="'/web/image/punchout.backend/' + record.id.raw_value + '/image_128'"
+                                alt="Logo"
+                                class="mb-0"
+                                style="max-width: 64px; max-height: 64px; width: auto; height: auto;"
                             />
                         </aside>
                         <div class="o_record_main d-flex flex-column flex-grow-1">
@@ -310,13 +311,15 @@
                 <templates>
                     <t t-name="card">
                         <aside class="me-2">
-                            <!-- Fixed 64x64 box + object-fit:contain so wide
-                                 logos keep their aspect ratio (see the main
-                                 backend kanban above). -->
-                            <field
-                                name="image_128"
-                                widget="image"
-                                class="o_image_64_contain mb-0"
+                            <!-- Plain <img>, inline max-width/max-height, no
+                                 forced dimensions -> aspect preserved (see the
+                                 main backend kanban above for why the image
+                                 widget stretches wide logos here). -->
+                            <img
+                                t-att-src="'/web/image/punchout.backend/' + record.id.raw_value + '/image_128'"
+                                alt="Logo"
+                                class="mb-0"
+                                style="max-width: 64px; max-height: 64px; width: auto; height: auto;"
                             />
                         </aside>
                         <div class="o_record_main d-flex flex-column flex-grow-1">
