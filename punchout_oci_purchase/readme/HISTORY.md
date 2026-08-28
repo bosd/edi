@@ -1,3 +1,10 @@
+## 19.0.1.5.0 (2026-08)
+
+- [ADD] Van Egmond cart field-mapping preset rows (via the new
+  ``punchout_purchase`` mapping framework): ``CUST_FIELD1`` → barcode
+  (its GTIN; ``VENDORMAT`` is Van Egmond's own article number) and
+  ``ATTACHMENT`` → the product image, fetched straight from the cart URL.
+
 ## 19.0.1.4.0 (2026)
 
 - [IMP] Barcode and VAT mapping are now config-driven per backend

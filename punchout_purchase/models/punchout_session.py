@@ -643,6 +643,16 @@ class PunchoutSession(models.Model):
         # This should be overridden by protocol-specific modules
         return []
 
+    def _apply_punchout_field_mappings(self, product, source):
+        """Run the backend's cart-field mapping rules against ``product``.
+
+        Thin session-side entry point so the protocol modules
+        (OCI / cXML) call one consistent method after resolving a product;
+        the actual engine lives on ``punchout.backend``. ``source`` is the
+        protocol-flattened ``{source_field: value}`` cart line."""
+        self.ensure_one()
+        self.backend_id._apply_product_field_mappings(product, source)
+
     def _get_redirect_url(self):
         """Redirect to purchase order after processing."""
         self.ensure_one()

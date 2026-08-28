@@ -1,3 +1,12 @@
+## 19.0.1.6.0 (2026-08)
+
+- [ADD] Flatten cXML ``ItemDetail`` into the protocol-agnostic
+  ``{source_field: value}`` dict consumed by the ``punchout_purchase``
+  cart field-mapping framework, so cXML suppliers benefit from the same
+  per-vendor mapping rules as OCI (``SupplierPartID``,
+  ``ManufacturerPartID``, ``Classification:<domain>``,
+  ``Extrinsic:<name>``, …).
+
 ## 19.0.1.5.0 (2026)
 
 - [ADD] Capture the cXML ``SupplierPartAuxiliaryID`` from each punchout

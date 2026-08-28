@@ -1,1 +1,5 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_punchout_field_mapping_user,punchout.field.mapping user,model_punchout_field_mapping,base.group_user,1,0,0,0
+access_punchout_field_mapping_manager,punchout.field.mapping manager,model_punchout_field_mapping,punchout.group_punchout_manager,1,1,1,1
+access_punchout_value_mapping_user,punchout.value.mapping user,model_punchout_value_mapping,base.group_user,1,0,0,0
+access_punchout_value_mapping_manager,punchout.value.mapping manager,model_punchout_value_mapping,punchout.group_punchout_manager,1,1,1,1

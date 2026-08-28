@@ -41,6 +41,49 @@
                         />
                     </group>
                 </group>
+                <group
+                    string="Cart Field Mappings"
+                    name="group_field_mappings"
+                    invisible="not auto_create_products"
+                >
+                    <div class="text-muted" colspan="2">
+                        Map supplier cart fields onto the auto-created
+                        product (barcode, image, brand, …). The source field
+                        name is supplier-specific — see the module docs.
+                    </div>
+                    <field name="field_mapping_ids" nolabel="1" colspan="2">
+                        <list editable="bottom">
+                            <field name="sequence" widget="handle" />
+                            <field name="source_field" />
+                            <field name="target" />
+                            <field name="value_transform" />
+                            <field name="overwrite" />
+                            <field name="active" column_invisible="1" />
+                        </list>
+                        <form>
+                            <group>
+                                <group>
+                                    <field name="source_field" />
+                                    <field name="target" />
+                                </group>
+                                <group>
+                                    <field name="value_transform" />
+                                    <field name="overwrite" />
+                                    <field name="active" />
+                                </group>
+                            </group>
+                            <field
+                                name="value_mapping_ids"
+                                invisible="value_transform != 'lookup_table'"
+                            >
+                                <list editable="bottom">
+                                    <field name="raw" />
+                                    <field name="value" />
+                                </list>
+                            </field>
+                        </form>
+                    </field>
+                </group>
             </xpath>
         </field>
     </record>

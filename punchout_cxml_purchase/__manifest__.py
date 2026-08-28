@@ -4,7 +4,7 @@
 
 {
     "name": "Punchout cXML Purchase",
-    "version": "19.0.1.5.0",
+    "version": "19.0.1.6.0",
     "license": "AGPL-3",
     "summary": "Create purchase orders from cXML shopping carts",
     "author": (

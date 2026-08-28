@@ -1,3 +1,23 @@
+## 19.0.1.8.0 (2026-08)
+
+- [ADD] **Cart field-mapping framework**. New ``punchout.field.mapping``
+  (with a ``punchout.value.mapping`` lookup table) lets each backend map
+  supplier-specific cart fields onto the auto-created product — because
+  the same datum lands in a different cart field per vendor (Van Egmond
+  returns the GTIN in ``CUST_FIELD1``, another OCI vendor in
+  ``VENDORMAT``). The engine is protocol-agnostic: OCI and cXML each
+  flatten a cart line to ``{source_field: value}`` and the rules do the
+  rest. Core targets: ``barcode`` (GTIN-validated), ``image`` (fetched
+  from a cart-supplied URL — https/size/content-type guarded),
+  ``description``, ``product_code`` and a deferred ``unspsc_category``.
+  Values can be used directly or translated through a per-rule lookup
+  table (supplier code → Odoo value). Rules run on both new products and
+  re-punchout matches; each target fills only when empty unless the rule
+  is set to overwrite, so manual corrections survive. Targets are
+  extensible — optional-module targets (e.g. brand) ship as bridge
+  add-ons (see ``punchout_product_brand``), keeping this module free of
+  optional dependencies.
+
 ## 19.0.1.7.0 (2026)
 
 - [ADD] Punchout adoption nudge: on a supplier's contact form and its

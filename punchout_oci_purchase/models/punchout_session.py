@@ -272,6 +272,7 @@ class PunchoutSession(models.Model):
                     matches.mapped("display_name"),
                 )
             if matches:
+                self._apply_punchout_field_mappings(matches[0], product_dict)
                 return matches[0]
 
         # Create new product if auto_create_products is enabled
@@ -348,6 +349,7 @@ class PunchoutSession(models.Model):
                 ]
 
             product = Product.sudo().create(product_vals)
+            self._apply_punchout_field_mappings(product, product_dict)
             self._post_create_product_hook(product, product_dict)
             return product
 

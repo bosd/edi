@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Copyright 2025 Bosd
+     License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
+
+     Cart field-mapping rules for OCI supplier presets. Lives here (not in
+     ``punchout_oci``) because ``punchout.field.mapping`` is defined in
+     ``punchout_purchase`` — this module depends on both, the preset
+     backend module and the mapping framework. -->
+<odoo noupdate="1">
+
+    <!-- Van Egmond (SAP OCI 5.0). Its cart puts the GTIN in CUST_FIELD1
+         (VENDORMAT is Van Egmond's own article number → supplierinfo
+         code, not a barcode) and returns a product image URL in
+         ATTACHMENT. -->
+    <record id="mapping_vanegmond_barcode" model="punchout.field.mapping">
+        <field name="backend_id" ref="punchout_oci.preset_vanegmond" />
+        <field name="sequence">10</field>
+        <field name="source_field">CUST_FIELD1</field>
+        <field name="target">barcode</field>
+    </record>
+    <record id="mapping_vanegmond_image" model="punchout.field.mapping">
+        <field name="backend_id" ref="punchout_oci.preset_vanegmond" />
+        <field name="sequence">20</field>
+        <field name="source_field">ATTACHMENT</field>
+        <field name="target">image</field>
+    </record>
+
+</odoo>

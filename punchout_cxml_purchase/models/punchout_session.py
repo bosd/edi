@@ -154,6 +154,12 @@ class PunchoutSession(models.Model):
                 )
             if matches:
                 self._apply_cxml_classification_to_description(matches[0], item_detail)
+                self._apply_punchout_field_mappings(
+                    matches[0],
+                    self._flatten_cxml_source(
+                        supplier_part_id, description, unit_price, item_detail
+                    ),
+                )
                 return matches[0]
 
         # Create new product if auto_create_products is enabled
@@ -207,6 +213,12 @@ class PunchoutSession(models.Model):
 
             product = Product.sudo().create(product_vals)
             self._apply_cxml_classification_to_description(product, item_detail)
+            self._apply_punchout_field_mappings(
+                product,
+                self._flatten_cxml_source(
+                    supplier_part_id, description, unit_price, item_detail
+                ),
+            )
             self._post_create_product_hook(
                 product,
                 {
@@ -267,6 +279,44 @@ class PunchoutSession(models.Model):
             return
         footer = "\n\n" + marker + "\n" + "\n".join(lines)
         product.sudo().description_purchase = (existing + footer).strip()
+
+    def _flatten_cxml_source(
+        self, supplier_part_id, description, unit_price, item_detail
+    ):
+        """Flatten a cXML ``ItemDetail`` into the protocol-agnostic
+        ``{source_field: value}`` dict the mapping engine consumes.
+
+        Exposes the stable, single-valued cXML fields under their tag
+        name (``SupplierPartID``, ``ManufacturerPartID``,
+        ``ManufacturerName``, ``Description``, ``UnitPrice``) plus the
+        repeatable ones under a namespaced key: ``Classification:<domain>``
+        (UNSPSC, eCl@ss …) and ``Extrinsic:<name>``. A mapping rule then
+        targets, e.g., ``Classification:UNSPSC`` or ``Extrinsic:Brand``."""
+        source = {
+            "SupplierPartID": supplier_part_id or "",
+            "Description": description or "",
+            "UnitPrice": unit_price,
+        }
+
+        def _text(tag):
+            elem = item_detail.find(tag)
+            return (elem.text or "").strip() if elem is not None else ""
+
+        for tag in ("ManufacturerPartID", "ManufacturerName"):
+            value = _text(tag)
+            if value:
+                source[tag] = value
+        for cls in item_detail.findall("Classification"):
+            domain = (cls.get("domain") or "").strip()
+            code = (cls.text or "").strip()
+            if domain and code:
+                source[f"Classification:{domain}"] = code
+        for extrinsic in item_detail.findall("Extrinsic"):
+            name = (extrinsic.get("name") or "").strip()
+            value = (extrinsic.text or "").strip()
+            if name and value:
+                source[f"Extrinsic:{name}"] = value
+        return source
 
     def _build_protocol_header_messages(self, order, new_lines):
         """Surface Total / Tax mismatches between the supplier's cart
