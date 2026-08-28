@@ -91,7 +91,11 @@ class PunchoutSession(models.Model):
         hook_url = backend._get_browser_form_post_url()
         sep = "&" if "?" in hook_url else "?"
         hook_url = f"{hook_url}{sep}punchout_session_token={session.buyer_cookie_id}"
-        params["HOOK_URL"] = hook_url
+        # The HOOK_URL parameter name is configurable per backend
+        # (``oci_hook_param``, default the OCI-standard ``HOOK_URL``) --
+        # query-string names are case-sensitive and a few suppliers expect
+        # a different case (e.g. Van Egmond wants lowercase ``hook_url``).
+        params[backend.oci_hook_param or "HOOK_URL"] = hook_url
 
         # Add OCI version info if needed
         if backend.oci_version:

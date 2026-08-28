@@ -1,3 +1,12 @@
+## 19.0.1.5.0 (2026)
+
+- [ADD] **Van Egmond** OCI supplier preset (technical wholesale, NL) with
+  logo. Plain OCI (SAP OCI 5.0), lowercase parameter names.
+- [ADD] Configurable ``oci_hook_param`` (default ``HOOK_URL``) — the name
+  of the return-URL parameter. Query-string names are case-sensitive and
+  some suppliers expect a different case (Van Egmond: lowercase
+  ``hook_url``), which the standard uppercase would break.
+
 ## 19.0.1.4.0 (2026)
 
 - [ADD] Per-backend inbound cart-field mapping: ``oci_barcode_field``

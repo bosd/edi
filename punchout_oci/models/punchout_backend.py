@@ -93,6 +93,17 @@ class PunchoutBackend(models.Model):
         "is forced (handles reduced / zero-rate items). Clear it to "
         "always trust the product / fiscal-position chain instead.",
     )
+    oci_hook_param = fields.Char(
+        string="HOOK_URL parameter name",
+        default="HOOK_URL",
+        required=True,
+        groups="base.group_system",
+        help="Name of the setup-call parameter that carries the return "
+        "(HOOK) URL. Defaults to the OCI-standard uppercase ``HOOK_URL``; "
+        "some suppliers expect a different case/spelling (e.g. Van Egmond "
+        "uses lowercase ``hook_url``). Query-string parameter names are "
+        "case-sensitive, so a mismatch means the cart never comes back.",
+    )
 
     @api.model
     def _selection_protocol(self):

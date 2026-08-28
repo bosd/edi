@@ -217,3 +217,15 @@ class TestPunchoutOci(TestPunchoutOciCommon):
         self.session.response = json.dumps({"other_field": "value"})
         result = self.session._validate_response()
         self.assertFalse(result.get("valid"))
+
+    def test_oci_setup_url_configurable_hook_param(self):
+        """The HOOK_URL parameter name is configurable (query-string names
+        are case-sensitive; e.g. Van Egmond expects lowercase hook_url)."""
+        self.backend.oci_hook_param = "hook_url"
+        url = self.session_model._get_post_punchout_setup_url(self.session)
+        self.assertIn("hook_url=", url)
+        self.assertNotIn("HOOK_URL=", url)
+
+    def test_oci_setup_url_default_hook_param(self):
+        url = self.session_model._get_post_punchout_setup_url(self.session)
+        self.assertIn("HOOK_URL=", url)

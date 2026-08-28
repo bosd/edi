@@ -327,4 +327,47 @@
         <field name="active" eval="False" />
         <field name="state">draft</field>
     </record>
+
+    <!-- ====================================================
+         Van Egmond (NL) — technical wholesale. OCI only (they
+         follow the SAP OCI 5.0 spec; cXML only via SAP Business
+         Network). Plain OCI: credentials ride in the setup URL.
+         Their parameter names are LOWERCASE and non-standard:
+           user / password / customer   (not USERNAME/PASSWORD/CUSTOMER)
+           hook_url                      (not the OCI-standard HOOK_URL)
+         Query-string names are case-sensitive, so oci_hook_param is
+         set to ``hook_url`` and the oci_param_* names to the lowercase
+         variants. Login endpoint:
+           https://oci.vanegmond.nl/externallogin
+         Order exchange (order/confirmation/packing slip/invoice) is a
+         separate track; Van Egmond support SCSN and DICO/Ketenstandaard
+         (MessageService) as well as Peppol; order_transmission stays
+         ``manual`` until that channel is agreed.
+    ==================================================== -->
+    <record id="preset_vanegmond" model="punchout.backend">
+        <field name="name">Van Egmond</field>
+        <field
+            name="description"
+        >Technical wholesale (NL). OCI only (SAP OCI 5.0). Plain OCI -- credentials go in the setup URL. Uses lowercase parameter names (user / password / customer / hook_url). Fill in the USERNAME / PASSWORD / customer number Van Egmond assign to your account.</field>
+        <field name="protocol">oci</field>
+        <field name="url">https://oci.vanegmond.nl/externallogin</field>
+        <field name="browser_form_post_url">/punchout/oci/receive/</field>
+        <field name="oci_version">5.0</field>
+        <!-- Van Egmond's lowercase, non-standard parameter names. -->
+        <field name="oci_param_username">user</field>
+        <field name="oci_param_password">password</field>
+        <field name="oci_param_customer">customer</field>
+        <!-- No language parameter in Van Egmond's flow. -->
+        <field name="oci_param_language" />
+        <!-- Lowercase hook_url (case-sensitive!). -->
+        <field name="oci_hook_param">hook_url</field>
+        <field name="order_transmission">manual</field>
+        <field
+            name="image_128"
+            type="base64"
+            file="punchout_oci/static/description/suppliers/vanegmond.png"
+        />
+        <field name="active" eval="False" />
+        <field name="state">draft</field>
+    </record>
 </odoo>
