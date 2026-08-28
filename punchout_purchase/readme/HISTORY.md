@@ -1,3 +1,9 @@
+## 19.0.1.10.0 (2026-08)
+
+- [IMP] Backend form: place ``order_transmission`` in the Purchase group
+  (next to the supplier), and show the supplier (``partner_id``) with the
+  ``many2one_avatar`` widget so its contact image is visible.
+
 ## 19.0.1.9.0 (2026-08)
 
 - [IMP] Move the Cart Field Mappings editor into the backend notebook as

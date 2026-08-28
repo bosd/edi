@@ -1,3 +1,14 @@
+## 19.0.1.6.0 (2026-08)
+
+- [IMP] PunchOut sessions UX: the user column/field now uses the
+  ``many2one_avatar_user`` widget (list + form); the search view gains
+  Group By filters for Status, Backend and User, and the list defaults to
+  grouping by Status; the raw Response is shown with a copy-to-clipboard
+  button (``CopyClipboardButton``).
+- [IMP] Move ``order_transmission`` out of the backend Connection group;
+  ``punchout_purchase`` now places it in the Purchase group next to the
+  supplier (it only makes sense once purchase is installed).
+
 ## 19.0.1.5.0 (2026-08)
 
 - [FIX] Backend kanban logos are no longer stretched. The ``image``

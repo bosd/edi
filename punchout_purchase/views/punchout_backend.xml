@@ -10,8 +10,9 @@
             <xpath expr="//group[@name='group_main']" position="after">
                 <group string="Purchase">
                     <group>
-                        <field name="partner_id" />
+                        <field name="partner_id" widget="many2one_avatar" />
                         <field name="company_id" groups="base.group_multi_company" />
+                        <field name="order_transmission" />
                     </group>
                     <group>
                         <field name="auto_create_products" />
