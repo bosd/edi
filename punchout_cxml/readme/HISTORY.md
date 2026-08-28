@@ -1,3 +1,15 @@
+## 19.0.1.6.0 (2026-08)
+
+- [FIX] All cXML supplier presets now pin ``auto_create_products = True``
+  explicitly. Punchout is a *dynamic* catalog — the parts a buyer picks
+  usually don't pre-exist in Odoo — so a preset that silently left the
+  flag off turned every cart into a "product not found" error at PO
+  creation. The field already defaulted to ``True``, but preset records
+  created before ``punchout_purchase`` added the column inherited the
+  raw column default (``False``) instead, so the behaviour was
+  non-deterministic per install order. Pinning it in the data makes the
+  intent explicit and install-order-independent.
+
 ## 19.0.1.3.0 (2026-08)
 
 - [ADD] **Topgeschenken.nl** cXML supplier preset (business gifts, NL)
