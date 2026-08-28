@@ -90,7 +90,6 @@
             name="description"
         >Electronics, components, technical supply (DE/EU). cXML PunchOut. Replace from_identity, to_identity (Conrad's DUNS), and shared_secret with the values Conrad assigned to your account.</field>
         <field name="protocol">cxml</field>
-        <field name="auto_create_products" eval="True" />
         <field name="url">https://oci.conrad.com/AribaRequest.html</field>
         <field name="browser_form_post_url">/punchout/cxml/receive/</field>
         <field name="cxml_version">1.2.008</field>
@@ -116,7 +115,6 @@
             name="description"
         >Fasteners, fixings, industrial supply (NL/EU). cXML PunchOut. Replace from_identity and shared_secret with the values Fabory assigned to your account.</field>
         <field name="protocol">cxml</field>
-        <field name="auto_create_products" eval="True" />
         <field name="url">https://www.fabory.com/punchout/v2/cxml/setup</field>
         <field name="browser_form_post_url">/punchout/cxml/receive/</field>
         <field name="cxml_version">1.2.008</field>
@@ -163,7 +161,6 @@
             name="description"
         >MRO, industrial &amp; office supplies (NL/EU). cXML PunchOut. Replace from_identity and shared_secret with the values Manutan assigned to your account.</field>
         <field name="protocol">cxml</field>
-        <field name="auto_create_products" eval="True" />
         <field name="url">https://punchout.manutan.nl/PunchOutSetup</field>
         <field name="browser_form_post_url">/punchout/cxml/receive/</field>
         <field name="cxml_version">1.2.008</field>
@@ -212,7 +209,6 @@
             name="description"
         >Business gifts (NL). cXML PunchOut. Request a sandbox account and the cXML endpoint + credentials from Topgeschenken, then replace url, from_identity, to_identity and shared_secret. Their PO intake needs SupplierPartAuxiliaryID echoed per line (handled automatically by the cXML purchase + order-send modules).</field>
         <field name="protocol">cxml</field>
-        <field name="auto_create_products" eval="True" />
         <field name="url">REPLACE_ME</field>
         <field name="browser_form_post_url">/punchout/cxml/receive/</field>
         <field name="cxml_version">1.2.008</field>

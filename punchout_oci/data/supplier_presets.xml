@@ -37,7 +37,6 @@
             name="description"
         >Industrial supplier (NL). OCI Roundtrip catalog with USERNAME/PASSWORD authentication.</field>
         <field name="protocol">oci</field>
-        <field name="auto_create_products" eval="True" />
         <field
             name="url"
         >https://www.indi.nl/INTERSHOP/web/WFS/org-webshop-Site/nl_NL/-/EUR/ViewOCICatalog-Start</field>
@@ -81,7 +80,6 @@
             name="description"
         >Industrial automation / electrical connection components (DE). OCI 4.0 PunchOut with USERNAME/PASSWORD authentication. Cart return uses eCl@ss in NEW_ITEM-MATGROUP and CUST_FIELD1 = delivery date.</field>
         <field name="protocol">oci</field>
-        <field name="auto_create_products" eval="True" />
         <field
             name="url"
         >https://punchout.phoenixcontact.com/gateway/v1/oci/handle</field>
@@ -120,7 +118,6 @@
             name="description"
         >IT hardware (US/global). OCI 4.0 PunchOut. Preview URL by default — replace with Dell-provisioned production endpoint after account activation. Note: requires operation_type=create in vendor parameters.</field>
         <field name="protocol">oci</field>
-        <field name="auto_create_products" eval="True" />
         <field
             name="url"
         >https://b2bpreview.dell.com/invoke/B2BDirect.Entry/processDocument</field>
@@ -186,7 +183,6 @@
             name="description"
         >Agricultural / forestry / earthmoving parts (NL/EU). OCI PunchOut. URL is provisioned per-customer by Kramp — REPLACE the example URL after Kramp registers your HOOK_URL domain. Auth is via domain validation; logonId only, no password.</field>
         <field name="protocol">oci</field>
-        <field name="auto_create_products" eval="True" />
         <!-- Example URL only — Kramp Business Solution Consultant
              will provision the real one for your account. -->
         <field name="url">https://www.kramp.com/do/action/OCITesting</field>
@@ -223,7 +219,6 @@
             name="description"
         >Office supplies (NL). OCI PunchOut with lowercase username / password authentication. Cart returns NEW_ITEM-CUST_FIELD1 = VAT percent.</field>
         <field name="protocol">oci</field>
-        <field name="auto_create_products" eval="True" />
         <field name="url">https://oci.discountoffice.nl/login</field>
         <field name="browser_form_post_url">/punchout/oci/receive/</field>
         <field name="oci_version">4.0</field>
@@ -261,7 +256,6 @@
             name="description"
         >Forklift / material-handling parts supplier (BE/global). OCI 4.0 PunchOut. Industrial e-shop URL — switch to bepcoparts/agri.shop for an Agricultural account.</field>
         <field name="protocol">oci</field>
-        <field name="auto_create_products" eval="True" />
         <field name="url">https://eshop.tvh.com/punch_out_cred</field>
         <field name="browser_form_post_url">/punchout/oci/receive/</field>
         <field name="oci_version">4.0</field>
@@ -302,7 +296,6 @@
             name="description"
         >Technical supplies / MRO (NL). OCI 4.0 PunchOut only (no cXML). Ships the fixed catalog parameters OkCode=ADDI, ~TARGET=_top, ~CALLER=CTLG, SERVICE=demo (set SERVICE to the value DESTIL assign for production). Fill in the USERNAME / PASSWORD credentials DESTIL assign to your account.</field>
         <field name="protocol">oci</field>
-        <field name="auto_create_products" eval="True" />
         <field name="url">https://www.destil.nl/services/login.aspx</field>
         <field name="browser_form_post_url">/punchout/oci/receive/</field>
         <field name="oci_version">4.0</field>
@@ -357,7 +350,6 @@
             name="description"
         >Technical wholesale (NL). OCI only (SAP OCI 5.0). Plain OCI -- credentials go in the setup URL. Uses lowercase parameter names (user / password / customer / hook_url). Fill in the USERNAME / PASSWORD / customer number Van Egmond assign to your account.</field>
         <field name="protocol">oci</field>
-        <field name="auto_create_products" eval="True" />
         <field name="url">https://oci.vanegmond.nl/externallogin</field>
         <field name="browser_form_post_url">/punchout/oci/receive/</field>
         <field name="oci_version">5.0</field>

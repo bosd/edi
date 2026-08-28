@@ -1,3 +1,14 @@
+## 19.0.1.5.0 (2026-08)
+
+- [FIX] Remove ``auto_create_products`` from the supplier presets. That
+  field is defined in ``punchout_purchase``, but these presets live in a
+  module that only depends on base ``punchout`` — referencing it made the
+  data file fail to load wherever ``punchout_purchase`` loads after this
+  module (``ValueError: Invalid field 'auto_create_products'``). The
+  field already defaults to ``True`` and Odoo backfills the default onto
+  existing rows when the column is added, so auto-create stays on by
+  default without the (mis-layered) explicit pin.
+
 ## 19.0.1.6.0 (2026-08)
 
 - [FIX] All cXML supplier presets now pin ``auto_create_products = True``
