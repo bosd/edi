@@ -106,7 +106,7 @@ class PunchoutSession(models.Model):
 
         return {
             "product_id": product.id,
-            "name": description,
+            "name": self._punchout_line_name(supplier_part_id, description),
             "product_qty": quantity,
             "price_unit": unit_price,
             "product_uom_id": uom.id,

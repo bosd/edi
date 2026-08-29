@@ -35,6 +35,17 @@ class TestPunchoutOciPurchase(TestPunchoutPurchaseCommon):
         _, _, vals = lines[0]
         self.assertEqual(vals["product_qty"], 3.0)
         self.assertEqual(vals["price_unit"], 25.0)
+        # Line label is prefixed with the supplier code ([VENDORMAT]) so
+        # it prints on the PO like a native Odoo line.
+        self.assertEqual(vals["name"], "[OCI-SKU-1] Test OCI Widget")
+
+    def test_line_name_no_code_is_bare_description(self):
+        """No VENDORMAT → the line name is the bare description, not an
+        empty ``[]`` prefix."""
+        cart = json.loads(_oci_cart())
+        del cart["NEW_ITEM-VENDORMAT[1]"]
+        self.session.response = json.dumps(cart)
+        _, _, vals = self.session._prepare_purchase_order_lines()[0]
         self.assertEqual(vals["name"], "Test OCI Widget")
 
     def test_multiple_items(self):

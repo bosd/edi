@@ -125,7 +125,9 @@ class PunchoutSession(models.Model):
 
         vals = {
             "product_id": product.id,
-            "name": description,
+            "name": self._punchout_line_name(
+                product_dict.get("VENDORMAT"), description
+            ),
             "product_qty": quantity,
             "price_unit": unit_price,
             "product_uom_id": uom.id,

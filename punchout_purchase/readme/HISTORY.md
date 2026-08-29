@@ -1,3 +1,11 @@
+## 19.0.1.11.0 (2026-08)
+
+- [ADD] ``_punchout_line_name`` helper composing the PO line label as
+  ``[supplier code] description`` so the supplier's own part number prints
+  on punchout POs (punchout set the line text straight from the cart,
+  bypassing Odoo's native ``[vendor code] name`` prefix). Used by the OCI
+  and cXML purchase modules.
+
 ## 19.0.1.10.0 (2026-08)
 
 - [IMP] Backend form: place ``order_transmission`` in the Purchase group

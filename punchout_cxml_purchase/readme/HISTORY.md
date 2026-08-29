@@ -1,3 +1,8 @@
+## 19.0.1.7.0 (2026-08)
+
+- [IMP] Prefix the PO line label with the cXML ``SupplierPartID``
+  (``[code] description``) so it prints on the purchase order.
+
 ## 19.0.1.6.0 (2026-08)
 
 - [ADD] Flatten cXML ``ItemDetail`` into the protocol-agnostic

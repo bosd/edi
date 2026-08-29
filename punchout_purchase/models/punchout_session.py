@@ -653,6 +653,17 @@ class PunchoutSession(models.Model):
         self.ensure_one()
         self.backend_id._apply_product_field_mappings(product, source)
 
+    def _punchout_line_name(self, supplier_code, description):
+        """Compose the PO line label as ``[supplier code] description``.
+
+        Punchout sets the line name directly from the supplier's cart text,
+        which bypasses Odoo's native ``[vendor code] name`` composition — so
+        the supplier's own part number never reached the printed PO. Prefix
+        it here (when present) so punchout POs read like every other PO."""
+        description = (description or "").strip()
+        code = (supplier_code or "").strip()
+        return f"[{code}] {description}" if code else description
+
     def _get_redirect_url(self):
         """Redirect to purchase order after processing."""
         self.ensure_one()

@@ -36,7 +36,9 @@ class TestPunchoutCxmlPurchase(TestPunchoutPurchaseCommon):
         _, _, vals = lines[0]
         self.assertEqual(vals["product_qty"], 2.0)
         self.assertEqual(vals["price_unit"], 50.0)
-        self.assertEqual(vals["name"], "Test cXML Widget")
+        # Line label is prefixed with the supplier code ([SupplierPartID])
+        # so it prints on the PO like a native Odoo line.
+        self.assertEqual(vals["name"], "[SKU-CXML-1] Test cXML Widget")
 
     def test_parse_cxml_cart_captures_supplier_aux_id(self):
         """The cart-item's SupplierPartAuxiliaryID (e.g. Topgeschenken's
