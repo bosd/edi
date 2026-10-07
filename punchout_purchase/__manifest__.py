@@ -19,7 +19,6 @@
         "purchase",
     ],
     "data": [
-        "security/punchout_security.xml",
         "security/ir.model.access.csv",
         "views/punchout_backend.xml",
         "views/punchout_session.xml",

@@ -412,18 +412,22 @@ from the cart data.</p>
 </ul>
 </li>
 <li><a class="reference internal" href="#changelog" id="toc-entry-18">Changelog</a><ul>
-<li><a class="reference internal" href="#section-1" id="toc-entry-19">19.0.1.7.0 (2026)</a></li>
-<li><a class="reference internal" href="#section-2" id="toc-entry-20">19.0.1.6.0 (2026)</a></li>
-<li><a class="reference internal" href="#section-3" id="toc-entry-21">19.0.1.5.0 (2026)</a></li>
-<li><a class="reference internal" href="#section-4" id="toc-entry-22">19.0.1.4.0 (2026)</a></li>
-<li><a class="reference internal" href="#section-5" id="toc-entry-23">18.0.1.0.0 (2026)</a></li>
+<li><a class="reference internal" href="#section-1" id="toc-entry-19">19.0.1.11.0 (2026-08)</a></li>
+<li><a class="reference internal" href="#section-2" id="toc-entry-20">19.0.1.10.0 (2026-08)</a></li>
+<li><a class="reference internal" href="#section-3" id="toc-entry-21">19.0.1.9.0 (2026-08)</a></li>
+<li><a class="reference internal" href="#section-4" id="toc-entry-22">19.0.1.8.0 (2026-08)</a></li>
+<li><a class="reference internal" href="#section-5" id="toc-entry-23">19.0.1.7.0 (2026)</a></li>
+<li><a class="reference internal" href="#section-6" id="toc-entry-24">19.0.1.6.0 (2026)</a></li>
+<li><a class="reference internal" href="#section-7" id="toc-entry-25">19.0.1.5.0 (2026)</a></li>
+<li><a class="reference internal" href="#section-8" id="toc-entry-26">19.0.1.4.0 (2026)</a></li>
+<li><a class="reference internal" href="#section-9" id="toc-entry-27">18.0.1.0.0 (2026)</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#bug-tracker" id="toc-entry-24">Bug Tracker</a></li>
-<li><a class="reference internal" href="#credits" id="toc-entry-25">Credits</a><ul>
-<li><a class="reference internal" href="#authors" id="toc-entry-26">Authors</a></li>
-<li><a class="reference internal" href="#contributors" id="toc-entry-27">Contributors</a></li>
-<li><a class="reference internal" href="#maintainers" id="toc-entry-28">Maintainers</a></li>
+<li><a class="reference internal" href="#bug-tracker" id="toc-entry-28">Bug Tracker</a></li>
+<li><a class="reference internal" href="#credits" id="toc-entry-29">Credits</a><ul>
+<li><a class="reference internal" href="#authors" id="toc-entry-30">Authors</a></li>
+<li><a class="reference internal" href="#contributors" id="toc-entry-31">Contributors</a></li>
+<li><a class="reference internal" href="#maintainers" id="toc-entry-32">Maintainers</a></li>
 </ul>
 </li>
 </ul>
@@ -600,7 +604,60 @@ whatever fields that supplier actually emits.</p>
 <div class="section" id="changelog">
 <h2><a class="toc-backref" href="#toc-entry-18">Changelog</a></h2>
 <div class="section" id="section-1">
-<h3><a class="toc-backref" href="#toc-entry-19">19.0.1.7.0 (2026)</a></h3>
+<h3><a class="toc-backref" href="#toc-entry-19">19.0.1.11.0 (2026-08)</a></h3>
+<ul class="simple">
+<li>Use the base <tt class="docutils literal">punchout.group_punchout_manager</tt> group instead of
+defining a second, identically-named <em>Punchout Manager</em> group. The
+duplicate made two “Punchout Manager” entries appear in a user’s
+access rights. The purchase extension’s manager role is the same role
+as the base module’s, so the groups are now consolidated.</li>
+<li>[ADD] <tt class="docutils literal">_punchout_line_name</tt> helper composing the PO line label as
+<tt class="docutils literal">[supplier code] description</tt> so the supplier’s own part number
+prints on punchout POs (punchout set the line text straight from the
+cart, bypassing Odoo’s native <tt class="docutils literal">[vendor code] name</tt> prefix). Used by
+the OCI and cXML purchase modules.</li>
+</ul>
+</div>
+<div class="section" id="section-2">
+<h3><a class="toc-backref" href="#toc-entry-20">19.0.1.10.0 (2026-08)</a></h3>
+<ul class="simple">
+<li>[IMP] Backend form: place <tt class="docutils literal">order_transmission</tt> in the Purchase group
+(next to the supplier), and show the supplier (<tt class="docutils literal">partner_id</tt>) with
+the <tt class="docutils literal">many2one_avatar</tt> widget so its contact image is visible.</li>
+</ul>
+</div>
+<div class="section" id="section-3">
+<h3><a class="toc-backref" href="#toc-entry-21">19.0.1.9.0 (2026-08)</a></h3>
+<ul class="simple">
+<li>[IMP] Move the Cart Field Mappings editor into the backend notebook as
+its own tab (next to UoM Mappings), instead of an inline group — the
+two “supplier-data mapping” tables now live together. Manager-gated.</li>
+</ul>
+</div>
+<div class="section" id="section-4">
+<h3><a class="toc-backref" href="#toc-entry-22">19.0.1.8.0 (2026-08)</a></h3>
+<ul class="simple">
+<li>[ADD] <strong>Cart field-mapping framework</strong>. New <tt class="docutils literal">punchout.field.mapping</tt>
+(with a <tt class="docutils literal">punchout.value.mapping</tt> lookup table) lets each backend map
+supplier-specific cart fields onto the auto-created product — because
+the same datum lands in a different cart field per vendor (Van Egmond
+returns the GTIN in <tt class="docutils literal">CUST_FIELD1</tt>, another OCI vendor in
+<tt class="docutils literal">VENDORMAT</tt>). The engine is protocol-agnostic: OCI and cXML each
+flatten a cart line to <tt class="docutils literal">{source_field: value}</tt> and the rules do the
+rest. Core targets: <tt class="docutils literal">barcode</tt> (GTIN-validated), <tt class="docutils literal">image</tt> (fetched
+from a cart-supplied URL — https/size/content-type guarded),
+<tt class="docutils literal">description</tt>, <tt class="docutils literal">product_code</tt> and a deferred <tt class="docutils literal">unspsc_category</tt>.
+Values can be used directly or translated through a per-rule lookup
+table (supplier code → Odoo value). Rules run on both new products and
+re-punchout matches; each target fills only when empty unless the rule
+is set to overwrite, so manual corrections survive. Targets are
+extensible — optional-module targets (e.g. brand) ship as bridge
+add-ons (see <tt class="docutils literal">punchout_product_brand</tt>), keeping this module free of
+optional dependencies.</li>
+</ul>
+</div>
+<div class="section" id="section-5">
+<h3><a class="toc-backref" href="#toc-entry-23">19.0.1.7.0 (2026)</a></h3>
 <ul class="simple">
 <li>[ADD] Punchout adoption nudge: on a supplier’s contact form and its
 POs, when a punchout backend is linked but not yet activated, buyers
@@ -610,8 +667,8 @@ The hint is hidden from managers and can be suppressed per backend
 (<tt class="docutils literal">punchout_hide_setup_hint</tt>) for deliberately-parked backends.</li>
 </ul>
 </div>
-<div class="section" id="section-2">
-<h3><a class="toc-backref" href="#toc-entry-20">19.0.1.6.0 (2026)</a></h3>
+<div class="section" id="section-6">
+<h3><a class="toc-backref" href="#toc-entry-24">19.0.1.6.0 (2026)</a></h3>
 <ul class="simple">
 <li>[ADD] Post a chatter note on the punchout-created PO stating the
 backend’s <tt class="docutils literal">order_transmission</tt> method (manual / email / cXML / REST
@@ -619,8 +676,8 @@ backend’s <tt class="docutils literal">order_transmission</tt> method (manual 
 sends it to the supplier or whether they must place it themselves.</li>
 </ul>
 </div>
-<div class="section" id="section-3">
-<h3><a class="toc-backref" href="#toc-entry-21">19.0.1.5.0 (2026)</a></h3>
+<div class="section" id="section-7">
+<h3><a class="toc-backref" href="#toc-entry-25">19.0.1.5.0 (2026)</a></h3>
 <ul class="simple">
 <li>[ADD] “Punchout Supplier” filter on the contacts search view — lists
 the vendors we have a punchout connection with (usually the preferred
@@ -632,8 +689,8 @@ its backend — and catalog — is perfectly usable; the button (and the
 flag) now depend on the open backend alone.</li>
 </ul>
 </div>
-<div class="section" id="section-4">
-<h3><a class="toc-backref" href="#toc-entry-22">19.0.1.4.0 (2026)</a></h3>
+<div class="section" id="section-8">
+<h3><a class="toc-backref" href="#toc-entry-26">19.0.1.4.0 (2026)</a></h3>
 <ul class="simple">
 <li>[ADD] New <tt class="docutils literal">_post_punchout_session_processed(order, new_lines)</tt> hook
 fired at the very end of <tt class="docutils literal">process()</tt> (after PO create/append and
@@ -642,8 +699,8 @@ override it to fire follow-up enrichment, batch inquiries, ASN
 polling, etc., without monkey-patching <tt class="docutils literal">process()</tt> itself.</li>
 </ul>
 </div>
-<div class="section" id="section-5">
-<h3><a class="toc-backref" href="#toc-entry-23">18.0.1.0.0 (2026)</a></h3>
+<div class="section" id="section-9">
+<h3><a class="toc-backref" href="#toc-entry-27">18.0.1.0.0 (2026)</a></h3>
 <ul class="simple">
 <li>[MIG] Migration to Odoo 18.0.</li>
 <li>[FIX] Surface <tt class="docutils literal">partner_id</tt>, <tt class="docutils literal">company_id</tt>, <tt class="docutils literal">product_category_id</tt>
@@ -692,7 +749,7 @@ ignored when the <tt class="docutils literal">stock</tt> module isn’t installe
 </div>
 </div>
 <div class="section" id="bug-tracker">
-<h2><a class="toc-backref" href="#toc-entry-24">Bug Tracker</a></h2>
+<h2><a class="toc-backref" href="#toc-entry-28">Bug Tracker</a></h2>
 <p>Bugs are tracked on <a class="reference external" href="https://github.com/OCA/edi/issues">GitHub Issues</a>.
 In case of trouble, please check there if your issue has already been reported.
 If you spotted it first, help us to smash it by providing a detailed and welcomed
@@ -700,9 +757,9 @@ If you spotted it first, help us to smash it by providing a detailed and welcome
 <p>Do not contact contributors directly about support or help with technical issues.</p>
 </div>
 <div class="section" id="credits">
-<h2><a class="toc-backref" href="#toc-entry-25">Credits</a></h2>
+<h2><a class="toc-backref" href="#toc-entry-29">Credits</a></h2>
 <div class="section" id="authors">
-<h3><a class="toc-backref" href="#toc-entry-26">Authors</a></h3>
+<h3><a class="toc-backref" href="#toc-entry-30">Authors</a></h3>
 <ul class="simple">
 <li>ACSONE SA/NV</li>
 <li>Hunki Enterprises BV</li>
@@ -710,7 +767,7 @@ If you spotted it first, help us to smash it by providing a detailed and welcome
 </ul>
 </div>
 <div class="section" id="contributors">
-<h3><a class="toc-backref" href="#toc-entry-27">Contributors</a></h3>
+<h3><a class="toc-backref" href="#toc-entry-31">Contributors</a></h3>
 <ul class="simple">
 <li>Thomas Binsfeld &lt;<a class="reference external" href="mailto:thomas.binsfeld&#64;acsone.eu">thomas.binsfeld&#64;acsone.eu</a>&gt;</li>
 <li>Benjamin Willig &lt;<a class="reference external" href="mailto:benjamin.willig&#64;acsone.eu">benjamin.willig&#64;acsone.eu</a>&gt;</li>
@@ -719,7 +776,7 @@ If you spotted it first, help us to smash it by providing a detailed and welcome
 </ul>
 </div>
 <div class="section" id="maintainers">
-<h3><a class="toc-backref" href="#toc-entry-28">Maintainers</a></h3>
+<h3><a class="toc-backref" href="#toc-entry-32">Maintainers</a></h3>
 <p>This module is maintained by the OCA.</p>
 <a class="reference external image-reference" href="https://odoo-community.org">
 <img alt="Odoo Community Association" src="https://odoo-community.org/logo.png" />

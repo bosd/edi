@@ -241,6 +241,56 @@ whatever fields that supplier actually emits.
 Changelog
 =========
 
+19.0.1.11.0 (2026-08)
+---------------------
+
+- Use the base ``punchout.group_punchout_manager`` group instead of
+  defining a second, identically-named *Punchout Manager* group. The
+  duplicate made two "Punchout Manager" entries appear in a user's
+  access rights. The purchase extension's manager role is the same role
+  as the base module's, so the groups are now consolidated.
+
+- [ADD] ``_punchout_line_name`` helper composing the PO line label as
+  ``[supplier code] description`` so the supplier's own part number
+  prints on punchout POs (punchout set the line text straight from the
+  cart, bypassing Odoo's native ``[vendor code] name`` prefix). Used by
+  the OCI and cXML purchase modules.
+
+19.0.1.10.0 (2026-08)
+---------------------
+
+- [IMP] Backend form: place ``order_transmission`` in the Purchase group
+  (next to the supplier), and show the supplier (``partner_id``) with
+  the ``many2one_avatar`` widget so its contact image is visible.
+
+19.0.1.9.0 (2026-08)
+--------------------
+
+- [IMP] Move the Cart Field Mappings editor into the backend notebook as
+  its own tab (next to UoM Mappings), instead of an inline group — the
+  two "supplier-data mapping" tables now live together. Manager-gated.
+
+19.0.1.8.0 (2026-08)
+--------------------
+
+- [ADD] **Cart field-mapping framework**. New ``punchout.field.mapping``
+  (with a ``punchout.value.mapping`` lookup table) lets each backend map
+  supplier-specific cart fields onto the auto-created product — because
+  the same datum lands in a different cart field per vendor (Van Egmond
+  returns the GTIN in ``CUST_FIELD1``, another OCI vendor in
+  ``VENDORMAT``). The engine is protocol-agnostic: OCI and cXML each
+  flatten a cart line to ``{source_field: value}`` and the rules do the
+  rest. Core targets: ``barcode`` (GTIN-validated), ``image`` (fetched
+  from a cart-supplied URL — https/size/content-type guarded),
+  ``description``, ``product_code`` and a deferred ``unspsc_category``.
+  Values can be used directly or translated through a per-rule lookup
+  table (supplier code → Odoo value). Rules run on both new products and
+  re-punchout matches; each target fills only when empty unless the rule
+  is set to overwrite, so manual corrections survive. Targets are
+  extensible — optional-module targets (e.g. brand) ship as bridge
+  add-ons (see ``punchout_product_brand``), keeping this module free of
+  optional dependencies.
+
 19.0.1.7.0 (2026)
 -----------------
 

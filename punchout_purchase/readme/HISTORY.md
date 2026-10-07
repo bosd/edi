@@ -1,5 +1,7 @@
 ## 19.0.1.11.0 (2026-08)
 
+* Use the base ``punchout.group_punchout_manager`` group instead of defining a second, identically-named *Punchout Manager* group. The duplicate made two "Punchout Manager" entries appear in a user's access rights. The purchase extension's manager role is the same role as the base module's, so the groups are now consolidated.
+
 - [ADD] ``_punchout_line_name`` helper composing the PO line label as
   ``[supplier code] description`` so the supplier's own part number prints
   on punchout POs (punchout set the line text straight from the cart,

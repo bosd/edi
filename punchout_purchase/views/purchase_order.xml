@@ -44,17 +44,17 @@
                     class="alert alert-info mb-0"
                     role="alert"
                     invisible="not has_dormant_punchout_backend"
-                    groups="!punchout_purchase.group_punchout_manager"
+                    groups="!punchout.group_punchout_manager"
                 >
                     Punchout ordering is available for this supplier but not
                     yet activated — you could order these items directly from
                     their catalog.
                     <button
-                        name="action_request_punchout_setup"
-                        type="object"
-                        class="btn btn-link p-0 align-baseline"
-                        string="Request punchout setup"
-                    />
+                    name="action_request_punchout_setup"
+                    type="object"
+                    class="btn btn-link p-0 align-baseline"
+                    string="Request punchout setup"
+                />
                 </div>
             </xpath>
             <!-- "Browse supplier catalog" button visible only on draft

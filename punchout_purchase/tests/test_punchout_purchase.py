@@ -742,9 +742,7 @@ class TestPunchoutPurchase(TestPunchoutPurchaseCommon):
 
     def test_request_setup_warns_without_manager(self):
         self.backend.state = "draft"
-        self.env.ref("punchout_purchase.group_punchout_manager").user_ids = [
-            (5, 0, 0)
-        ]
+        self.env.ref("punchout.group_punchout_manager").user_ids = [(5, 0, 0)]
         res = self.partner.action_request_punchout_setup()
         self.assertEqual(res["params"]["type"], "warning")
 
@@ -757,9 +755,7 @@ class TestPunchoutPurchase(TestPunchoutPurchaseCommon):
                 "group_ids": [
                     (
                         4,
-                        self.env.ref(
-                            "punchout_purchase.group_punchout_manager"
-                        ).id,
+                        self.env.ref("punchout.group_punchout_manager").id,
                     )
                 ],
             }
@@ -779,9 +775,7 @@ class TestPunchoutPurchase(TestPunchoutPurchaseCommon):
                 "group_ids": [
                     (
                         4,
-                        self.env.ref(
-                            "punchout_purchase.group_punchout_manager"
-                        ).id,
+                        self.env.ref("punchout.group_punchout_manager").id,
                     )
                 ],
             }

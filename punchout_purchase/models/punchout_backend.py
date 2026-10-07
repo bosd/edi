@@ -127,7 +127,7 @@ class PunchoutBackend(models.Model):
         self.ensure_one()
         requester = requester or self.env.user
         managers = (
-            self.env.ref("punchout_purchase.group_punchout_manager")
+            self.env.ref("punchout.group_punchout_manager")
             .sudo()
             .user_ids.filtered("active")
         )
