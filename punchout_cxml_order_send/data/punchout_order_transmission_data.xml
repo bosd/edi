@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Copyright 2026 Bosd
+     License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl). -->
+<odoo>
+    <!-- This module implements cXML OrderRequest sending, so it owns the
+         'cxml' order-transmission channel record. -->
+    <record id="transmission_cxml" model="punchout.order.transmission">
+        <field name="name">cXML OrderRequest</field>
+        <field name="code">cxml</field>
+        <field name="sequence">30</field>
+    </record>
+
+    <!-- Declare cXML as a supported channel on the shipped cXML-protocol
+         presets. (4, ref) adds without clobbering the universal
+         manual/email set. The actual send is still gated by the
+         per-backend 'Send orders as cXML' flag. -->
+    <record id="punchout_cxml.preset_conrad" model="punchout.backend">
+        <field
+            name="supported_transmission_ids"
+            eval="[(4, ref('transmission_cxml'))]"
+        />
+    </record>
+    <record id="punchout_cxml.preset_fabory" model="punchout.backend">
+        <field
+            name="supported_transmission_ids"
+            eval="[(4, ref('transmission_cxml'))]"
+        />
+    </record>
+    <record id="punchout_cxml.preset_manutan" model="punchout.backend">
+        <field
+            name="supported_transmission_ids"
+            eval="[(4, ref('transmission_cxml'))]"
+        />
+    </record>
+    <record id="punchout_cxml.preset_topgeschenken" model="punchout.backend">
+        <field
+            name="supported_transmission_ids"
+            eval="[(4, ref('transmission_cxml'))]"
+        />
+    </record>
+</odoo>

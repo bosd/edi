@@ -110,3 +110,24 @@ class TestPunchout(TestPunchoutCommon):
         )
         self.session_model._gc_punchout_sessions()
         self.assertTrue(old_session.exists())
+
+    # ---- order transmission per-supplier restriction --------------------
+
+    def test_supported_transmission_default_is_manual_email(self):
+        """A new backend supports the universal channels out of the box."""
+        codes = set(self.backend.supported_transmission_ids.mapped("code"))
+        self.assertEqual(codes, {"manual", "email"})
+
+    def test_order_transmission_must_be_supported(self):
+        """Assigning a channel the supplier does not support is rejected."""
+        rogue = self.env["punchout.order.transmission"].create(
+            {"name": "Rogue", "code": f"rogue_{self.backend.id}"}
+        )
+        with self.assertRaises(ValidationError):
+            self.backend.order_transmission_id = rogue
+
+    def test_order_transmission_supported_is_accepted(self):
+        """A channel in the supported set is accepted."""
+        email = self.env.ref("punchout.transmission_email")
+        self.backend.order_transmission_id = email
+        self.assertEqual(self.backend.order_transmission_id, email)

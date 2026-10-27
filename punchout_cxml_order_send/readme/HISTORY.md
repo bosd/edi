@@ -1,3 +1,10 @@
+## 19.0.1.2.0 (2026-10)
+
+- [IMP] Own the ``cxml`` order-transmission channel record and declare it as
+  a supported channel on the shipped cXML presets, so cXML OrderRequest is
+  only offered on cXML suppliers. Post-migration maps any legacy
+  ``order_transmission = 'cxml'`` backend.
+
 ## 19.0.1.1.0 (2026)
 
 - [ADD] Emit ``SupplierPartAuxiliaryID`` per order line in the cXML

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Copyright 2026 Bosd
+     License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl). -->
+<odoo>
+    <!-- User: read channels (needed to resolve the order_transmission_id
+         label and the supported set on backends they can see). -->
+    <record model="ir.model.access" id="punchout_order_transmission_access_user">
+        <field name="name">punchout.order.transmission access user</field>
+        <field name="model_id" ref="punchout.model_punchout_order_transmission" />
+        <field name="group_id" ref="base.group_user" />
+        <field name="perm_read" eval="1" />
+        <field name="perm_create" eval="0" />
+        <field name="perm_write" eval="0" />
+        <field name="perm_unlink" eval="0" />
+    </record>
+    <!-- Manager: full write (curation of channels). -->
+    <record model="ir.model.access" id="punchout_order_transmission_access_manager">
+        <field name="name">punchout.order.transmission access manager</field>
+        <field name="model_id" ref="punchout.model_punchout_order_transmission" />
+        <field name="group_id" ref="punchout.group_punchout_manager" />
+        <field name="perm_read" eval="1" />
+        <field name="perm_create" eval="1" />
+        <field name="perm_write" eval="1" />
+        <field name="perm_unlink" eval="1" />
+    </record>
+</odoo>

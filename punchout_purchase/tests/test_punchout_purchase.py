@@ -708,7 +708,9 @@ class TestPunchoutPurchase(TestPunchoutPurchaseCommon):
     def test_order_transmission_note_manual_warns(self):
         """A 'manual' backend posts a note making clear the PO is NOT
         auto-sent to the supplier."""
-        self.backend.order_transmission = "manual"
+        self.backend.order_transmission_id = self.env.ref(
+            "punchout.transmission_manual"
+        )
         po = self.env["purchase.order"].create({"partner_id": self.partner.id})
         before = len(po.message_ids)
         self.session._post_punchout_order_transmission_note(po, self.env.user)
@@ -716,11 +718,13 @@ class TestPunchoutPurchase(TestPunchoutPurchaseCommon):
         self.assertIn("does <strong>not</strong> send", po.message_ids[0].body)
 
     def test_order_transmission_note_names_channel(self):
-        """A non-manual backend names the channel in the note."""
-        self.backend.order_transmission = "cxml"
+        """A non-manual backend names the channel in the note. 'email' is a
+        base channel (always available); cXML/REST live in their own
+        modules."""
+        self.backend.order_transmission_id = self.env.ref("punchout.transmission_email")
         po = self.env["purchase.order"].create({"partner_id": self.partner.id})
         self.session._post_punchout_order_transmission_note(po, self.env.user)
-        self.assertIn("cXML OrderRequest", po.message_ids[0].body)
+        self.assertIn("Email", po.message_ids[0].body)
 
     # ---- dormant-backend adoption nudge ---------------------------------
 

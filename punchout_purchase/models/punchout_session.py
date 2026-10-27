@@ -192,15 +192,14 @@ class PunchoutSession(models.Model):
         """Post a chatter note stating how the confirmed order reaches the
         supplier. Punchout only builds the draft PO in Odoo; whether
         confirming it transmits the order (and by which channel) depends
-        on the backend's ``order_transmission``. Makes that explicit so a
+        on the backend's ``order_transmission_id``. Makes that explicit so a
         purchaser doesn't assume 'confirmed in Odoo' means 'sent'.
         """
         self.ensure_one()
         backend = self.backend_id
-        method = backend.order_transmission or "manual"
-        label = dict(
-            backend._fields["order_transmission"]._description_selection(self.env)
-        ).get(method, method)
+        channel = backend.order_transmission_id
+        method = channel.code or "manual"
+        label = channel.name or method
         supplier = backend.partner_id.display_name or self.env._("the supplier")
         if method == "manual":
             body = Markup(

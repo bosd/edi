@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Copyright 2026 Bosd
+     License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl). -->
+<odoo>
+    <!-- Generic 'rest' order-transmission channel. A supplier-specific
+         module (e.g. the TVH integration) declares which presets support
+         REST by adding this channel to their supported_transmission_ids,
+         and implements the actual REST call. -->
+    <record id="transmission_rest" model="punchout.order.transmission">
+        <field name="name">REST API</field>
+        <field name="code">rest</field>
+        <field name="sequence">40</field>
+    </record>
+</odoo>

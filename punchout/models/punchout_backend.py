@@ -95,10 +95,29 @@ class PunchoutBackend(models.Model):
     state = fields.Selection(
         selection="_selection_state", default="draft", tracking=True
     )
-    order_transmission = fields.Selection(
-        selection="_selection_order_transmission",
-        default="manual",
+    supported_transmission_ids = fields.Many2many(
+        comodel_name="punchout.order.transmission",
+        relation="punchout_backend_supported_transmission_rel",
+        column1="backend_id",
+        column2="transmission_id",
+        string="Supported order channels",
+        default=lambda self: self._default_supported_transmission_ids(),
+        help=(
+            "The order-transmission channels this supplier actually "
+            "accepts. Restricts the 'Order transmission' choice to a "
+            "valid set — a supplier is never offered a channel it does "
+            "not support. Universal channels (Manual, Email) are the "
+            "default; a channel module adds its own (e.g. cXML, REST) to "
+            "the presets that support it."
+        ),
+    )
+    order_transmission_id = fields.Many2one(
+        comodel_name="punchout.order.transmission",
         string="Order transmission",
+        domain="[('id', 'in', supported_transmission_ids)]",
+        default=lambda self: self.env.ref(
+            "punchout.transmission_manual", raise_if_not_found=False
+        ),
         tracking=True,
         help=(
             "How a confirmed purchase order actually reaches this "
@@ -106,8 +125,9 @@ class PunchoutBackend(models.Model):
             "does NOT place the order. 'Manual' means you send it via "
             "your usual channel; the other options name an integrated "
             "channel (which may be automatic or a button, depending on "
-            "the installed modules). Surfaced to the purchaser on the "
-            "PO chatter so it's clear whether/how the order is sent."
+            "the installed modules). Limited to the supplier's supported "
+            "channels. Surfaced to the purchaser on the PO chatter so "
+            "it's clear whether/how the order is sent."
         ),
     )
     session_duration = fields.Integer(
@@ -222,17 +242,37 @@ class PunchoutBackend(models.Model):
         ]
 
     @api.model
-    def _selection_order_transmission(self):
-        """How the confirmed PO reaches the supplier. Extensible — a
-        module that implements a channel (e.g. ``punchout_cxml_order_send``)
-        can append its own option."""
-        return [
-            ("manual", "Manual / your own channel"),
-            ("email", "Email"),
-            ("cxml", "cXML OrderRequest"),
-            ("rest", "REST API"),
-            ("portal", "Supplier portal"),
-        ]
+    def _default_supported_transmission_ids(self):
+        """Universal channels every supplier can use. Channel modules add
+        their own (cXML, REST, …) to the presets that support them."""
+        codes = ("punchout.transmission_manual", "punchout.transmission_email")
+        recs = self.env["punchout.order.transmission"]
+        for xmlid in codes:
+            rec = self.env.ref(xmlid, raise_if_not_found=False)
+            if rec:
+                recs |= rec
+        return recs
+
+    @api.constrains("order_transmission_id", "supported_transmission_ids")
+    def _check_order_transmission_supported(self):
+        """A backend may only use a channel its supplier actually supports.
+        The field domain enforces this in the UI; this guards RPC / data
+        writes that bypass the view."""
+        for rec in self:
+            if (
+                rec.order_transmission_id
+                and rec.order_transmission_id not in rec.supported_transmission_ids
+            ):
+                raise ValidationError(
+                    self.env._(
+                        "'%(channel)s' is not a supported order "
+                        "transmission for %(name)s. Supported: %(allowed)s.",
+                        channel=rec.order_transmission_id.name,
+                        name=rec.display_name,
+                        allowed=", ".join(rec.supported_transmission_ids.mapped("name"))
+                        or self.env._("none"),
+                    )
+                )
 
     def _get_browser_form_post_url(self):
         """Build the full browser form post URL."""

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Copyright 2026 Bosd
+     License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl). -->
+<odoo>
+    <!-- Universal, always-available channels. Both are informational:
+         punchout only builds the draft PO; the order leaves Odoo by the
+         named channel. Implemented channels (cXML, REST) are shipped by
+         their own modules. -->
+    <record id="transmission_manual" model="punchout.order.transmission">
+        <field name="name">Manual / your own channel</field>
+        <field name="code">manual</field>
+        <field name="sequence">10</field>
+    </record>
+    <record id="transmission_email" model="punchout.order.transmission">
+        <field name="name">Email</field>
+        <field name="code">email</field>
+        <field name="sequence">20</field>
+    </record>
+</odoo>

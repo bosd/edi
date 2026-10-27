@@ -147,6 +147,32 @@ contributors discovering new features to implement. ]
 Changelog
 =========
 
+19.0.1.7.0 (2026-10)
+--------------------
+
+- [IMP] Order transmission is now restricted to the channels a supplier
+  actually supports. New model ``punchout.order.transmission`` (base
+  ships ``manual`` + ``email``); backends gain
+  ``supported_transmission_ids`` and the old ``order_transmission``
+  Selection becomes ``order_transmission_id`` (Many2one filtered to the
+  supported set). A constraint blocks assigning an unsupported channel
+  via RPC/data. Channel modules contribute their own option (e.g. cXML,
+  REST). Unimplemented ``rest``/``portal`` are no longer offered by
+  base. A post-migration maps existing values (manual/email; channel
+  modules map their own).
+
+19.0.1.6.0 (2026-08)
+--------------------
+
+- [IMP] PunchOut sessions UX: the user column/field now uses the
+  ``many2one_avatar_user`` widget (list + form); the search view gains
+  Group By filters for Status, Backend and User, and the list defaults
+  to grouping by Status; the raw Response is shown with a
+  copy-to-clipboard button (``CopyClipboardButton``).
+- [IMP] Move ``order_transmission`` out of the backend Connection group;
+  ``punchout_purchase`` now places it in the Purchase group next to the
+  supplier (it only makes sense once purchase is installed).
+
 19.0.1.5.0 (2026-08)
 --------------------
 

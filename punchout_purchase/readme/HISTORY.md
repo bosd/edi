@@ -1,3 +1,10 @@
+## 19.0.1.12.0 (2026-10)
+
+- [IMP] Follow the base ``order_transmission_id`` Many2one (was the
+  ``order_transmission`` Selection): the backend form shows the supplier's
+  supported channels (manager-gated) and the filtered transmission field;
+  the PO chatter note reads the channel record.
+
 ## 19.0.1.11.0 (2026-08)
 
 * Use the base ``punchout.group_punchout_manager`` group instead of defining a second, identically-named *Punchout Manager* group. The duplicate made two "Punchout Manager" entries appear in a user's access rights. The purchase extension's manager role is the same role as the base module's, so the groups are now consolidated.

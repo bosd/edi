@@ -222,6 +222,42 @@ work to land — every supplier diverges from the spec in subtle ways:
 Changelog
 =========
 
+19.0.1.8.0 (2026-08)
+--------------------
+
+- [REM] Retire ``oci_barcode_field`` — the barcode is now a generic
+  ``punchout.field.mapping`` target (punchout_purchase). Preset backends
+  get a shipped ``VENDORMAT -> barcode`` rule (see
+  punchout_oci_purchase); a pre-migration converts any non-preset
+  backend that had a barcode source configured and drops the column.
+  ``oci_vat_field`` stays (VAT is a line-level override the framework
+  doesn't cover yet).
+
+19.0.1.7.0 (2026-08)
+--------------------
+
+- [FIX] Remove ``auto_create_products`` from the supplier presets. That
+  field is defined in ``punchout_purchase``, but these presets live in a
+  module that only depends on base ``punchout`` — referencing it made
+  the data file fail to load wherever ``punchout_purchase`` loads after
+  this module (``ValueError: Invalid field 'auto_create_products'``).
+  The field already defaults to ``True`` and Odoo backfills the default
+  onto existing rows when the column is added, so auto-create stays on
+  by default without the (mis-layered) explicit pin.
+
+19.0.1.6.0 (2026-08)
+--------------------
+
+- [FIX] All OCI supplier presets now pin ``auto_create_products = True``
+  explicitly. Punchout is a *dynamic* catalog — the parts a buyer picks
+  usually don't pre-exist in Odoo — so a preset that silently left the
+  flag off turned every cart into a "product not found" error at PO
+  creation. The field already defaulted to ``True``, but preset records
+  created before ``punchout_purchase`` added the column inherited the
+  raw column default (``False``) instead, so the behaviour was
+  non-deterministic per install order. Pinning it in the data makes the
+  intent explicit and install-order-independent.
+
 19.0.1.5.0 (2026)
 -----------------
 

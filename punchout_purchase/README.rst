@@ -241,6 +241,14 @@ whatever fields that supplier actually emits.
 Changelog
 =========
 
+19.0.1.12.0 (2026-10)
+---------------------
+
+- [IMP] Follow the base ``order_transmission_id`` Many2one (was the
+  ``order_transmission`` Selection): the backend form shows the
+  supplier's supported channels (manager-gated) and the filtered
+  transmission field; the PO chatter note reads the channel record.
+
 19.0.1.11.0 (2026-08)
 ---------------------
 

@@ -3,7 +3,7 @@
 
 {
     "name": "Punchout",
-    "version": "19.0.1.6.0",
+    "version": "19.0.1.7.0",
     "license": "AGPL-3",
     "author": (
         "ACSONE SA/NV, OBS Solutions Netherlands, Odoo Community Association (OCA)"
@@ -24,6 +24,8 @@
         "security/punchout_backend.xml",
         "security/punchout_session.xml",
         "security/punchout_uom_mapping.xml",
+        "security/punchout_order_transmission.xml",
+        "data/punchout_order_transmission_data.xml",
         "data/uom_mapping_data.xml",
         "data/ir_cron.xml",
         "views/punchout_backend.xml",

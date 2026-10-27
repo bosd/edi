@@ -12,7 +12,12 @@
                     <group>
                         <field name="partner_id" widget="many2one_avatar" />
                         <field name="company_id" groups="base.group_multi_company" />
-                        <field name="order_transmission" />
+                        <field
+                            name="supported_transmission_ids"
+                            widget="many2many_tags"
+                            groups="punchout.group_punchout_manager"
+                        />
+                        <field name="order_transmission_id" />
                     </group>
                     <group>
                         <field name="auto_create_products" />

@@ -313,9 +313,8 @@
              Field Mapping row (see punchout_oci_purchase presets). -->
         <field name="oci_vat_field">VATPERCENTAGE</field>
         <!-- DESTIL gave no order-intake spec, so a confirmed PO is placed
-             manually until they confirm their channel (email / REST /
-             cXML). Change once known. -->
-        <field name="order_transmission">manual</field>
+             manually (the default) until they confirm their channel
+             (email / REST / cXML). Change once known. -->
         <field
             name="image_128"
             type="base64"
@@ -358,7 +357,8 @@
         <field name="oci_param_language" />
         <!-- Lowercase hook_url (case-sensitive!). -->
         <field name="oci_hook_param">hook_url</field>
-        <field name="order_transmission">manual</field>
+        <!-- order_transmission stays manual (the default) until that
+             channel is agreed. -->
         <field
             name="image_128"
             type="base64"

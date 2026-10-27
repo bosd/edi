@@ -397,19 +397,22 @@ back to the ERP system.</p>
 </li>
 <li><a class="reference internal" href="#known-issues-roadmap" id="toc-entry-5">Known issues / Roadmap</a></li>
 <li><a class="reference internal" href="#changelog" id="toc-entry-6">Changelog</a><ul>
-<li><a class="reference internal" href="#section-1" id="toc-entry-7">19.0.1.5.0 (2026)</a></li>
-<li><a class="reference internal" href="#section-2" id="toc-entry-8">19.0.1.4.0 (2026)</a></li>
-<li><a class="reference internal" href="#section-3" id="toc-entry-9">19.0.1.3.0 (2026)</a></li>
-<li><a class="reference internal" href="#section-4" id="toc-entry-10">19.0.1.2.1 (2026)</a></li>
-<li><a class="reference internal" href="#section-5" id="toc-entry-11">19.0.1.2.0 (2026)</a></li>
-<li><a class="reference internal" href="#section-6" id="toc-entry-12">18.0.1.0.0 (2026)</a></li>
+<li><a class="reference internal" href="#section-1" id="toc-entry-7">19.0.1.8.0 (2026-08)</a></li>
+<li><a class="reference internal" href="#section-2" id="toc-entry-8">19.0.1.7.0 (2026-08)</a></li>
+<li><a class="reference internal" href="#section-3" id="toc-entry-9">19.0.1.6.0 (2026-08)</a></li>
+<li><a class="reference internal" href="#section-4" id="toc-entry-10">19.0.1.5.0 (2026)</a></li>
+<li><a class="reference internal" href="#section-5" id="toc-entry-11">19.0.1.4.0 (2026)</a></li>
+<li><a class="reference internal" href="#section-6" id="toc-entry-12">19.0.1.3.0 (2026)</a></li>
+<li><a class="reference internal" href="#section-7" id="toc-entry-13">19.0.1.2.1 (2026)</a></li>
+<li><a class="reference internal" href="#section-8" id="toc-entry-14">19.0.1.2.0 (2026)</a></li>
+<li><a class="reference internal" href="#section-9" id="toc-entry-15">18.0.1.0.0 (2026)</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#bug-tracker" id="toc-entry-13">Bug Tracker</a></li>
-<li><a class="reference internal" href="#credits" id="toc-entry-14">Credits</a><ul>
-<li><a class="reference internal" href="#authors" id="toc-entry-15">Authors</a></li>
-<li><a class="reference internal" href="#contributors" id="toc-entry-16">Contributors</a></li>
-<li><a class="reference internal" href="#maintainers" id="toc-entry-17">Maintainers</a></li>
+<li><a class="reference internal" href="#bug-tracker" id="toc-entry-16">Bug Tracker</a></li>
+<li><a class="reference internal" href="#credits" id="toc-entry-17">Credits</a><ul>
+<li><a class="reference internal" href="#authors" id="toc-entry-18">Authors</a></li>
+<li><a class="reference internal" href="#contributors" id="toc-entry-19">Contributors</a></li>
+<li><a class="reference internal" href="#maintainers" id="toc-entry-20">Maintainers</a></li>
 </ul>
 </li>
 </ul>
@@ -641,7 +644,46 @@ and encrypted credential fields are supplier-specific.</li>
 <div class="section" id="changelog">
 <h2><a class="toc-backref" href="#toc-entry-6">Changelog</a></h2>
 <div class="section" id="section-1">
-<h3><a class="toc-backref" href="#toc-entry-7">19.0.1.5.0 (2026)</a></h3>
+<h3><a class="toc-backref" href="#toc-entry-7">19.0.1.8.0 (2026-08)</a></h3>
+<ul class="simple">
+<li>[REM] Retire <tt class="docutils literal">oci_barcode_field</tt> — the barcode is now a generic
+<tt class="docutils literal">punchout.field.mapping</tt> target (punchout_purchase). Preset backends
+get a shipped <tt class="docutils literal">VENDORMAT <span class="pre">-&gt;</span> barcode</tt> rule (see
+punchout_oci_purchase); a pre-migration converts any non-preset
+backend that had a barcode source configured and drops the column.
+<tt class="docutils literal">oci_vat_field</tt> stays (VAT is a line-level override the framework
+doesn’t cover yet).</li>
+</ul>
+</div>
+<div class="section" id="section-2">
+<h3><a class="toc-backref" href="#toc-entry-8">19.0.1.7.0 (2026-08)</a></h3>
+<ul class="simple">
+<li>[FIX] Remove <tt class="docutils literal">auto_create_products</tt> from the supplier presets. That
+field is defined in <tt class="docutils literal">punchout_purchase</tt>, but these presets live in a
+module that only depends on base <tt class="docutils literal">punchout</tt> — referencing it made
+the data file fail to load wherever <tt class="docutils literal">punchout_purchase</tt> loads after
+this module (<tt class="docutils literal">ValueError: Invalid field 'auto_create_products'</tt>).
+The field already defaults to <tt class="docutils literal">True</tt> and Odoo backfills the default
+onto existing rows when the column is added, so auto-create stays on
+by default without the (mis-layered) explicit pin.</li>
+</ul>
+</div>
+<div class="section" id="section-3">
+<h3><a class="toc-backref" href="#toc-entry-9">19.0.1.6.0 (2026-08)</a></h3>
+<ul class="simple">
+<li>[FIX] All OCI supplier presets now pin <tt class="docutils literal">auto_create_products = True</tt>
+explicitly. Punchout is a <em>dynamic</em> catalog — the parts a buyer picks
+usually don’t pre-exist in Odoo — so a preset that silently left the
+flag off turned every cart into a “product not found” error at PO
+creation. The field already defaulted to <tt class="docutils literal">True</tt>, but preset records
+created before <tt class="docutils literal">punchout_purchase</tt> added the column inherited the
+raw column default (<tt class="docutils literal">False</tt>) instead, so the behaviour was
+non-deterministic per install order. Pinning it in the data makes the
+intent explicit and install-order-independent.</li>
+</ul>
+</div>
+<div class="section" id="section-4">
+<h3><a class="toc-backref" href="#toc-entry-10">19.0.1.5.0 (2026)</a></h3>
 <ul class="simple">
 <li>[ADD] <strong>Van Egmond</strong> OCI supplier preset (technical wholesale, NL)
 with logo. Plain OCI (SAP OCI 5.0), lowercase parameter names.</li>
@@ -651,8 +693,8 @@ case-sensitive and some suppliers expect a different case (Van Egmond:
 lowercase <tt class="docutils literal">hook_url</tt>), which the standard uppercase would break.</li>
 </ul>
 </div>
-<div class="section" id="section-2">
-<h3><a class="toc-backref" href="#toc-entry-8">19.0.1.4.0 (2026)</a></h3>
+<div class="section" id="section-5">
+<h3><a class="toc-backref" href="#toc-entry-11">19.0.1.4.0 (2026)</a></h3>
 <ul class="simple">
 <li>[ADD] Per-backend inbound cart-field mapping: <tt class="docutils literal">oci_barcode_field</tt>
 (default <tt class="docutils literal">VENDORMAT</tt>) and <tt class="docutils literal">oci_vat_field</tt> (default
@@ -662,8 +704,8 @@ preset; clear either to disable that mapping (e.g. customers keeping
 their own barcodes). Consumed by <tt class="docutils literal">punchout_oci_purchase</tt>.</li>
 </ul>
 </div>
-<div class="section" id="section-3">
-<h3><a class="toc-backref" href="#toc-entry-9">19.0.1.3.0 (2026)</a></h3>
+<div class="section" id="section-6">
+<h3><a class="toc-backref" href="#toc-entry-12">19.0.1.3.0 (2026)</a></h3>
 <ul class="simple">
 <li>[ADD] <strong>DESTIL</strong> OCI 4.0 supplier preset (technical supplies / MRO,
 NL) with logo. Ships the fixed catalog parameters DESTIL require
@@ -671,8 +713,8 @@ NL) with logo. Ships the fixed catalog parameters DESTIL require
 <tt class="docutils literal">oci_custom_parameters</tt>; archived until credentials are filled in.</li>
 </ul>
 </div>
-<div class="section" id="section-4">
-<h3><a class="toc-backref" href="#toc-entry-10">19.0.1.2.1 (2026)</a></h3>
+<div class="section" id="section-7">
+<h3><a class="toc-backref" href="#toc-entry-13">19.0.1.2.1 (2026)</a></h3>
 <ul class="simple">
 <li>[FIX] Expose the <tt class="docutils literal">oci_param_language</tt> field on the backend form so
 managers can adjust the language-param name (or clear it to skip the
@@ -683,8 +725,8 @@ splice) without dropping into a server-action — was added in
 skip-when-cleared, and <tt class="docutils literal">oci_custom_parameters</tt> override-wins.</li>
 </ul>
 </div>
-<div class="section" id="section-5">
-<h3><a class="toc-backref" href="#toc-entry-11">19.0.1.2.0 (2026)</a></h3>
+<div class="section" id="section-8">
+<h3><a class="toc-backref" href="#toc-entry-14">19.0.1.2.0 (2026)</a></h3>
 <ul class="simple">
 <li>[ADD] Pass the buyer’s session language to the supplier’s catalog on
 punchout-setup. New <tt class="docutils literal">oci_param_language</tt> field on the backend
@@ -696,8 +738,8 @@ right UoM / description set up front. Clear the field on the backend
 to skip the param entirely.</li>
 </ul>
 </div>
-<div class="section" id="section-6">
-<h3><a class="toc-backref" href="#toc-entry-12">18.0.1.0.0 (2026)</a></h3>
+<div class="section" id="section-9">
+<h3><a class="toc-backref" href="#toc-entry-15">18.0.1.0.0 (2026)</a></h3>
 <ul class="simple">
 <li>[MIG] Migration to Odoo 18.0. Original OCI protocol implementation by
 Hunki Enterprises BV (Holger Brunn).</li>
@@ -714,7 +756,7 @@ session for backend”, which mis-routed concurrent sessions.</li>
 </div>
 </div>
 <div class="section" id="bug-tracker">
-<h2><a class="toc-backref" href="#toc-entry-13">Bug Tracker</a></h2>
+<h2><a class="toc-backref" href="#toc-entry-16">Bug Tracker</a></h2>
 <p>Bugs are tracked on <a class="reference external" href="https://github.com/OCA/edi/issues">GitHub Issues</a>.
 In case of trouble, please check there if your issue has already been reported.
 If you spotted it first, help us to smash it by providing a detailed and welcomed
@@ -722,23 +764,23 @@ If you spotted it first, help us to smash it by providing a detailed and welcome
 <p>Do not contact contributors directly about support or help with technical issues.</p>
 </div>
 <div class="section" id="credits">
-<h2><a class="toc-backref" href="#toc-entry-14">Credits</a></h2>
+<h2><a class="toc-backref" href="#toc-entry-17">Credits</a></h2>
 <div class="section" id="authors">
-<h3><a class="toc-backref" href="#toc-entry-15">Authors</a></h3>
+<h3><a class="toc-backref" href="#toc-entry-18">Authors</a></h3>
 <ul class="simple">
 <li>Hunki Enterprises BV</li>
 <li>OBS Solutions Netherlands</li>
 </ul>
 </div>
 <div class="section" id="contributors">
-<h3><a class="toc-backref" href="#toc-entry-16">Contributors</a></h3>
+<h3><a class="toc-backref" href="#toc-entry-19">Contributors</a></h3>
 <ul class="simple">
 <li>Holger Brunn &lt;<a class="reference external" href="mailto:hbrunn&#64;therp.nl">hbrunn&#64;therp.nl</a>&gt;</li>
 <li>Bosd (migration to 18.0)</li>
 </ul>
 </div>
 <div class="section" id="maintainers">
-<h3><a class="toc-backref" href="#toc-entry-17">Maintainers</a></h3>
+<h3><a class="toc-backref" href="#toc-entry-20">Maintainers</a></h3>
 <p>This module is maintained by the OCA.</p>
 <a class="reference external image-reference" href="https://odoo-community.org">
 <img alt="Odoo Community Association" src="https://odoo-community.org/logo.png" />
