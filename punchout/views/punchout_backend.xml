@@ -118,7 +118,10 @@
                             >
                                 <list editable="bottom">
                                     <field name="supplier_code" />
-                                    <field name="uom_id" />
+                                    <field
+                                        name="uom_id"
+                                        context="{'active_test': True}"
+                                    />
                                     <field name="notes" optional="hide" />
                                 </list>
                             </field>

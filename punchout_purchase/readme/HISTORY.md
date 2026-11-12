@@ -1,3 +1,9 @@
+## 19.0.1.12.1 (2026-11)
+
+- [FIX] Backend form: the Supplier and Company dropdowns no longer offer
+  archived records. The backend catalog opens with ``active_test`` off (to
+  show archived presets) and that context leaked into the dropdowns.
+
 ## 19.0.1.12.0 (2026-10)
 
 - [IMP] Follow the base ``order_transmission_id`` Many2one (was the

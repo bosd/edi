@@ -1,3 +1,9 @@
+## 19.0.1.8.0 (2026-11)
+
+- [FIX] Backend form: the UoM dropdown in the UoM mappings no longer offers
+  archived units. The backend catalog opens with ``active_test`` off (to show
+  archived presets) and that context leaked into the dropdown.
+
 ## 19.0.1.7.0 (2026-10)
 
 - [IMP] Order transmission is now restricted to the channels a supplier

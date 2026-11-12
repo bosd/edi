@@ -5,8 +5,11 @@
 
 from unittest.mock import patch
 
+from lxml import etree
+
 from odoo.exceptions import UserError
 from odoo.tools import mute_logger
+from odoo.tools.safe_eval import safe_eval
 
 from .common import TestPunchoutPurchaseCommon
 
@@ -28,6 +31,27 @@ class TestPunchoutPurchase(TestPunchoutPurchaseCommon):
     def test_backend_has_partner(self):
         """Test that backend has partner configured."""
         self.assertEqual(self.backend.partner_id, self.partner)
+
+    def test_backend_form_dropdowns_hide_archived(self):
+        """Partner/company dropdowns force active_test on the backend form.
+
+        The catalog action opens with ``active_test: False`` to show archived
+        presets; without a field context that leaks into the dropdowns.
+        """
+        arch = (
+            self.env["punchout.backend"]
+            .with_context(active_test=False)
+            .get_view(view_type="form")["arch"]
+        )
+        tree = etree.fromstring(arch)
+        self.assertTrue(tree.xpath("//field[@name='partner_id']"))
+        # company_id is only in the arch for multi-company users.
+        for name in ("partner_id", "company_id"):
+            nodes = tree.xpath(f"//field[@name='{name}']")
+            if not nodes:
+                continue
+            ctx = safe_eval(nodes[0].get("context") or "{}", {"id": False})
+            self.assertIs(ctx.get("active_test"), True, name)
 
     def test_backend_has_auto_create_products(self):
         """Test that backend has auto_create_products flag."""
