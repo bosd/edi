@@ -1,4 +1,5 @@
-1. On the PunchOut backend (cXML), tick **Send orders as cXML** and fill the
+1. On the PunchOut backend (cXML), set **Order transmission** to
+   **cXML OrderRequest** and fill the
    **OrderRequest endpoint** the supplier gave you (often different from the
    PunchOut setup URL). Optionally record the supplier's **order email**.
 2. On a confirmed purchase order for that supplier, press **Send to supplier

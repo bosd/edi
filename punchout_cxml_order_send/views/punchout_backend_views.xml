@@ -13,7 +13,8 @@
                     string="cXML Order Transmission"
                     invisible="protocol != 'cxml'"
                 >
-                    <field name="cxml_order_send" />
+                    <!-- Driven by Order transmission = cXML OrderRequest. -->
+                    <field name="cxml_order_send" invisible="1" />
                     <field
                         name="order_request_url"
                         invisible="not cxml_order_send"

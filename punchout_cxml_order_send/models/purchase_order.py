@@ -37,9 +37,10 @@ class PurchaseOrder(models.Model):
     def _cxml_order_backend(self):
         """The cXML backend that should receive this PO as an OrderRequest.
 
-        A backend for the order's (commercial) vendor, cXML, opted in via
-        ``cxml_order_send`` and active. Empty when the supplier is catalog-only
-        (or not a cXML punchout supplier at all).
+        A backend for the order's (commercial) vendor, cXML, whose Order
+        transmission is cXML OrderRequest (``cxml_order_send``) and active.
+        Empty when the supplier is catalog-only (or not a cXML punchout
+        supplier at all).
         """
         self.ensure_one()
         commercial = self.partner_id.commercial_partner_id
@@ -145,8 +146,8 @@ class PurchaseOrder(models.Model):
                 raise UserError(
                     _(
                         "No cXML order-send backend is configured for supplier "
-                        "%(supplier)s (enable 'Send orders as cXML' on the "
-                        "PunchOut backend).",
+                        "%(supplier)s (set Order transmission to 'cXML "
+                        "OrderRequest' on the PunchOut backend).",
                         supplier=order.partner_id.display_name,
                     )
                 )

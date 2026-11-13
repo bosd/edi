@@ -32,6 +32,8 @@ class TestOrderSend(TransactionCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
+        cls.cxml_channel = cls.env.ref("punchout_cxml_order_send.transmission_cxml")
+        cls.manual_channel = cls.env.ref("punchout.transmission_manual")
         cls.supplier = cls.env["res.partner"].create(
             {"name": "Manutan", "is_company": True}
         )
@@ -48,7 +50,10 @@ class TestOrderSend(TransactionCase):
                 "to_identity": "417526183",
                 "shared_secret": "s3cr3t",
                 "partner_id": cls.supplier.id,
-                "cxml_order_send": True,
+                "supported_transmission_ids": [
+                    (6, 0, (cls.manual_channel | cls.cxml_channel).ids)
+                ],
+                "order_transmission_id": cls.cxml_channel.id,
                 "order_request_url": "https://supplier.example/cxml/order",
             }
         )
@@ -112,8 +117,17 @@ class TestOrderSend(TransactionCase):
                 self.po.action_send_cxml_order()
         self.assertFalse(self.po.cxml_order_sent)
 
+    def test_send_flag_follows_order_transmission(self):
+        """The cXML send flag is derived from the Order transmission choice."""
+        self.assertTrue(self.backend.cxml_order_send)
+        self.backend.order_transmission_id = self.manual_channel
+        self.assertFalse(self.backend.cxml_order_send)
+        self.assertFalse(self.po.cxml_order_capable)
+        self.backend.order_transmission_id = self.cxml_channel
+        self.assertTrue(self.backend.cxml_order_send)
+
     def test_no_backend_raises(self):
-        self.backend.cxml_order_send = False
+        self.backend.order_transmission_id = self.manual_channel
         with self.assertRaises(UserError):
             self.po.action_send_cxml_order()
 

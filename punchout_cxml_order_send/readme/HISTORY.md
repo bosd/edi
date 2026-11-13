@@ -1,3 +1,11 @@
+## 19.0.1.3.0 (2026-11)
+
+- [IMP] Drop the separate *Send orders as cXML* checkbox: sending is now
+  driven by the backend's *Order transmission* (``cXML OrderRequest``), so the
+  two settings can no longer contradict each other. ``cxml_order_send`` stays
+  as a stored computed flag. Pre-migration moves backends that had the
+  checkbox ticked onto the cXML channel.
+
 ## 19.0.1.2.0 (2026-10)
 
 - [IMP] Own the ``cxml`` order-transmission channel record and declare it as
