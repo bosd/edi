@@ -20,12 +20,8 @@
             eval="[(4, ref('transmission_cxml'))]"
         />
     </record>
-    <record id="punchout_cxml.preset_fabory" model="punchout.backend">
-        <field
-            name="supported_transmission_ids"
-            eval="[(4, ref('transmission_cxml'))]"
-        />
-    </record>
+    <!-- Fabory is deliberately absent: it takes orders as e-PDF only and
+         does not accept a cXML OrderRequest. -->
     <record id="punchout_cxml.preset_manutan" model="punchout.backend">
         <field
             name="supported_transmission_ids"

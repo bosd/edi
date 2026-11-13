@@ -5,6 +5,9 @@
   two settings can no longer contradict each other. ``cxml_order_send`` stays
   as a stored computed flag. Pre-migration moves backends that had the
   checkbox ticked onto the cXML channel.
+- [FIX] Fabory no longer offers *cXML OrderRequest* as an order channel (it
+  takes orders as e-PDF only); post-migration removes it from the preset
+  unless it was explicitly chosen.
 
 ## 19.0.1.2.0 (2026-10)
 

@@ -57,14 +57,22 @@ class TestOrderSend(TransactionCase):
                 "order_request_url": "https://supplier.example/cxml/order",
             }
         )
-        cls.product = cls.env["product.template"].create(
-            {
-                "name": "Hex bolt M8x40",
-                "seller_ids": [
-                    (0, 0, {"partner_id": cls.supplier.id, "product_code": "MAN-123"})
-                ],
-            }
-        ).product_variant_id
+        cls.product = (
+            cls.env["product.template"]
+            .create(
+                {
+                    "name": "Hex bolt M8x40",
+                    "seller_ids": [
+                        (
+                            0,
+                            0,
+                            {"partner_id": cls.supplier.id, "product_code": "MAN-123"},
+                        )
+                    ],
+                }
+            )
+            .product_variant_id
+        )
         cls.po = cls.env["purchase.order"].create(
             {
                 "partner_id": cls.supplier.id,
@@ -135,3 +143,14 @@ class TestOrderSend(TransactionCase):
         self.backend.order_request_url = False
         with self.assertRaises(UserError):
             self.po.action_send_cxml_order()
+
+    def test_fabory_preset_has_no_cxml_channel(self):
+        """Fabory takes e-PDF orders only: cXML is not a supported channel."""
+        fabory = self.env.ref("punchout_cxml.preset_fabory").with_context(
+            active_test=False
+        )
+        self.assertNotIn(self.cxml_channel, fabory.supported_transmission_ids)
+        manutan = self.env.ref("punchout_cxml.preset_manutan").with_context(
+            active_test=False
+        )
+        self.assertIn(self.cxml_channel, manutan.supported_transmission_ids)
